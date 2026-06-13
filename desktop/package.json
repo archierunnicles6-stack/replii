@@ -39,8 +39,10 @@
     "productName": "Ghost",
     "mac": {
       "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "Ghost needs microphone access to transcribe your voice during sales calls."
+        "NSMicrophoneUsageDescription": "Ghost needs microphone access to transcribe your voice during sales calls.",
+        "NSScreenCaptureDescription": "Ghost needs screen capture to hear your sales call audio from Zoom, Meet, or Teams."
       },
       "target": [
         "dmg",

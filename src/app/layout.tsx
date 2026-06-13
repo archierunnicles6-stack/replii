@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "Ghost — Live AI Sales Coach",
   description:
     "Real-time response suggestions during sales calls. Invisible overlay, instant coaching, zero bots.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Ghost",
+  },
 };
 
 export default function RootLayout({

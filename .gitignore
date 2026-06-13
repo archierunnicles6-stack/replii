@@ -38,6 +38,8 @@ yarn-error.log*
 # desktop dev artifacts
 /desktop/.ghost-dev
 /desktop/node_modules
+/desktop/release
+/public/downloads/*.dmg
 
 # typescript
 *.tsbuildinfo

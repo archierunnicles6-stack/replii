@@ -11,10 +11,11 @@ import {
   ListeningPill,
   MeetingBackground,
   SuggestionPill,
+  TabSharePrompt,
 } from "@/components/app/overlay-ui";
 import { useCallTimer } from "@/hooks/useCallTimer";
 import { useGhostAI } from "@/hooks/useGhostAI";
-import { useGhostAudio } from "@/hooks/useGhostAudio";
+import { useGhostSession, type SessionMode } from "@/hooks/useGhostSession";
 import { lightPillTheme } from "@/lib/pill-theme";
 import type { TranscriptLine } from "@/types/ghost";
 
@@ -34,6 +35,7 @@ function lastProspectLine(lines: TranscriptLine[]): TranscriptLine | null {
 
 export function GhostApp() {
   const [phase, setPhase] = useState<AppPhase>("welcome");
+  const [sessionMode, setSessionMode] = useState<SessionMode>("live");
   const [listening, setListening] = useState(true);
   const [suggestionVisible, setSuggestionVisible] = useState(false);
   const [suggestionMounted, setSuggestionMounted] = useState(false);
@@ -43,7 +45,7 @@ export function GhostApp() {
   const [sessionLines, setSessionLines] = useState<TranscriptLine[]>([]);
 
   const audioActive = phase === "active" && listening;
-  const { lines, interim, clear } = useGhostAudio(audioActive);
+  const session = useGhostSession(audioActive, sessionMode);
   const {
     suggestion,
     followUps,
@@ -61,12 +63,12 @@ export function GhostApp() {
 
   const lastProspectRef = useRef<string | null>(null);
   const hideTimerRef = useRef<number | null>(null);
-  const linesRef = useRef(lines);
-  linesRef.current = lines;
+  const linesRef = useRef(session.lines);
+  linesRef.current = session.lines;
 
   const pillTheme = lightPillTheme;
-  const liveText = buildLiveText(lines, interim);
-  const isStreaming = !!interim.trim();
+  const liveText = buildLiveText(session.lines, session.interim);
+  const isStreaming = !!session.interim.trim();
 
   const showSuggestion = useCallback((text: string, health: number | null) => {
     if (hideTimerRef.current) {
@@ -90,28 +92,22 @@ export function GhostApp() {
   useEffect(() => {
     if (phase !== "active" || !listening) return;
 
-    const last = lines[lines.length - 1];
+    const last = session.lines[session.lines.length - 1];
     if (!last || last.speaker !== "Prospect") return;
     if (lastProspectRef.current === last.id) return;
 
     lastProspectRef.current = last.id;
-    void fetchSuggestion(last.text, lines).then((result) => {
+    void fetchSuggestion(last.text, session.lines).then((result) => {
       if (result?.suggestion) {
         showSuggestion(result.suggestion, result.health);
       }
     });
-  }, [phase, listening, lines, fetchSuggestion, showSuggestion]);
+  }, [phase, listening, session.lines, fetchSuggestion, showSuggestion]);
 
-  useEffect(() => {
-    if (suggestion?.suggestion && loading) {
-      setSuggestionMounted(true);
-      setSuggestionVisible(true);
-    }
-  }, [suggestion, loading]);
-
-  const startSession = () => {
-    clear();
+  const startSession = (mode: SessionMode) => {
+    session.clear();
     clearSuggestion();
+    setSessionMode(mode);
     setSessionLines([]);
     setShowFollowUps(false);
     lastProspectRef.current = null;
@@ -143,7 +139,7 @@ export function GhostApp() {
 
   const restart = () => {
     if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-    clear();
+    session.clear();
     clearSuggestion();
     setSessionLines([]);
     setShowFollowUps(false);
@@ -169,7 +165,7 @@ export function GhostApp() {
   if (phase === "welcome") {
     return (
       <div className="relative min-h-screen overflow-hidden">
-        <MeetingBackground />
+        <MeetingBackground mode="live" />
         <div className="relative z-10 flex min-h-screen flex-col">
           <header className="flex items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-2 text-sm text-white/60 hover:text-white">
@@ -179,7 +175,7 @@ export function GhostApp() {
               Ghost
             </Link>
             <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white/50 backdrop-blur-sm">
-              Web app · mock call
+              Real mic · tab audio · GPT
             </span>
           </header>
 
@@ -187,26 +183,36 @@ export function GhostApp() {
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full max-w-md rounded-2xl border border-white/10 bg-black/40 p-8 text-center backdrop-blur-xl"
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-black/40 p-8 backdrop-blur-xl"
             >
-              <h1 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
-                Start a sales call
+              <h1 className="text-center text-2xl font-semibold tracking-tight text-white md:text-3xl">
+                Ghost sales co-pilot
               </h1>
-              <p className="mt-3 text-[14px] leading-relaxed text-white/55">
-                Ghost listens to the conversation and surfaces exactly what to say — in real time.
-                This demo uses mock prospect audio so you can test instantly.
+              <p className="mt-3 text-center text-[14px] leading-relaxed text-white/55">
+                Use your mic plus share your Zoom or Meet tab — Ghost transcribes the prospect and
+                tells you exactly what to say.
               </p>
+
               <button
                 type="button"
-                onClick={startSession}
+                onClick={() => startSession("live")}
                 className="mt-8 w-full rounded-full bg-white py-3 text-[15px] font-medium text-zinc-900 transition hover:bg-zinc-100"
               >
-                Start Ghost
+                Start live session
               </button>
-              <p className="mt-4 text-[12px] text-white/40">
-                Full desktop app with real mic →{" "}
+
+              <button
+                type="button"
+                onClick={() => startSession("demo")}
+                className="mt-3 w-full rounded-full border border-white/20 py-3 text-[15px] font-medium text-white/80 transition hover:bg-white/10"
+              >
+                Try demo call (no mic)
+              </button>
+
+              <p className="mt-6 text-center text-[12px] text-white/40">
+                Native Mac app →{" "}
                 <Link href="/download" className="text-ghost-300 hover:text-ghost-200">
-                  Download for Mac
+                  Download Ghost.dmg
                 </Link>
               </p>
             </motion.div>
@@ -222,7 +228,7 @@ export function GhostApp() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
-      <MeetingBackground />
+      <MeetingBackground mode={sessionMode} />
 
       <div className="relative z-10 flex h-full flex-col">
         <motion.div
@@ -235,9 +241,20 @@ export function GhostApp() {
             liveText={liveText}
             callTime={callTime}
             isStreaming={isStreaming}
-            isDemo
+            isDemo={sessionMode === "demo"}
+            tabSharing={session.tabSharing}
+            hasMic={session.hasMic}
+            micError={session.micError}
             theme={pillTheme}
           />
+
+          {sessionMode === "live" && !session.tabSharing && (
+            <TabSharePrompt
+              onShare={() => void session.startTabShare()}
+              error={session.tabError}
+              theme={pillTheme}
+            />
+          )}
 
           <AnimatePresence>
             {showPill && (

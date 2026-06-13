@@ -92,7 +92,7 @@ export const useAppStore = create<AppState>()(
       meetings: DEFAULT_MEETINGS,
       upcoming: DEFAULT_UPCOMING,
       sessionActive: false,
-      audioCaptureMode: "mock" as const,
+      audioCaptureMode: "mic" as const,
       currentMeetingId: null,
       freeSessionsUsed: 0,
 
@@ -210,11 +210,11 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "ghost-app-storage",
-      version: 4,
+      version: 5,
       migrate: (persisted, version) => {
         const state = persisted as Partial<AppState>;
-        if (version < 4 && state.audioCaptureMode !== "mock") {
-          state.audioCaptureMode = "mock";
+        if (version < 5) {
+          state.audioCaptureMode = "mic";
         }
         return state as AppState;
       },

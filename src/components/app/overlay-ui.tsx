@@ -63,7 +63,10 @@ export function ListeningPill({
   liveText,
   callTime,
   isStreaming = false,
-  isDemo = true,
+  isDemo = false,
+  tabSharing = false,
+  hasMic = false,
+  micError = null,
   theme,
 }: {
   listening: boolean;
@@ -71,9 +74,20 @@ export function ListeningPill({
   callTime: string;
   isStreaming?: boolean;
   isDemo?: boolean;
+  tabSharing?: boolean;
+  hasMic?: boolean;
+  micError?: string | null;
   theme: PillThemeStyles;
 }) {
-  const statusText = !listening ? "Paused" : isDemo ? `Demo · ${callTime}` : `Listening · ${callTime}`;
+  const statusText = (() => {
+    if (!listening) return "Paused";
+    if (micError === "not-allowed") return "Mic blocked";
+    if (isDemo) return `Demo · ${callTime}`;
+    if (tabSharing && hasMic) return `Live · ${callTime}`;
+    if (tabSharing) return `Call audio · ${callTime}`;
+    if (hasMic) return `Mic on · ${callTime}`;
+    return `Listening · ${callTime}`;
+  })();
 
   return (
     <div className="overflow-hidden rounded-full" style={theme.glass}>
@@ -321,7 +335,40 @@ export function FollowUpPanel({
   );
 }
 
-export function MeetingBackground() {
+export function TabSharePrompt({
+  onShare,
+  error,
+  theme,
+}: {
+  onShare: () => void;
+  error?: string | null;
+  theme: PillThemeStyles;
+}) {
+  return (
+    <div className="w-[340px] max-w-[520px] rounded-2xl px-4 py-3" style={theme.glass}>
+      <p className={`text-[13px] leading-snug ${theme.body}`}>
+        Share your Zoom or Meet tab with audio so Ghost can hear the prospect.
+      </p>
+      {error === "no-audio" ? (
+        <p className="mt-2 text-[12px] text-amber-700">
+          No audio in that share — pick a tab and check &quot;Share tab audio&quot;.
+        </p>
+      ) : null}
+      {error === "denied" ? (
+        <p className="mt-2 text-[12px] text-red-600">Screen share was cancelled.</p>
+      ) : null}
+      <button
+        type="button"
+        onClick={onShare}
+        className="mt-3 rounded-full bg-zinc-900 px-4 py-1.5 text-[12px] font-semibold text-white hover:bg-zinc-800"
+      >
+        Share meeting tab
+      </button>
+    </div>
+  );
+}
+
+export function MeetingBackground({ mode = "live" }: { mode?: "live" | "demo" }) {
   return (
     <div className="absolute inset-0 bg-[#1a1a1f]">
       <div className="absolute inset-0 opacity-40">
@@ -337,7 +384,7 @@ export function MeetingBackground() {
       </div>
       <div className="absolute bottom-6 left-6 flex items-center gap-2 rounded-lg bg-black/40 px-3 py-1.5 text-[11px] text-white/50">
         <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-        Demo sales call · mock audio
+        {mode === "demo" ? "Demo call" : "Live sales call"} · Ghost overlay
       </div>
     </div>
   );
