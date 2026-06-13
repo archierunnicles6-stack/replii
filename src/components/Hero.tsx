@@ -23,18 +23,17 @@ export function Hero() {
             className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <Link
-              href="/download"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-zinc-900 px-6 text-[14px] font-medium text-white transition-colors hover:bg-zinc-800"
+              href="/overlay"
+              className="inline-flex h-11 items-center rounded-full bg-zinc-900 px-6 text-[14px] font-medium text-white transition-colors hover:bg-zinc-800"
             >
-              <AppleIcon />
-              Download for Mac
+              Try live demo
             </Link>
             <Link
               href="/download"
               className="inline-flex h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-6 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
             >
-              <WindowsIcon />
-              Get for Windows
+              <AppleIcon />
+              Download for Mac
             </Link>
           </div>
         </div>

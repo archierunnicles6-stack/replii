@@ -12,16 +12,16 @@ export function CTA() {
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href="/download"
+            href="/overlay"
             className="inline-flex h-11 items-center rounded-full bg-white px-6 text-[14px] font-medium text-zinc-900 transition-colors hover:bg-zinc-100"
           >
-            Download for Mac
+            Try live demo
           </Link>
           <Link
-            href="/pricing"
+            href="/download"
             className="inline-flex h-11 items-center rounded-full border border-zinc-700 px-6 text-[14px] font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
           >
-            View pricing
+            Download for Mac
           </Link>
         </div>
       </div>
