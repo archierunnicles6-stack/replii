@@ -53,11 +53,3 @@ function AppleIcon() {
     </svg>
   );
 }
-
-function WindowsIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M3 5.5L10.5 4.1V11.5H3V5.5M10.5 12.5H3V18.5L10.5 17.1V12.5M11.5 3.9L21 2V11.5H11.5V3.9M21 12.5H11.5V20.1L21 21V12.5Z" />
-    </svg>
-  );
-}
