@@ -1,0 +1,286 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { RecapScreen } from "@/components/app/RecapScreen";
+import {
+  ControlButtons,
+  FollowUpPanel,
+  getSuggestionReadDurationMs,
+  ListeningPill,
+  MeetingBackground,
+  SuggestionPill,
+} from "@/components/app/overlay-ui";
+import { useCallTimer } from "@/hooks/useCallTimer";
+import { useGhostAI } from "@/hooks/useGhostAI";
+import { useGhostAudio } from "@/hooks/useGhostAudio";
+import { lightPillTheme } from "@/lib/pill-theme";
+import type { TranscriptLine } from "@/types/ghost";
+
+type AppPhase = "welcome" | "active" | "recap";
+
+function buildLiveText(lines: TranscriptLine[], interim: string): string {
+  if (interim.trim()) return interim;
+  return lines[lines.length - 1]?.text ?? "";
+}
+
+function lastProspectLine(lines: TranscriptLine[]): TranscriptLine | null {
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (lines[i]?.speaker === "Prospect") return lines[i] ?? null;
+  }
+  return null;
+}
+
+export function GhostApp() {
+  const [phase, setPhase] = useState<AppPhase>("welcome");
+  const [listening, setListening] = useState(true);
+  const [suggestionVisible, setSuggestionVisible] = useState(false);
+  const [suggestionMounted, setSuggestionMounted] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState("");
+  const [dealHealth, setDealHealth] = useState<number | null>(null);
+  const [showFollowUps, setShowFollowUps] = useState(false);
+  const [sessionLines, setSessionLines] = useState<TranscriptLine[]>([]);
+
+  const audioActive = phase === "active" && listening;
+  const { lines, interim, clear } = useGhostAudio(audioActive);
+  const {
+    suggestion,
+    followUps,
+    recap,
+    loading,
+    followUpLoading,
+    recapLoading,
+    error,
+    fetchSuggestion,
+    fetchFollowUps,
+    fetchRecap,
+    clearSuggestion,
+  } = useGhostAI();
+  const { formatted: callTime } = useCallTimer(phase === "active");
+
+  const lastProspectRef = useRef<string | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
+  const linesRef = useRef(lines);
+  linesRef.current = lines;
+
+  const pillTheme = lightPillTheme;
+  const liveText = buildLiveText(lines, interim);
+  const isStreaming = !!interim.trim();
+
+  const showSuggestion = useCallback((text: string, health: number | null) => {
+    if (hideTimerRef.current) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    setActiveSuggestion(text);
+    setDealHealth(health);
+    setSuggestionMounted(true);
+    setSuggestionVisible(true);
+
+    hideTimerRef.current = window.setTimeout(() => {
+      setSuggestionVisible(false);
+      hideTimerRef.current = window.setTimeout(() => {
+        setSuggestionMounted(false);
+        setActiveSuggestion("");
+      }, 300);
+    }, getSuggestionReadDurationMs(text));
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "active" || !listening) return;
+
+    const last = lines[lines.length - 1];
+    if (!last || last.speaker !== "Prospect") return;
+    if (lastProspectRef.current === last.id) return;
+
+    lastProspectRef.current = last.id;
+    void fetchSuggestion(last.text, lines).then((result) => {
+      if (result?.suggestion) {
+        showSuggestion(result.suggestion, result.health);
+      }
+    });
+  }, [phase, listening, lines, fetchSuggestion, showSuggestion]);
+
+  useEffect(() => {
+    if (suggestion?.suggestion && loading) {
+      setSuggestionMounted(true);
+      setSuggestionVisible(true);
+    }
+  }, [suggestion, loading]);
+
+  const startSession = () => {
+    clear();
+    clearSuggestion();
+    setSessionLines([]);
+    setShowFollowUps(false);
+    lastProspectRef.current = null;
+    setPhase("active");
+    setListening(true);
+  };
+
+  const endSession = () => {
+    setListening(false);
+    setSessionLines([...linesRef.current]);
+    setPhase("recap");
+    void fetchRecap(linesRef.current);
+  };
+
+  const handleAssist = () => {
+    const prospect = lastProspectLine(linesRef.current);
+    const text = prospect?.text ?? "Tell me more about your current setup.";
+    void fetchSuggestion(text, linesRef.current).then((result) => {
+      if (result?.suggestion) {
+        showSuggestion(result.suggestion, result.health);
+      }
+    });
+  };
+
+  const handleFollowUp = async () => {
+    const questions = await fetchFollowUps(linesRef.current);
+    if (questions.length > 0) setShowFollowUps(true);
+  };
+
+  const restart = () => {
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    clear();
+    clearSuggestion();
+    setSessionLines([]);
+    setShowFollowUps(false);
+    setSuggestionVisible(false);
+    setSuggestionMounted(false);
+    setActiveSuggestion("");
+    setDealHealth(null);
+    lastProspectRef.current = null;
+    setPhase("welcome");
+  };
+
+  if (phase === "recap") {
+    return (
+      <RecapScreen
+        recap={recap}
+        loading={recapLoading}
+        transcript={sessionLines}
+        onRestart={restart}
+      />
+    );
+  }
+
+  if (phase === "welcome") {
+    return (
+      <div className="relative min-h-screen overflow-hidden">
+        <MeetingBackground />
+        <div className="relative z-10 flex min-h-screen flex-col">
+          <header className="flex items-center justify-between px-6 py-4">
+            <Link href="/" className="flex items-center gap-2 text-sm text-white/60 hover:text-white">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ghost-500 text-xs font-bold text-white">
+                ◉
+              </span>
+              Ghost
+            </Link>
+            <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white/50 backdrop-blur-sm">
+              Web app · mock call
+            </span>
+          </header>
+
+          <div className="flex flex-1 flex-col items-center justify-center px-6 pb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-black/40 p-8 text-center backdrop-blur-xl"
+            >
+              <h1 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+                Start a sales call
+              </h1>
+              <p className="mt-3 text-[14px] leading-relaxed text-white/55">
+                Ghost listens to the conversation and surfaces exactly what to say — in real time.
+                This demo uses mock prospect audio so you can test instantly.
+              </p>
+              <button
+                type="button"
+                onClick={startSession}
+                className="mt-8 w-full rounded-full bg-white py-3 text-[15px] font-medium text-zinc-900 transition hover:bg-zinc-100"
+              >
+                Start Ghost
+              </button>
+              <p className="mt-4 text-[12px] text-white/40">
+                Full desktop app with real mic →{" "}
+                <Link href="/download" className="text-ghost-300 hover:text-ghost-200">
+                  Download for Mac
+                </Link>
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displaySuggestion = activeSuggestion || suggestion?.suggestion || "";
+  const displayHealth = dealHealth ?? suggestion?.health ?? null;
+  const showPill = suggestionMounted || loading;
+
+  return (
+    <div className="relative h-screen w-screen overflow-hidden">
+      <MeetingBackground />
+
+      <div className="relative z-10 flex h-full flex-col">
+        <motion.div
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="absolute left-5 top-5 flex max-w-[520px] flex-col gap-2"
+        >
+          <ListeningPill
+            listening={listening}
+            liveText={liveText}
+            callTime={callTime}
+            isStreaming={isStreaming}
+            isDemo
+            theme={pillTheme}
+          />
+
+          <AnimatePresence>
+            {showPill && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+              >
+                <SuggestionPill
+                  suggestion={displaySuggestion}
+                  loading={loading && !displaySuggestion}
+                  visible={suggestionVisible || loading}
+                  dealHealth={displayHealth}
+                  theme={pillTheme}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <FollowUpPanel
+            questions={followUps}
+            visible={showFollowUps}
+            theme={pillTheme}
+            onClose={() => setShowFollowUps(false)}
+          />
+
+          {error ? (
+            <p className="rounded-lg bg-red-500/20 px-3 py-2 text-[12px] text-red-200">{error}</p>
+          ) : null}
+        </motion.div>
+
+        <div className="mt-auto flex justify-center pb-8">
+          <ControlButtons
+            onAssist={handleAssist}
+            onFollowUp={handleFollowUp}
+            onEndSession={endSession}
+            listening={listening}
+            onToggleListening={() => setListening((v) => !v)}
+            followUpLoading={followUpLoading}
+            theme={pillTheme}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

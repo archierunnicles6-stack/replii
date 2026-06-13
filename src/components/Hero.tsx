@@ -23,7 +23,7 @@ export function Hero() {
             className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <Link
-              href="/overlay"
+              href="/app"
               className="inline-flex h-11 items-center rounded-full bg-zinc-900 px-6 text-[14px] font-medium text-white transition-colors hover:bg-zinc-800"
             >
               Try live demo

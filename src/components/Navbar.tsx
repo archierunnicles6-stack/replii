@@ -32,7 +32,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/overlay"
+            href="/app"
             className="hidden text-[13px] font-medium text-zinc-500 transition-colors hover:text-zinc-900 sm:inline-flex"
           >
             Try demo
