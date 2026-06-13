@@ -1,0 +1,57 @@
+{
+  "name": "ghost-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ghost — live AI meeting assistant overlay",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "node scripts/prepare-dev-app.mjs && node scripts/dev.mjs",
+    "dev:raw": "electron-vite dev",
+    "open-app": "node scripts/open-ghost-app.mjs",
+    "setup:blackhole": "node scripts/setup-blackhole.mjs",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package": "npm run build && electron-builder --mac --dir",
+    "package:mac": "npm run build && electron-builder --mac"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  },
+  "build": {
+    "appId": "com.ghost.app",
+    "productName": "Ghost",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Ghost needs microphone access to transcribe your voice during sales calls."
+      },
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*"
+    ]
+  }
+}
