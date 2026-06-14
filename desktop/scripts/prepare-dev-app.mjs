@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
+import { signMacApp } from "./sign-mac-app.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const desktopRoot = path.join(__dirname, "..");
@@ -24,6 +25,7 @@ const electronVersion = require(path.join(desktopRoot, "node_modules/electron/pa
 if (existsSync(stampFile) && existsSync(destApp)) {
   const stamp = readFileSync(stampFile, "utf8");
   if (stamp === electronVersion) {
+    signMacApp(destApp);
     process.exit(0);
   }
 }
@@ -31,7 +33,6 @@ if (existsSync(stampFile) && existsSync(destApp)) {
 if (existsSync(outDir)) rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
-// Preserve symlinks inside Electron Framework (cp -a keeps bundle intact).
 execSync(`cp -a "${electronDist}/." "${outDir}/"`, { stdio: "inherit" });
 
 const setPlist = (key, value) => {
@@ -63,11 +64,7 @@ addPlist(
   "Ghost captures call audio from your screen to transcribe meetings.",
 );
 
-try {
-  execSync(`xattr -cr "${destApp}"`, { stdio: "ignore" });
-} catch {
-  // ignore
-}
+signMacApp(destApp);
 
 writeFileSync(stampFile, electronVersion);
 writeFileSync(path.join(outDir, "absolute-path.txt"), outDir);

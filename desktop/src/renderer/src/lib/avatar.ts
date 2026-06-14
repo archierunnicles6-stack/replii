@@ -1,4 +1,4 @@
-import { isSupabaseConfigured, supabase } from "./supabase";
+import { getSupabase, isSupabaseConfigured } from "./supabase";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -54,8 +54,9 @@ export async function uploadProfileAvatar(
   }
 
   const dataUrl = await resizeImageFile(file);
+  const supabase = getSupabase();
 
-  if (isSupabaseConfigured()) {
+  if (isSupabaseConfigured() && supabase) {
     try {
       const blob = await (await fetch(dataUrl)).blob();
       const ext =
@@ -96,8 +97,9 @@ export async function removeProfileAvatar(
   email: string,
 ): Promise<string> {
   const initial = avatarInitial(name, email);
+  const supabase = getSupabase();
 
-  if (isSupabaseConfigured()) {
+  if (isSupabaseConfigured() && supabase) {
     await supabase.auth.updateUser({ data: { avatar_url: "" } });
   }
 

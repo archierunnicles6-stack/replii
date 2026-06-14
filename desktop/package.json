@@ -13,7 +13,8 @@
     "preview": "electron-vite preview",
     "package": "npm run build && electron-builder --mac --dir",
     "package:mac": "npm run build && electron-builder --mac",
-    "fix:installed": "xattr -cr /Applications/Ghost.app 2>/dev/null; codesign --force --deep --sign - /Applications/Ghost.app"
+    "fix:installed": "node scripts/sign-mac-app.mjs /Applications/Ghost.app",
+    "fix:dev": "node scripts/sign-mac-app.mjs .ghost-dev/Electron.app"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",

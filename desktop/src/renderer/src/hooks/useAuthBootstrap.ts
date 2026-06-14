@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { isSupabaseConfigured, supabase, toAppUser } from "../lib/supabase";
+import { getSupabase, isSupabaseConfigured, toAppUser } from "../lib/supabase";
 import { useAppStore } from "../store/useAppStore";
 
 /** Restore Supabase session and keep the Zustand auth state in sync. */
 export function useAuthBootstrap() {
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
+    const supabase = getSupabase();
+    if (!isSupabaseConfigured() || !supabase) return;
 
     const syncUser = (authenticated: boolean, user?: ReturnType<typeof toAppUser>) => {
       if (authenticated && user) {

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { isSupabaseConfigured, supabase } from "../../lib/supabase";
+import { getSupabase, isSupabaseConfigured } from "../../lib/supabase";
 import { removeProfileAvatar, isAvatarImage, uploadProfileAvatar } from "../../lib/avatar";
 import { useAppStore } from "../../store/useAppStore";
 import { UserAvatar } from "../ui/UserAvatar";
@@ -500,7 +500,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
 
   const handleSignOut = async () => {
     if (isSupabaseConfigured()) {
-      await supabase.auth.signOut();
+      await getSupabase()?.auth.signOut();
     }
     logout();
     onClose();

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, toAppUser, isSupabaseConfigured } from "../../lib/supabase";
+import { getSupabase, toAppUser, isSupabaseConfigured } from "../../lib/supabase";
 import { legalLinks, openLegalLink } from "../../lib/legal-urls";
 import { useAppStore } from "../../store/useAppStore";
 import { BackButton, PillButton } from "../../components/ui";
@@ -61,6 +61,9 @@ export function AuthPage() {
 
   const handleOAuthCallback = useCallback(
     async (url: string) => {
+      const supabase = getSupabase();
+      if (!supabase) return;
+
       setError(null);
       setLoading(true);
       try {
@@ -120,6 +123,11 @@ export function AuthPage() {
         afterAuth("demo@ghost.ai", "Demo User");
         return;
       }
+      const supabase = getSupabase();
+      if (!supabase) {
+        afterAuth("demo@ghost.ai", "Demo User");
+        return;
+      }
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -144,6 +152,15 @@ export function AuthPage() {
     setLoading(true);
     try {
       if (!configured) {
+        afterAuth(
+          email || "demo@ghost.ai",
+          email.split("@")[0],
+          mode === "signup",
+        );
+        return;
+      }
+      const supabase = getSupabase();
+      if (!supabase) {
         afterAuth(
           email || "demo@ghost.ai",
           email.split("@")[0],

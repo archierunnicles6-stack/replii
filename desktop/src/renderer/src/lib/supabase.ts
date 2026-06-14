@@ -1,17 +1,28 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    // Electron can't use localStorage the same way — use in-memory + manual persist
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false,
-    flowType: "pkce",
-  },
-});
+let client: SupabaseClient | null = null;
+
+export const isSupabaseConfigured = () =>
+  Boolean(supabaseUrl.trim() && supabaseAnonKey.trim());
+
+/** Lazy client so packaged builds without .env don't crash on import. */
+export function getSupabase(): SupabaseClient | null {
+  if (!isSupabaseConfigured()) return null;
+  if (!client) {
+    client = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+        flowType: "pkce",
+      },
+    });
+  }
+  return client;
+}
 
 export type SupabaseUser = {
   id: string;
@@ -38,6 +49,3 @@ export function toAppUser(user: {
     "G";
   return { id: user.id, email, name, avatar };
 }
-
-export const isSupabaseConfigured = () =>
-  Boolean(supabaseUrl && supabaseAnonKey);

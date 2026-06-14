@@ -45,7 +45,8 @@ function DashboardGuard() {
 }
 
 function AppRoutes() {
-  const hash = window.location.hash.replace(/^#/, "") || "/";
+  const raw = window.location.hash.replace(/^#/, "") || "/";
+  const hash = raw.startsWith("/") ? raw : `/${raw}`;
   if (hash.startsWith("/mic-helper")) return <MicHelperApp />;
   if (hash.startsWith("/overlay")) return <OverlayApp />;
 

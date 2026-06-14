@@ -82,11 +82,11 @@ function getRendererUrl(route: string): string {
 function loadRoute(win: BrowserWindow, route: string): void {
   if (isDev) {
     win.loadURL(getRendererUrl(route));
-  } else {
-    win.loadFile(path.join(__dirname, "../renderer/index.html"), {
-      hash: route.replace(/^\//, ""),
-    });
+    return;
   }
+
+  const hash = route.startsWith("/") ? route : `/${route}`;
+  win.loadFile(path.join(__dirname, "../renderer/index.html"), { hash });
 }
 
 function createDashboardWindow(): void {
