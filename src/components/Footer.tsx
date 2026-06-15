@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GhostLogo } from "./GhostLogo";
 
 export function Footer() {
   return (
@@ -7,9 +8,7 @@ export function Footer() {
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div>
             <Link href="/" className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ghost-500 text-xs font-bold text-white">
-                ◉
-              </span>
+              <GhostLogo />
               <span className="text-[15px] font-semibold">Ghost</span>
             </Link>
             <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-zinc-500">

@@ -14,13 +14,51 @@ export function isPaidPlan(plan: Plan): boolean {
   return plan !== "free";
 }
 
-export function canStartSession(plan: Plan, freeSessionsUsed: number): boolean {
-  return isPaidPlan(plan) || freeSessionsUsed < FREE_SESSION_LIMIT;
+/** Sessions with no captured transcript should not count against the free tier. */
+export function getEffectiveFreeSessionsUsed(
+  meetings: MeetingRecord[],
+  freeSessionsUsed: number,
+): number {
+  const billableMeetings = meetings.filter(
+    (m) => (m.transcript?.length ?? 0) > 0,
+  ).length;
+  const pendingSessions = Math.max(0, freeSessionsUsed - meetings.length);
+  return billableMeetings + pendingSessions;
 }
 
-export function getFreeSessionsRemaining(plan: Plan, freeSessionsUsed: number): number {
+export function canStartSession(
+  plan: Plan,
+  freeSessionsUsed: number,
+  meetings: MeetingRecord[] = [],
+): boolean {
+  const used = getEffectiveFreeSessionsUsed(meetings, freeSessionsUsed);
+  return isPaidPlan(plan) || used < FREE_SESSION_LIMIT;
+}
+
+export function getFreeSessionsRemaining(
+  plan: Plan,
+  freeSessionsUsed: number,
+  meetings: MeetingRecord[] = [],
+): number {
   if (isPaidPlan(plan)) return Number.POSITIVE_INFINITY;
-  return Math.max(0, FREE_SESSION_LIMIT - freeSessionsUsed);
+  const used = getEffectiveFreeSessionsUsed(meetings, freeSessionsUsed);
+  return Math.max(0, FREE_SESSION_LIMIT - used);
+}
+
+/** Detectability toggle (visible on screen share) is exclusive to the Undetectable plan. */
+export function canUseDetectabilityToggle(plan: Plan): boolean {
+  return plan === "undetectable";
+}
+
+/** Free / Solo / Pro are always detectable on screen share; only Undetectable can hide. */
+export function normalizedInvisibleSetting(plan: Plan, invisible: boolean): boolean {
+  if (!canUseDetectabilityToggle(plan)) return false;
+  return invisible;
+}
+
+/** Whether Electron content protection should be enabled (overlay hidden from capture). */
+export function effectiveContentProtection(plan: Plan, invisible: boolean): boolean {
+  return normalizedInvisibleSetting(plan, invisible);
 }
 
 export interface SalesModeConfig {
@@ -58,6 +96,25 @@ export interface MeetingRecord {
   transcript: TranscriptLine[];
   dealScore: number;
   objections: string[];
+  /** AI suggestions shown during the live session. */
+  suggestionUses?: number;
+}
+
+export function salesModeShortLabel(mode: SalesMode): string {
+  switch (mode) {
+    case "sales":
+      return "Default";
+    case "discovery":
+      return "Discovery";
+    case "demo":
+      return "Demo";
+    case "negotiation":
+      return "Negotiation";
+    case "enterprise":
+      return "Enterprise";
+    default:
+      return "Default";
+  }
 }
 
 export interface UpcomingCall {
@@ -311,7 +368,7 @@ export const ACTIVITY_PLACEHOLDER_MEETINGS = DEMO_MEETINGS.filter(
 export const DEFAULT_MEETINGS: MeetingRecord[] = [];
 
 export const DEFAULT_SETTINGS: UserSettings = {
-  invisible: true,
+  invisible: false,
   hideFromTaskbar: true,
   autoLaunch: false,
   outputLanguage: "English",

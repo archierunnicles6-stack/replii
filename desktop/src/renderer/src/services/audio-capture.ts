@@ -89,6 +89,20 @@ export async function detectGhostAudioSetup(): Promise<GhostAudioSetup> {
   };
 }
 
+/** True when macOS reports mic access or getUserMedia succeeds (ignores Web Speech false positives). */
+export async function confirmMicrophoneAccess(): Promise<boolean> {
+  const status = await window.ghost?.getPermissionStatus?.();
+  if (status?.microphone) return true;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    stream.getTracks().forEach((t) => t.stop());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Native macOS screen share + system audio loopback (no virtual drivers). */
 export async function captureCallAudio(): Promise<{
   stream: MediaStream;
@@ -136,24 +150,30 @@ export async function captureCallAudio(): Promise<{
 }
 
 export async function captureMicrophone(): Promise<MediaStream> {
+  const devices = await listAudioInputDevices();
+  const builtIn =
+    devices.find((d) => /built.?in|macbook|internal|air/i.test(d.label)) ?? devices[0];
+
   return navigator.mediaDevices.getUserMedia({
     audio: {
+      deviceId: builtIn ? { ideal: builtIn.deviceId } : undefined,
       echoCancellation: false,
       noiseSuppression: false,
       autoGainControl: false,
-      sampleRate: { ideal: 16000 },
+      channelCount: { ideal: 1 },
+      sampleRate: { ideal: 48000 },
     },
     video: false,
   });
 }
 
 export function getSupportedRecorderMime(): string | undefined {
-  const candidates = [
-    "audio/webm;codecs=opus",
-    "audio/webm",
-    "audio/ogg;codecs=opus",
-    "audio/mp4",
-  ];
+  const isMac =
+    typeof navigator !== "undefined" && /Mac/i.test(navigator.platform || navigator.userAgent);
+  // WebM chunks are valid standalone files for Whisper; macOS MP4 timeslices often are not.
+  const candidates = isMac
+    ? ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"]
+    : ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
   for (const mime of candidates) {
     if (MediaRecorder.isTypeSupported(mime)) return mime;
   }

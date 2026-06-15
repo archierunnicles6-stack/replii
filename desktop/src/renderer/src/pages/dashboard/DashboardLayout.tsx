@@ -1,14 +1,13 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { DevModeBanner } from "../../components/DevModeBanner";
 import { MicPermissionBanner } from "../../components/MicPermissionBanner";
 import { MeetingSummaryWorker } from "../../components/MeetingSummaryWorker";
-import { SessionMicBridge } from "../../components/SessionMicBridge";
 import { DashboardTopBar } from "../../components/dashboard/DashboardTopBar";
 import { DashboardHeader } from "../../components/dashboard/DashboardHeader";
+import { UpgradeModal } from "../../components/pricing/UpgradeModal";
 import { useStartGhostSession } from "../../hooks/useStartGhostSession";
-import { shouldUseMockAudio } from "../../services/mock-audio";
-import { rehydrateAppStoreFromStorage, useAppStore } from "../../store/useAppStore";
+import { rehydrateAppStoreFromStorage, syncPlanLimitsToMain, useAppStore } from "../../store/useAppStore";
+import { effectiveContentProtection } from "../../store/types";
 
 const SUB_PAGE_PATHS: string[] = ["/meetings"];
 
@@ -16,15 +15,24 @@ export function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { setSessionActive } = useAppStore();
-  const { startSession, canStart, sessionsRemaining, isPaid } = useStartGhostSession();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { setSessionActive, plan, settings } = useAppStore();
+  const { startSession, canStart, sessionActive, sessionsRemaining, isPaid } =
+    useStartGhostSession();
 
   const isSubPage = SUB_PAGE_PATHS.some((p) => location.pathname.startsWith(p));
   const showMainHeader = !isSubPage;
 
   useEffect(() => {
+    const protected_ = effectiveContentProtection(plan, settings.invisible);
+    void window.ghost?.setContentProtection(protected_);
+  }, [plan, settings.invisible]);
+
+  useEffect(() => {
     void window.ghost?.setDashboardLayout?.("dashboard");
+    void rehydrateAppStoreFromStorage().then(() => {
+      syncPlanLimitsToMain();
+    });
     void window.ghost?.getSettings?.().then((settings) => {
       if (settings.useCallAudio) {
         useAppStore.getState().setAudioCaptureMode("auto");
@@ -64,17 +72,10 @@ export function DashboardLayout() {
     });
   }, [setSessionActive]);
 
-  const handleRefresh = () => setRefreshKey((k) => k + 1);
-
-  const audioCaptureMode = useAppStore((s) => s.audioCaptureMode);
-  const mockMode = shouldUseMockAudio(audioCaptureMode);
-
   return (
     <div className="flex h-screen flex-col bg-white">
-      <SessionMicBridge />
       <MeetingSummaryWorker />
-      <DevModeBanner />
-      {!mockMode && <MicPermissionBanner />}
+      <MicPermissionBanner />
       <DashboardTopBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -82,9 +83,10 @@ export function DashboardLayout() {
 
       {showMainHeader && (
         <DashboardHeader
-          onRefresh={handleRefresh}
           onStartSession={() => void startSession()}
+          onRequestUpgrade={() => setUpgradeOpen(true)}
           canStartSession={canStart}
+          sessionActive={sessionActive}
           sessionsRemaining={
             Number.isFinite(sessionsRemaining) ? sessionsRemaining : undefined
           }
@@ -92,11 +94,13 @@ export function DashboardLayout() {
         />
       )}
 
+      {upgradeOpen ? <UpgradeModal onClose={() => setUpgradeOpen(false)} /> : null}
+
       <main className="no-drag min-h-0 flex-1 overflow-y-auto">
         <div
-          className={`mx-auto px-8 ${isSubPage ? "max-w-3xl py-8" : "max-w-3xl pt-8 pb-12"}`}
+          className={`mx-auto px-8 ${isSubPage ? "max-w-3xl py-8" : "max-w-5xl pt-6 pb-12"}`}
         >
-          <Outlet context={{ searchQuery, refreshKey }} />
+          <Outlet context={{ searchQuery, onRequestUpgrade: () => setUpgradeOpen(true) }} />
         </div>
       </main>
     </div>
@@ -105,5 +109,5 @@ export function DashboardLayout() {
 
 export type DashboardOutletContext = {
   searchQuery: string;
-  refreshKey: number;
+  onRequestUpgrade: () => void;
 };

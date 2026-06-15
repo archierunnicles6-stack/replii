@@ -8,15 +8,18 @@
     "start": "next start",
     "lint": "next lint",
     "desktop:dev": "npm run dev --prefix desktop",
+    "desktop:open": "npm run open-app --prefix desktop",
     "desktop:build": "npm run build --prefix desktop",
     "desktop:package": "npm run package:mac --prefix desktop"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
     "framer-motion": "^12.40.0",
     "next": "^15.1.0",
     "openai": "^6.42.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "stripe": "^22.2.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

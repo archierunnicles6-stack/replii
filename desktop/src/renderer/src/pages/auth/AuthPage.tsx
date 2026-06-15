@@ -36,13 +36,8 @@ export function AuthPage() {
       userId?: string,
       avatar?: string,
     ) => {
-      login(userEmail, name, userId, avatar);
+      login(userEmail, name, userId, avatar, isNewAccount);
       if (isNewAccount) {
-        useAppStore.setState({
-          onboardingComplete: false,
-          shortcutTutorialComplete: false,
-          paywallComplete: false,
-        });
         navigate("/onboarding");
         return;
       }

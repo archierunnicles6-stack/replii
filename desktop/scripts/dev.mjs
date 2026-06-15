@@ -7,7 +7,7 @@ import { signMacApp } from "./sign-mac-app.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const desktopRoot = path.join(__dirname, "..");
 const ghostDevDir = path.join(desktopRoot, ".ghost-dev");
-const ghostApp = path.join(ghostDevDir, "Electron.app");
+const ghostApp = path.join(ghostDevDir, "Ghost.app");
 const ghostExec = path.join(ghostApp, "Contents", "MacOS", "Electron");
 
 const env = { ...process.env };

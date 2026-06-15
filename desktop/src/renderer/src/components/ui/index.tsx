@@ -16,13 +16,25 @@ export function PillButton({
   );
 }
 
-export function GhostLogo({ className = "" }: { className?: string }) {
+import ghostIcon from "../../assets/ghost-icon.png";
+import ghostLogo from "../../assets/ghost-logo.png";
+
+export function GhostLogo({
+  className = "",
+  variant = "icon",
+}: {
+  className?: string;
+  variant?: "icon" | "mark";
+}) {
+  const src = variant === "mark" ? ghostLogo : ghostIcon;
   return (
-    <span
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-full bg-ghost-500 text-sm font-bold text-white ${className}`}
-    >
-      ◉
-    </span>
+    <img
+      src={src}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={`inline-block shrink-0 object-contain ${className || "h-8 w-8"}`}
+    />
   );
 }
 
@@ -99,18 +111,21 @@ export function Toggle({
   checked,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50"
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={`flex w-full items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
     >
       <span className="text-[14px] text-zinc-800">{label}</span>
       <span

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GhostLogo } from "./GhostLogo";
 
 const navLinks = [
   { href: "/#how-it-works", label: "How it works" },
@@ -9,21 +10,21 @@ const navLinks = [
 
 export function Navbar() {
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-zinc-200/60 bg-white/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+    <header className="fixed top-0 z-50 w-full bg-[#f5f6f8]/70 backdrop-blur-md">
+      <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ghost-500 text-xs font-bold text-white">
-            ◉
+          <GhostLogo />
+          <span className="text-[15px] font-semibold tracking-tight text-[#0a0a0a]">
+            Ghost
           </span>
-          <span className="text-[15px] font-semibold tracking-tight">Ghost</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-[13px] font-medium text-zinc-500 transition-colors hover:text-zinc-900"
+              className="text-[13px] font-medium text-[#52525b] transition-colors hover:text-[#0a0a0a]"
             >
               {link.label}
             </Link>
@@ -33,15 +34,15 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <Link
             href="/app"
-            className="hidden text-[13px] font-medium text-zinc-500 transition-colors hover:text-zinc-900 sm:inline-flex"
+            className="hidden text-[13px] font-medium text-[#52525b] transition-colors hover:text-[#0a0a0a] sm:inline-flex"
           >
             Try demo
           </Link>
           <Link
             href="/download"
-            className="hidden rounded-full bg-zinc-900 px-4 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-zinc-800 sm:inline-flex"
+            className="hidden h-8 items-center gap-1.5 rounded-full bg-[#3b82f6] px-4 text-[13px] font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.35)] transition-all hover:bg-[#2563eb] sm:inline-flex"
           >
-            Download
+            Get for Mac
           </Link>
         </div>
       </div>

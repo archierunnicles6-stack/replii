@@ -34,18 +34,37 @@ const LIGHT: PillThemeStyles = {
 const DARK: PillThemeStyles = {
   theme: "dark",
   glass: {
-    backdropFilter: "blur(48px) saturate(160%)",
-    WebkitBackdropFilter: "blur(48px) saturate(160%)",
-    background: "rgba(12,12,16,0.62)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    backdropFilter: "blur(24px) saturate(160%)",
+    WebkitBackdropFilter: "blur(24px) saturate(160%)",
+    background: "rgba(12,12,16,0.88)",
+    border: "1px solid rgba(255,255,255,0.14)",
     boxShadow: "0 8px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08)",
   },
   status: "text-white",
-  transcript: "text-white/75",
-  transcriptMuted: "text-white/45",
-  label: "text-white/55",
-  body: "text-white/90",
+  transcript: "text-white",
+  transcriptMuted: "text-white/60",
+  label: "text-white/70",
+  body: "text-white",
   edgeFade: "linear-gradient(to right, rgba(12,12,16,0.9) 0%, transparent 100%)",
+};
+
+/** Light frosted glass for overlay — translucent so backdrop blur reads through. */
+export const OVERLAY_PILL_THEME: PillThemeStyles = {
+  theme: "light",
+  glass: {
+    backdropFilter: "blur(44px) saturate(190%)",
+    WebkitBackdropFilter: "blur(44px) saturate(190%)",
+    background: "rgba(255,255,255,0.58)",
+    border: "1px solid rgba(255,255,255,0.72)",
+    boxShadow:
+      "0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.92)",
+  },
+  status: "text-zinc-900",
+  transcript: "text-zinc-800",
+  transcriptMuted: "text-zinc-400",
+  label: "text-zinc-500",
+  body: "text-zinc-900",
+  edgeFade: "linear-gradient(to right, rgba(255,255,255,0.9) 0%, transparent 100%)",
 };
 
 export function usePillBackdrop(

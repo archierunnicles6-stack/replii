@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { sectionsToPlainText } from "../../services/ai";
 import { useAppStore } from "../../store/useAppStore";
-import { DEMO_MEETINGS, type SummarySection } from "../../store/types";
+import { DEMO_MEETINGS, isUserMeeting, type SummarySection } from "../../store/types";
 
 type Tab = "summary" | "transcript";
 
@@ -201,9 +201,12 @@ function TranscriptView({
 
 export function MeetingDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const savedMeeting = useAppStore((s) => s.meetings.find((m) => m.id === id));
+  const deleteMeeting = useAppStore((s) => s.deleteMeeting);
   const meeting = savedMeeting ?? DEMO_MEETINGS.find((m) => m.id === id);
   const [tab, setTab] = useState<Tab>("summary");
+  const canDelete = meeting ? isUserMeeting(meeting) : false;
 
   if (!meeting) {
     return (
@@ -224,14 +227,45 @@ export function MeetingDetailPage() {
       ? [{ heading: "Summary", items: [meeting.summary] }]
       : []);
 
+  const handleDelete = () => {
+    if (!canDelete || !meeting) return;
+    if (!window.confirm("Delete this meeting? This cannot be undone.")) return;
+    deleteMeeting(meeting.id);
+    navigate("/");
+  };
+
   return (
     <div>
-      <Link
-        to="/"
-        className="mb-6 inline-flex text-[13px] font-medium text-zinc-400 hover:text-zinc-600"
-      >
-        ← Activity
-      </Link>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <Link
+          to="/"
+          className="inline-flex text-[13px] font-medium text-zinc-400 hover:text-zinc-600"
+        >
+          ← Activity
+        </Link>
+        {canDelete && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-[12px] font-medium text-red-600 transition-colors hover:bg-red-50"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.75}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Delete
+          </button>
+        )}
+      </div>
 
       <p className="text-[13px] text-zinc-400">{formatDate(meeting.date)}</p>
       <h1 className="mt-1 text-[26px] font-semibold tracking-tight text-zinc-900">

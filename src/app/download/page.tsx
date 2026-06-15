@@ -50,18 +50,21 @@ export default function DownloadPage() {
           <div className="mt-10 space-y-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
               <h2 className="text-[13px] font-semibold text-amber-900">
-                macOS says &quot;Ghost is damaged&quot;?
+                macOS blocked Ghost?
               </h2>
               <p className="mt-2 text-[14px] leading-relaxed text-amber-900/80">
-                This happens with unsigned apps downloaded from the web. After dragging Ghost
-                to Applications, run this once in Terminal:
+                Unsigned apps show &quot;Apple could not verify&quot; or &quot;damaged&quot;. After
+                installing to Applications, run this once in Terminal:
               </p>
               <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-900 p-3 text-[12px] text-zinc-100">
 {`xattr -cr /Applications/Ghost.app
-codesign --force --deep --sign - /Applications/Ghost.app`}
+codesign --force --deep --sign - /Applications/Ghost.app
+open /Applications/Ghost.app`}
               </pre>
               <p className="mt-2 text-[13px] text-amber-900/70">
-                Or double-click <strong>Install Ghost.command</strong> inside the DMG.
+                Fastest fix: use <strong>Open Ghost.command</strong> on your Desktop (or inside
+                the DMG). Or right-click Ghost in Applications → <strong>Open</strong> →{" "}
+                <strong>Open</strong> again.
               </p>
             </div>
 

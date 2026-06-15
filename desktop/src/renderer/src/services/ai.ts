@@ -1,5 +1,7 @@
 import { isDirectQuestion } from "./transcript";
+import { formatScreenContextBlock, getScreenContext } from "./screen-context";
 import { getGhostSuggestion } from "./ghost-suggest";
+import { getOpenAIKey } from "./whisper";
 
 export type QuickAction =
   | "say"
@@ -63,6 +65,7 @@ function buildPrompt(
   action: QuickAction,
   transcript: TranscriptLine[],
   options: AskOptions,
+  screenContent?: string,
 ): string {
   const liveTranscript = options.interimText?.trim()
     ? [
@@ -112,7 +115,11 @@ function buildPrompt(
     ? `\nRespond in ${options.outputLanguage}.`
     : "";
 
-  return `${prompts[action]}${smartHint}${questionHint}${langHint}\n\nTranscript:\n${recent || "(Conversation just started — give proactive help.)"}`;
+  const screenBlock = screenContent?.trim()
+    ? `\n\n${formatScreenContextBlock(screenContent)}`
+    : "";
+
+  return `${prompts[action]}${smartHint}${questionHint}${langHint}\n\nTranscript:\n${recent || "(Conversation just started — give proactive help.)"}${screenBlock}`;
 }
 
 function parseStreamChunk(line: string): string | null {
@@ -135,13 +142,14 @@ export async function askGhost(
   transcript: TranscriptLine[],
   options: AskOptions = {},
 ): Promise<string> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const apiKey = await getOpenAIKey();
   const system =
     options.systemPrompt ??
     "You are Ghost, a fast AI meeting assistant. Be extremely concise. Give words the user can say or do immediately. No preamble.";
 
   if (apiKey) {
     try {
+      const screenContent = await getScreenContext();
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -150,12 +158,12 @@ export async function askGhost(
         },
         signal: options.signal,
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "gpt-4o",
           messages: [
             { role: "system", content: system },
             {
               role: "user",
-              content: buildPrompt(action, transcript, options),
+              content: buildPrompt(action, transcript, options, screenContent),
             },
           ],
           max_tokens: action === "assist" || action === "say" ? 120 : 180,
@@ -272,12 +280,12 @@ export async function generateMeetingSummary(
   systemPrompt?: string,
   outputLanguage?: string,
 ): Promise<MeetingSummaryResult> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const apiKey = await getOpenAIKey();
   const fullTranscript = formatFullTranscript(transcript);
 
   if (!apiKey || transcript.length === 0) {
     if (!apiKey) {
-      console.error("[ghost] VITE_OPENAI_API_KEY is missing — cannot generate summary.");
+      console.error("[ghost] OpenAI API key is missing — cannot generate summary.");
     }
     return mockMeetingSummary(transcript);
   }

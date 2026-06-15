@@ -1,19 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePillBackdrop } from "../hooks/usePillBackdrop";
 import { useLiveTranscriptFeed } from "../hooks/useLiveTranscriptFeed";
+import { OVERLAY_PILL_THEME } from "../hooks/usePillBackdrop";
 import { useOverlayClickThrough } from "../hooks/useOverlayClickThrough";
 import {
   askGhost,
-  TEST_PROSPECT_LINES,
-  testGhostSuggestion,
-  type AssistResult,
   type QuickAction,
   type TranscriptLine,
 } from "../services/ai";
-import { getGhostSuggestion } from "../services/ghost-suggest";
-import { buildLiveDisplayText, isLikelyProspectUtterance } from "../services/transcript";
-import { shouldUseMockAudio } from "../services/mock-audio";
+import { streamGhostSuggestion } from "../services/ghost-suggest";
+import {
+  autoTriggerDelayMs,
+  buildLiveDisplayText,
+  isDirectQuestion,
+  normalizeTranscriptText,
+  shouldAutoSuggestLine,
+  shouldSuggestFromInterim,
+  suggestionTriggerKey,
+} from "../services/transcript";
+import { clearScreenContext, getScreenContext } from "../services/screen-context";
+import { bootstrapOpenAIKey } from "../services/whisper";
 import { useAppStore, notifyAppStoreChanged, rehydrateAppStoreFromStorage } from "../store/useAppStore";
+import { effectiveContentProtection } from "../store/types";
 import {
   ControlButtons,
   getSuggestionReadDurationMs,
@@ -33,13 +40,13 @@ export function OverlayApp() {
   const [streamingText, setStreamingText] = useState("");
   const [activeSuggestion, setActiveSuggestion] = useState("");
   const [dealHealth, setDealHealth] = useState<number | null>(null);
-  const [suggestionVisible, setSuggestionVisible] = useState(false);
-  const [suggestionMounted, setSuggestionMounted] = useState(false);
   const [topPanelHidden, setTopPanelHidden] = useState(false);
 
   const { activeMode, customSystemPrompt, settings, saveMeetingFromSession } =
     useAppStore();
+  const plan = useAppStore((s) => s.plan);
   const sessionStartRef = useRef<number | null>(null);
+  const suggestionUsesRef = useRef(0);
   const hideSuggestionTimerRef = useRef<number | null>(null);
   const assistAbortRef = useRef<AbortController | null>(null);
   const interimRef = useRef("");
@@ -48,10 +55,21 @@ export function OverlayApp() {
     (action: QuickAction, customPrompt?: string) => Promise<void>
   >(() => Promise.resolve());
   const lastTriggerKeyRef = useRef<string | null>(null);
-  const testLineIndexRef = useRef(0);
+  const lastProcessedLineIdRef = useRef<string | null>(null);
+  const prevSpeakingRef = useRef(false);
+  const suggestDebounceRef = useRef<number | null>(null);
 
-  const { lines, interim, error, aiReady, hearingAudio, hasMic, hasSystemAudio, isDemo } =
-    useLiveTranscriptFeed(phase === "active");
+  const feedActive = phase === "active";
+  const {
+    lines,
+    interim,
+    error,
+    aiReady,
+    hearingAudio,
+    isSpeaking,
+    hasMic,
+    hasSystemAudio,
+  } = useLiveTranscriptFeed(feedActive);
 
   const clearTranscript = useCallback(() => {
     window.ghost?.clearLiveTranscript?.();
@@ -61,15 +79,14 @@ export function OverlayApp() {
   interimRef.current = interim;
 
   useOverlayClickThrough(phase === "active", topPanelRef, controlBarRef, topPanelHidden);
-  const pillTheme = usePillBackdrop(topPanelRef, phase === "active" && !topPanelHidden);
+  const pillTheme = OVERLAY_PILL_THEME;
 
   const resetSessionState = useCallback(() => {
     clearTranscript();
+    clearScreenContext();
     setStreamingText("");
     setActiveSuggestion("");
     setDealHealth(null);
-    setSuggestionVisible(false);
-    setSuggestionMounted(false);
     setTopPanelHidden(false);
     if (hideSuggestionTimerRef.current) {
       window.clearTimeout(hideSuggestionTimerRef.current);
@@ -78,9 +95,11 @@ export function OverlayApp() {
     setListening(false);
     setPhase("idle");
     lastTriggerKeyRef.current = null;
+    lastProcessedLineIdRef.current = null;
     assistAbortRef.current?.abort();
     assistAbortRef.current = null;
     sessionStartRef.current = null;
+    suggestionUsesRef.current = 0;
     void window.ghost?.setOverlayMode("pill");
     document.documentElement.classList.remove("active-mode");
     document.body.classList.remove("active-mode");
@@ -89,17 +108,17 @@ export function OverlayApp() {
   const activateListening = useCallback(async () => {
     setStreamingText("");
     lastTriggerKeyRef.current = null;
+    lastProcessedLineIdRef.current = null;
     assistAbortRef.current?.abort();
     assistAbortRef.current = null;
     sessionStartRef.current = Date.now();
+    suggestionUsesRef.current = 0;
 
-    const captureMode = useAppStore.getState().audioCaptureMode;
-    if (!shouldUseMockAudio(captureMode)) {
-      const permissions = await window.ghost?.getPermissionStatus?.();
-      if (permissions && !permissions.microphone) {
-        await window.ghost?.showMicHelper?.();
-        await window.ghost?.ensureMicrophone?.();
-      }
+    await bootstrapOpenAIKey();
+    const permissions = await window.ghost?.getPermissionStatus?.();
+    if (permissions && !permissions.microphone) {
+      await window.ghost?.showMicHelper?.();
+      await window.ghost?.ensureMicrophone?.();
     }
 
     document.documentElement.classList.add("active-mode");
@@ -108,6 +127,7 @@ export function OverlayApp() {
     setPhase("active");
     setListening(true);
     window.ghost?.setSessionListening?.(true);
+    window.ghost?.requestLiveTranscript?.();
   }, []);
 
   useEffect(() => {
@@ -129,8 +149,9 @@ export function OverlayApp() {
   }, [activateListening]);
 
   useEffect(() => {
-    window.ghost?.setContentProtection(settings.invisible);
-  }, [settings.invisible]);
+    const protected_ = effectiveContentProtection(plan, settings.invisible);
+    void window.ghost?.setContentProtection(protected_);
+  }, [plan, settings.invisible]);
 
   useEffect(() => {
     return window.ghost?.onSessionStarted?.(() => void activateListening());
@@ -157,15 +178,70 @@ export function OverlayApp() {
     (text: string) => {
       clearHideSuggestionTimer();
       hideSuggestionTimerRef.current = window.setTimeout(() => {
-        setSuggestionVisible(false);
-        hideSuggestionTimerRef.current = window.setTimeout(() => {
-          setSuggestionMounted(false);
-          setActiveSuggestion("");
-          hideSuggestionTimerRef.current = null;
-        }, 320);
+        setActiveSuggestion("");
+        setStreamingText("");
+        hideSuggestionTimerRef.current = null;
       }, getSuggestionReadDurationMs(text));
     },
     [clearHideSuggestionTimer],
+  );
+
+  const runSuggestion = useCallback(
+    (triggerText: string, triggerKey?: string) => {
+      const text = normalizeTranscriptText(triggerText);
+      if (text.length < 3 || text === "…") return;
+
+      const key = triggerKey ?? suggestionTriggerKey(text);
+      if (!key || key === lastTriggerKeyRef.current) return;
+
+      const isQuestion = isDirectQuestion(text);
+
+      assistAbortRef.current?.abort();
+      const controller = new AbortController();
+      assistAbortRef.current = controller;
+
+      clearHideSuggestionTimer();
+      setDealHealth(null);
+      setLoading(true);
+      setStreamingText("");
+
+      const modeConfig = useAppStore.getState().getActiveModeConfig();
+
+      void streamGhostSuggestion(text, linesRef.current, {
+        coachingContext: customSystemPrompt,
+        product: modeConfig.description,
+        micOnly: !hasSystemAudio && hasMic,
+        fast: true,
+        isQuestion,
+        signal: controller.signal,
+        onChunk: (chunk) => setStreamingText(chunk),
+      })
+        .then((result) => {
+          if (controller.signal.aborted) return;
+          if (!result) {
+            setLoading(false);
+            return;
+          }
+          lastTriggerKeyRef.current = key;
+          suggestionUsesRef.current += 1;
+          setStreamingText("");
+          setActiveSuggestion(result.suggestion);
+          setDealHealth(result.health);
+          setLoading(false);
+          scheduleHideSuggestion(result.suggestion);
+        })
+        .catch((err) => {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          console.error("[ghost] Auto suggestion failed:", err);
+          setLoading(false);
+        })
+        .finally(() => {
+          if (assistAbortRef.current === controller) {
+            assistAbortRef.current = null;
+          }
+        });
+    },
+    [customSystemPrompt, hasMic, hasSystemAudio, clearHideSuggestionTimer, scheduleHideSuggestion],
   );
 
   const runAssist = useCallback(
@@ -175,8 +251,6 @@ export function OverlayApp() {
       assistAbortRef.current = controller;
 
       clearHideSuggestionTimer();
-      setSuggestionMounted(true);
-      setSuggestionVisible(true);
       setActiveSuggestion("");
       setDealHealth(null);
       setLoading(true);
@@ -204,6 +278,7 @@ export function OverlayApp() {
         if (controller.signal.aborted) return;
 
         final = accumulated || response;
+        suggestionUsesRef.current += 1;
         setStreamingText("");
         setActiveSuggestion(final);
       } catch (err) {
@@ -220,9 +295,6 @@ export function OverlayApp() {
         setLoading(false);
         if (final) {
           scheduleHideSuggestion(final);
-        } else {
-          setSuggestionVisible(false);
-          setSuggestionMounted(false);
         }
       }
     },
@@ -230,39 +302,6 @@ export function OverlayApp() {
   );
 
   runAssistRef.current = runAssist;
-
-  const runTestAi = useCallback(async () => {
-    assistAbortRef.current?.abort();
-    clearHideSuggestionTimer();
-    setSuggestionMounted(true);
-    setSuggestionVisible(true);
-    setActiveSuggestion("");
-    setDealHealth(null);
-    setLoading(true);
-    setStreamingText("");
-
-    const prospectText =
-      TEST_PROSPECT_LINES[testLineIndexRef.current % TEST_PROSPECT_LINES.length] ??
-      TEST_PROSPECT_LINES[0];
-    testLineIndexRef.current += 1;
-
-    try {
-      const result = await testGhostSuggestion(prospectText, {
-        coachingContext: customSystemPrompt,
-        product: useAppStore.getState().getActiveModeConfig().description,
-      });
-      if (!result) {
-        setActiveSuggestion("Couldn't reach Ghost AI. Check your OpenAI API key.");
-        setDealHealth(null);
-        return;
-      }
-      setActiveSuggestion(result.suggestion);
-      setDealHealth(result.dealHealth);
-      scheduleHideSuggestion(result.suggestion);
-    } finally {
-      setLoading(false);
-    }
-  }, [customSystemPrompt, clearHideSuggestionTimer, scheduleHideSuggestion]);
 
   useEffect(() => {
     return window.ghost?.onAssist(() => void runAssist("assist"));
@@ -274,10 +313,9 @@ export function OverlayApp() {
       setStreamingText("");
       setActiveSuggestion("");
       setDealHealth(null);
-      setSuggestionVisible(false);
-      setSuggestionMounted(false);
       clearHideSuggestionTimer();
       lastTriggerKeyRef.current = null;
+      lastProcessedLineIdRef.current = null;
       assistAbortRef.current?.abort();
       assistAbortRef.current = null;
     });
@@ -288,71 +326,89 @@ export function OverlayApp() {
   }, [clearHideSuggestionTimer]);
 
   useEffect(() => {
+    if (phase !== "active" || !listening) return;
+    const id = window.setInterval(() => void getScreenContext(true), 60_000);
+    return () => window.clearInterval(id);
+  }, [phase, listening]);
+
+  useEffect(() => {
     if (!listening) return;
 
     const lastLine = lines[lines.length - 1];
     if (!lastLine) return;
+    if (lastLine.id === lastProcessedLineIdRef.current) return;
+    if (!shouldAutoSuggestLine(lastLine, hasSystemAudio, hasMic)) return;
 
-    const fromProspect = lastLine.speaker === "Prospect";
-    const fromMicOnly =
-      !hasSystemAudio && isLikelyProspectUtterance(lastLine.text);
+    lastProcessedLineIdRef.current = lastLine.id;
+    runSuggestion(lastLine.text);
+  }, [lines, listening, hasSystemAudio, hasMic, runSuggestion]);
 
-    if (!fromProspect && !fromMicOnly) return;
-    if (lastTriggerKeyRef.current === lastLine.id) return;
+  useEffect(() => {
+    if (!listening) return;
 
-    lastTriggerKeyRef.current = lastLine.id;
+    const interimText = normalizeTranscriptText(interim);
+    if (!shouldSuggestFromInterim(interimText)) return;
 
-    assistAbortRef.current?.abort();
-    const controller = new AbortController();
-    assistAbortRef.current = controller;
+    const delay = autoTriggerDelayMs(interimText, true) ?? 80;
+    const id = window.setTimeout(() => {
+      runSuggestion(interimText);
+    }, delay);
 
-    clearHideSuggestionTimer();
-    setSuggestionMounted(true);
-    setSuggestionVisible(true);
-    setActiveSuggestion("");
-    setDealHealth(null);
-    setLoading(true);
-    setStreamingText("");
+    return () => window.clearTimeout(id);
+  }, [interim, listening, runSuggestion]);
 
-    const modeConfig = useAppStore.getState().getActiveModeConfig();
+  useEffect(() => {
+    if (!listening) {
+      prevSpeakingRef.current = false;
+      return;
+    }
 
-    void getGhostSuggestion(lastLine.text, linesRef.current, {
-      coachingContext: customSystemPrompt,
-      product: modeConfig.description,
-      signal: controller.signal,
-    })
-      .then((result) => {
-        if (controller.signal.aborted) return;
-        if (!result) {
-          console.error("[ghost] No suggestion returned — check OpenAI API key and network.");
-          setSuggestionVisible(false);
-          setSuggestionMounted(false);
-          return;
-        }
-        setActiveSuggestion(result.suggestion);
-        setDealHealth(result.health);
-        scheduleHideSuggestion(result.suggestion);
-      })
-      .catch((err) => {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        console.error("[ghost] Auto suggestion failed:", err);
-      })
-      .finally(() => {
-        if (assistAbortRef.current === controller) {
-          assistAbortRef.current = null;
-        }
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
-  }, [
-    lines,
-    listening,
-    hasSystemAudio,
-    customSystemPrompt,
-    clearHideSuggestionTimer,
-    scheduleHideSuggestion,
-  ]);
+    const wasSpeaking = prevSpeakingRef.current;
+    prevSpeakingRef.current = isSpeaking;
+
+    if (isSpeaking || !wasSpeaking) return;
+
+    if (suggestDebounceRef.current) {
+      window.clearTimeout(suggestDebounceRef.current);
+    }
+
+    const preview = buildLiveDisplayText(linesRef.current, interimRef.current);
+    if (!preview || preview === "…" || preview.length < 3) return;
+
+    const delay = isDirectQuestion(preview) ? 40 : 80;
+
+    suggestDebounceRef.current = window.setTimeout(() => {
+      suggestDebounceRef.current = null;
+      const text = buildLiveDisplayText(linesRef.current, interimRef.current);
+      if (text.length < 3 || text === "…") return;
+
+      const lastLine = linesRef.current[linesRef.current.length - 1];
+      if (
+        lastLine &&
+        suggestionTriggerKey(lastLine.text) === suggestionTriggerKey(text)
+      ) {
+        return;
+      }
+
+      if (
+        !shouldAutoSuggestLine(
+          { id: "tail", speaker: "You", text, timestamp: 0 },
+          hasSystemAudio,
+          hasMic,
+        )
+      ) {
+        return;
+      }
+
+      runSuggestion(text);
+    }, delay);
+  }, [isSpeaking, listening, hasSystemAudio, hasMic, runSuggestion]);
+
+  useEffect(() => {
+    return () => {
+      if (suggestDebounceRef.current) window.clearTimeout(suggestDebounceRef.current);
+    };
+  }, []);
 
   const stopSession = async () => {
     const duration = sessionStartRef.current
@@ -372,7 +428,13 @@ export function OverlayApp() {
       nextSteps: [],
       dealScore: 0,
       objections: [],
+      suggestionUses: suggestionUsesRef.current,
     });
+
+    if (linesRef.current.length === 0) {
+      useAppStore.getState().refundFreeSessionUsage();
+    }
+
     notifyAppStoreChanged();
 
     void window.ghost?.requestMeetingSummary?.({
@@ -381,17 +443,18 @@ export function OverlayApp() {
     });
 
     await window.ghost?.stopSession();
-    useAppStore.getState().incrementFreeSessionUsage();
     useAppStore.getState().setSessionActive(false);
     void window.ghost?.focusDashboard(`/meetings/${meeting.id}`);
   };
 
   if (phase === "idle") return null;
 
+  const liveText =
+    buildLiveDisplayText(lines, interim) ||
+    (isSpeaking && listening ? "…" : "");
+  const isStreaming = (!!interim.trim() || isSpeaking) && listening;
   const displaySuggestion = loading ? streamingText : activeSuggestion;
-  const showSuggestionCard = suggestionMounted && (loading || !!displaySuggestion);
-  const liveText = buildLiveDisplayText(lines, interim) || (hearingAudio && listening ? "…" : "");
-  const isStreaming = !!interim.trim() && listening;
+  const showSuggestionBox = loading || !!displaySuggestion.trim();
 
   return (
     <div className="pointer-events-none fixed inset-0 h-full w-full bg-transparent">
@@ -409,15 +472,12 @@ export function OverlayApp() {
             hearingAudio={hearingAudio}
             hasMic={hasMic}
             hasSystemAudio={hasSystemAudio}
-            isDemo={isDemo}
             pillTheme={pillTheme}
           />
-          {showSuggestionCard && (
+          {showSuggestionBox && (
             <SuggestionPill
               suggestion={displaySuggestion}
               loading={loading}
-              visible={suggestionVisible}
-              dealHealth={dealHealth}
               pillTheme={pillTheme}
             />
           )}
@@ -429,11 +489,7 @@ export function OverlayApp() {
         className="pointer-events-auto absolute bottom-6 left-1/2 w-max max-w-[calc(100vw-32px)] -translate-x-1/2"
       >
         <ControlButtons
-          onAssist={() => void runAssist("assist")}
-          onTestAi={() => void runTestAi()}
-          onMock={() => window.ghost?.triggerMock?.()}
-          showTestAi={import.meta.env.DEV}
-          showMock={import.meta.env.DEV && isDemo}
+          onToggleDashboard={() => void window.ghost?.toggleDashboard?.()}
           listening={listening}
           onToggleListening={() => {
             const next = !listening;

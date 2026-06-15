@@ -3,25 +3,36 @@ import type { TranscriptLine } from "../services/ai";
 import {
   captureCallAudio,
   captureMicrophone,
+  confirmMicrophoneAccess,
   detectGhostAudioSetup,
   getSupportedRecorderMime,
   isCallAudioSource,
   type GhostAudioSetup,
   type GhostAudioSource,
 } from "../services/audio-capture";
-import { shouldUseMockAudio, startMockConversation, MOCK_CONVERSATION } from "../services/mock-audio";
+import {
+  createSpeechDetector,
+  startAudioLevelMonitor,
+  type SpeechDetector,
+} from "../services/audio-level";
 import { normalizeTranscriptText } from "../services/transcript";
-import { getOpenAIKey, transcribeAudioChunk } from "../services/whisper";
+import {
+  bootstrapOpenAIKey,
+  getOpenAIKeySync,
+  MIN_SPEECH_BLOB_BYTES,
+  transcribeAudioChunk,
+} from "../services/whisper";
 import { useSpeechRecognition } from "./useSpeechRecognition";
 
-const CHUNK_MS = 1000;
-const MIN_BLOB_BYTES = 32;
+const CHUNK_MS = 500;
+const MIN_BLOB_BYTES = 96;
+const MAX_SPEECH_BUFFER_MS = 8000;
 
-export type AudioCaptureMode = "auto" | "mic" | "system" | "mock";
+export type AudioCaptureMode = "auto" | "mic" | "system";
 
 function isDuplicateLine(prev: TranscriptLine[], text: string): boolean {
   const normalized = normalizeTranscriptText(text).toLowerCase();
-  if (!normalized || normalized.length < 2) return true;
+  if (!normalized) return true;
 
   for (let i = prev.length - 1; i >= Math.max(0, prev.length - 3); i--) {
     const existing = prev[i];
@@ -33,9 +44,6 @@ function isDuplicateLine(prev: TranscriptLine[], text: string): boolean {
   return false;
 }
 
-function recentTranscriptText(lines: TranscriptLine[], maxChars = 120): string {
-  return normalizeTranscriptText(lines.slice(-4).map((l) => l.text).join(" ")).slice(-maxChars);
-}
 
 function mergeLines(...groups: TranscriptLine[][]): TranscriptLine[] {
   const map = new Map<string, TranscriptLine>();
@@ -51,13 +59,21 @@ type TranscriberCallbacks = {
   onLine: (line: TranscriptLine) => void;
   onProcessing?: (active: boolean) => void;
   onChunk?: () => void;
+  onLiveCaption?: (text: string) => void;
+  onSpeakingChange?: (speaking: boolean) => void;
 };
 
 class StreamTranscriber {
   private recorder: MediaRecorder | null = null;
   private processing = false;
   private queue: Blob[] = [];
+  private speechBuffer: Blob[] = [];
+  private speechBufferStartedAt: number | null = null;
+  private flushTimer: number | null = null;
+  private speechDetector: SpeechDetector | null = null;
   private stopped = false;
+  private mimeType = "audio/webm";
+  private segmentTimer: number | null = null;
 
   constructor(
     private stream: MediaStream,
@@ -68,24 +84,128 @@ class StreamTranscriber {
   ) {}
 
   start(): void {
-    const mimeType = getSupportedRecorderMime();
-    if (!mimeType) return;
+    this.stopped = false;
+    this.speechDetector = createSpeechDetector(this.stream, {
+      onSpeechStart: () => {
+        this.speechBufferStartedAt ??= Date.now();
+        this.callbacks.onLiveCaption?.("");
+        this.callbacks.onSpeakingChange?.(true);
+      },
+      onSpeechEnd: () => {
+        this.callbacks.onSpeakingChange?.(false);
+        this.scheduleSpeechFlush();
+      },
+    });
+    this.beginSegment();
+  }
 
-    this.recorder = new MediaRecorder(this.stream, { mimeType, audioBitsPerSecond: 128_000 });
+  private clearFlushTimer(): void {
+    if (this.flushTimer) {
+      window.clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
+  }
+
+  private scheduleSpeechFlush(): void {
+    this.clearFlushTimer();
+    this.flushTimer = window.setTimeout(() => {
+      this.flushTimer = null;
+      void this.flushSpeechBuffer();
+    }, 120);
+  }
+
+  private async flushSpeechBuffer(): Promise<void> {
+    if (this.speechBuffer.length === 0) return;
+
+    const blob = new Blob(this.speechBuffer, { type: this.mimeType });
+    this.speechBuffer = [];
+    this.speechBufferStartedAt = null;
+
+    if (blob.size < MIN_SPEECH_BLOB_BYTES) return;
+    await this.enqueue(blob);
+  }
+
+  private clearSegmentTimer(): void {
+    if (this.segmentTimer) {
+      window.clearTimeout(this.segmentTimer);
+      this.segmentTimer = null;
+    }
+  }
+
+  private beginSegment(): void {
+    if (this.stopped) return;
+
+    const preferredMime = getSupportedRecorderMime();
+
+    try {
+      this.recorder = preferredMime
+        ? new MediaRecorder(this.stream, {
+            mimeType: preferredMime,
+            audioBitsPerSecond: 128_000,
+          })
+        : new MediaRecorder(this.stream);
+      this.mimeType = this.recorder.mimeType || preferredMime || "audio/webm";
+    } catch (err) {
+      console.warn("[ghost] MediaRecorder init failed:", err);
+      try {
+        this.recorder = new MediaRecorder(this.stream);
+        this.mimeType = this.recorder.mimeType || "audio/webm";
+      } catch (fallbackErr) {
+        console.warn("[ghost] MediaRecorder fallback failed:", fallbackErr);
+        return;
+      }
+    }
+
     this.recorder.ondataavailable = (event) => {
       if (this.stopped || event.data.size < MIN_BLOB_BYTES) return;
+
+      const speaking = this.speechDetector?.isSpeaking() ?? false;
+      const capturingTail = this.speechBuffer.length > 0;
+      if (!speaking && !capturingTail) return;
+
+      if (this.speechBuffer.length === 0) {
+        this.speechBufferStartedAt = Date.now();
+      }
+      this.speechBuffer.push(event.data);
       this.callbacks.onChunk?.();
-      void this.enqueue(event.data, mimeType);
+
+      if (
+        this.speechBufferStartedAt &&
+        Date.now() - this.speechBufferStartedAt >= MAX_SPEECH_BUFFER_MS
+      ) {
+        void this.flushSpeechBuffer();
+        return;
+      }
+
+      if (!speaking && capturingTail) {
+        this.scheduleSpeechFlush();
+      }
+    };
+
+    this.recorder.onstop = () => {
+      if (!this.stopped) {
+        window.setTimeout(() => this.beginSegment(), 30);
+      }
     };
 
     try {
-      this.recorder.start(CHUNK_MS);
+      this.recorder.start();
+      this.clearSegmentTimer();
+      this.segmentTimer = window.setTimeout(() => {
+        if (this.stopped || !this.recorder || this.recorder.state !== "recording") return;
+        try {
+          this.recorder.requestData();
+          this.recorder.stop();
+        } catch (err) {
+          console.warn("[ghost] MediaRecorder segment stop failed:", err);
+        }
+      }, CHUNK_MS);
     } catch (err) {
       console.warn("[ghost] MediaRecorder start failed:", err);
     }
   }
 
-  private async enqueue(blob: Blob, mimeType: string): Promise<void> {
+  private async enqueue(blob: Blob): Promise<void> {
     this.queue.push(blob);
     if (this.processing) return;
     this.processing = true;
@@ -95,13 +215,15 @@ class StreamTranscriber {
       const chunk = this.queue.shift();
       if (!chunk || this.stopped) continue;
 
-      const text = await transcribeAudioChunk(chunk, this.meetingLanguage, mimeType);
+      const text = await transcribeAudioChunk(chunk, this.meetingLanguage, this.mimeType);
       if (!text) continue;
 
+      const normalized = normalizeTranscriptText(text);
+      this.callbacks.onLiveCaption?.(normalized);
       this.callbacks.onLine({
         id: `${Date.now()}-${Math.random()}`,
         speaker: this.speaker,
-        text: normalizeTranscriptText(text),
+        text: normalized,
         timestamp: Math.floor((Date.now() - this.sessionStart) / 1000),
       });
     }
@@ -112,6 +234,13 @@ class StreamTranscriber {
 
   stop(): void {
     this.stopped = true;
+    this.clearSegmentTimer();
+    this.clearFlushTimer();
+    this.speechBuffer = [];
+    this.speechBufferStartedAt = null;
+    this.callbacks.onSpeakingChange?.(false);
+    this.speechDetector?.stop();
+    this.speechDetector = null;
     if (this.recorder?.state !== "inactive") {
       try {
         this.recorder?.stop();
@@ -128,11 +257,12 @@ export interface MeetingTranscriptionState {
   interim: string;
   supported: boolean;
   error: string | null;
-  mode: "hybrid" | "webspeech" | "whisper" | "call-audio" | "mock" | "idle";
+  mode: "hybrid" | "webspeech" | "whisper" | "call-audio" | "idle";
   hasSystemAudio: boolean;
   hasMic: boolean;
   aiReady: boolean;
   hearingAudio: boolean;
+  isSpeaking: boolean;
   audioCaptureMode: AudioCaptureMode;
   audioSource: GhostAudioSource;
   audioSetup: GhostAudioSetup | null;
@@ -142,13 +272,7 @@ export function useMeetingTranscription(
   active: boolean,
   meetingLanguage = "English",
   audioCaptureMode: AudioCaptureMode = "auto",
-): MeetingTranscriptionState & { clear: () => void; triggerMock: () => void } {
-  const mockMode = shouldUseMockAudio(audioCaptureMode);
-  const [mockLines, setMockLines] = useState<TranscriptLine[]>([]);
-  const [mockInterim, setMockInterim] = useState("");
-  const mockStopRef = useRef<(() => void) | null>(null);
-  const mockIndexRef = useRef(0);
-
+): MeetingTranscriptionState & { clear: () => void } {
   const [whisperLines, setWhisperLines] = useState<TranscriptLine[]>([]);
   const [audioSource, setAudioSource] = useState<GhostAudioSource>(null);
   const [audioSetup, setAudioSetup] = useState<GhostAudioSetup | null>(null);
@@ -157,34 +281,23 @@ export function useMeetingTranscription(
   const [captureError, setCaptureError] = useState<string | null>(null);
   const [captureProcessing, setCaptureProcessing] = useState(false);
   const [callAudioActive, setCallAudioActive] = useState(false);
+  const [micAudioActive, setMicAudioActive] = useState(false);
+  const [liveCaption, setLiveCaption] = useState("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speakingRef = useRef<Partial<Record<TranscriptLine["speaker"], boolean>>>({});
   const transcribersRef = useRef<StreamTranscriber[]>([]);
+  const audioLevelStopRef = useRef<(() => void) | null>(null);
   const sessionStartRef = useRef<number | null>(null);
-  const aiReady = !!getOpenAIKey();
-
-  const triggerMock = useCallback(() => {
-    if (!mockMode) return;
-    if (!sessionStartRef.current) sessionStartRef.current = Date.now();
-    const prospects = MOCK_CONVERSATION.filter((e) => e.speaker === "Prospect");
-    const entry = prospects[mockIndexRef.current % prospects.length];
-    if (!entry) return;
-    mockIndexRef.current += 1;
-    setMockLines((prev) => {
-      const line: TranscriptLine = {
-        id: `mock-manual-${Date.now()}`,
-        speaker: "Prospect",
-        text: entry.text,
-        timestamp: Math.floor((Date.now() - sessionStartRef.current!) / 1000),
-      };
-      if (isDuplicateLine(prev, line.text)) return prev;
-      return [...prev, line];
-    });
-  }, [mockMode]);
+  const [aiReady, setAiReady] = useState(!!getOpenAIKeySync());
 
   const [captureRetry, setCaptureRetry] = useState(0);
-  const useMicPath = !mockMode && audioCaptureMode !== "system";
-  const useCallAudioPath = !mockMode && audioCaptureMode === "system";
+  const [micAccessGranted, setMicAccessGranted] = useState<boolean | null>(null);
+  const useMicPath = audioCaptureMode !== "system";
+  const useCallAudioPath = audioCaptureMode === "system";
 
-  const micSpeech = useSpeechRecognition(active && useMicPath, meetingLanguage, "You");
+  // Web Speech conflicts with MediaRecorder on the same mic in Electron.
+  const useMicSpeech = false;
+  const micSpeech = useSpeechRecognition(active && useMicSpeech, meetingLanguage, "You");
 
   const addWhisperLine = useCallback((line: TranscriptLine) => {
     setWhisperLines((prev) => {
@@ -193,12 +306,12 @@ export function useMeetingTranscription(
     });
   }, []);
 
+  const setSpeakerSpeaking = useCallback((speaker: TranscriptLine["speaker"], speaking: boolean) => {
+    speakingRef.current[speaker] = speaking;
+    setIsSpeaking(Object.values(speakingRef.current).some(Boolean));
+  }, []);
+
   const clear = useCallback(() => {
-    const wasMockRunning = !!mockStopRef.current;
-    mockStopRef.current?.();
-    mockStopRef.current = null;
-    setMockLines([]);
-    setMockInterim("");
     transcribersRef.current.forEach((t) => t.stop());
     transcribersRef.current = [];
     setWhisperLines([]);
@@ -208,38 +321,15 @@ export function useMeetingTranscription(
     setCaptureError(null);
     setCaptureProcessing(false);
     setCallAudioActive(false);
-    if (!wasMockRunning) {
-      sessionStartRef.current = null;
-    }
+    setMicAudioActive(false);
+    setLiveCaption("");
+    setIsSpeaking(false);
+    speakingRef.current = {};
+    audioLevelStopRef.current?.();
+    audioLevelStopRef.current = null;
+    sessionStartRef.current = null;
     micSpeech.clear();
   }, [micSpeech]);
-
-  useEffect(() => {
-    if (!active || !mockMode) {
-      mockStopRef.current?.();
-      mockStopRef.current = null;
-      return;
-    }
-
-    if (!sessionStartRef.current) sessionStartRef.current = Date.now();
-    const sessionStart = sessionStartRef.current;
-
-    mockStopRef.current = startMockConversation({
-      sessionStart,
-      onInterim: setMockInterim,
-      onLine: (line) => {
-        setMockLines((prev) => {
-          if (isDuplicateLine(prev, line.text)) return prev;
-          return [...prev, line];
-        });
-      },
-    });
-
-    return () => {
-      mockStopRef.current?.();
-      mockStopRef.current = null;
-    };
-  }, [active, mockMode]);
 
   const startTranscriber = useCallback(
     (stream: MediaStream, sessionStart: number, speaker: TranscriptLine["speaker"]) => {
@@ -252,83 +342,110 @@ export function useMeetingTranscription(
           onLine: addWhisperLine,
           onProcessing: setCaptureProcessing,
           onChunk: () => setCallAudioActive(true),
+          onLiveCaption: setLiveCaption,
+          onSpeakingChange: (speaking) => setSpeakerSpeaking(speaker, speaking),
         },
       );
       transcribersRef.current.push(transcriber);
       transcriber.start();
     },
-    [addWhisperLine, meetingLanguage],
+    [addWhisperLine, meetingLanguage, setSpeakerSpeaking],
   );
 
   useEffect(() => {
-    return window.ghost?.onMicGranted?.(() => setCaptureRetry((n) => n + 1));
+    void bootstrapOpenAIKey().then((key) => {
+      if (key) setAiReady(true);
+    });
   }, []);
 
   useEffect(() => {
-    if (!active || mockMode) {
+    return window.ghost?.onMicGranted?.(() => {
+      setMicAccessGranted(true);
+      setCaptureError(null);
+      setCaptureRetry((n) => n + 1);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!active || !useMicPath) {
+      setMicAccessGranted(null);
+      return;
+    }
+
+    let cancelled = false;
+    const refresh = async () => {
+      const granted = await confirmMicrophoneAccess();
+      if (cancelled) return;
+      setMicAccessGranted(granted);
+      if (granted) setCaptureError(null);
+    };
+
+    void refresh();
+    const id = window.setInterval(() => void refresh(), 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [active, useMicPath, captureRetry]);
+
+  useEffect(() => {
+    if (!active) {
       transcribersRef.current.forEach((t) => t.stop());
       transcribersRef.current = [];
-      if (!mockMode) {
-        setHasMicCapture(false);
-        setHasCallCapture(false);
-      }
+      setHasMicCapture(false);
+      setHasCallCapture(false);
       setCallAudioActive(false);
       return;
     }
 
     if (!sessionStartRef.current) sessionStartRef.current = Date.now();
-
+    const sessionStart = sessionStartRef.current;
     let cancelled = false;
 
     void (async () => {
       setCaptureError(null);
-      const setup = await detectGhostAudioSetup();
-      if (cancelled) return;
-      setAudioSetup(setup);
-
-      await window.ghost?.ensureMicrophone?.();
-      if (cancelled) return;
-
-      if (!aiReady) return;
-
-      const sessionStart = sessionStartRef.current ?? Date.now();
-      let micOk = false;
-      let callOk = false;
-
-      if (useCallAudioPath) {
-        const callAudio = await captureCallAudio();
-        if (cancelled) {
-          callAudio?.stream.getTracks().forEach((t) => t.stop());
-        } else if (callAudio) {
-          setAudioSource(callAudio.source);
-          setHasCallCapture(true);
-          callOk = true;
-          startTranscriber(callAudio.stream, sessionStart, "Prospect");
-        } else if (audioCaptureMode === "system") {
-          setCaptureError("screen-blocked");
-        }
-      }
+      void detectGhostAudioSetup().then((setup) => {
+        if (!cancelled) setAudioSetup(setup);
+      });
 
       if (useMicPath) {
         try {
           const micStream = await captureMicrophone();
           if (cancelled) {
             micStream.getTracks().forEach((t) => t.stop());
-          } else {
-            if (!callOk) setAudioSource("microphone");
-            setHasMicCapture(true);
-            micOk = true;
-            startTranscriber(micStream, sessionStart, "You");
+            return;
           }
+          setHasMicCapture(true);
+          setMicAccessGranted(true);
+          setAudioSource("microphone");
+          if (!getOpenAIKeySync()) setCaptureError("no-api-key");
+
+          const levelStream =
+            typeof micStream.clone === "function" ? micStream.clone() : micStream;
+          audioLevelStopRef.current?.();
+          audioLevelStopRef.current = startAudioLevelMonitor(levelStream, (level) => {
+            if (level > 0.006) setMicAudioActive(true);
+          });
+          startTranscriber(micStream, sessionStart, "You");
         } catch {
-          if (audioCaptureMode === "mic" || !callOk) {
+          if (!cancelled) {
+            setMicAccessGranted(false);
             setCaptureError("not-allowed");
           }
         }
       }
 
-      if (!micOk && !callOk) {
-        setCaptureError(audioCaptureMode === "system" ? "screen-blocked" : "not-allowed");
+      if (useCallAudioPath && !cancelled) {
+        const callAudio = await captureCallAudio();
+        if (cancelled) {
+          callAudio?.stream.getTracks().forEach((t) => t.stop());
+        } else if (callAudio) {
+          setAudioSource(callAudio.source);
+          setHasCallCapture(true);
+          startTranscriber(callAudio.stream, sessionStart, "Prospect");
+        } else {
+          setCaptureError("screen-blocked");
+        }
       }
     })();
 
@@ -336,63 +453,60 @@ export function useMeetingTranscription(
       cancelled = true;
       transcribersRef.current.forEach((t) => t.stop());
       transcribersRef.current = [];
+      audioLevelStopRef.current?.();
+      audioLevelStopRef.current = null;
     };
-  }, [active, aiReady, audioCaptureMode, mockMode, startTranscriber, useCallAudioPath, useMicPath, captureRetry]);
+  }, [active, audioCaptureMode, startTranscriber, useCallAudioPath, useMicPath, captureRetry]);
 
   useEffect(() => {
-    if (!active || mockMode || captureError !== "not-allowed") return;
+    if (!active || !captureError) return;
     const id = window.setInterval(async () => {
       const status = await window.ghost?.getPermissionStatus?.();
-      if (status?.microphone) setCaptureRetry((n) => n + 1);
+      if (!status) return;
+      if (captureError === "not-allowed" && status.microphone) {
+        setMicAccessGranted(true);
+        setCaptureError(null);
+        setCaptureRetry((n) => n + 1);
+      }
+      if (captureError === "screen-blocked" && status.screen) {
+        setCaptureRetry((n) => n + 1);
+      }
     }, 2000);
     return () => window.clearInterval(id);
-  }, [active, mockMode, captureError]);
+  }, [active, captureError]);
 
-  if (mockMode) {
-    const lines = mockLines;
-    const interim = normalizeTranscriptText(mockInterim);
-    return {
-      lines,
-      interim,
-      supported: true,
-      error: null,
-      mode: active ? "mock" : "idle",
-      hasSystemAudio: true,
-      hasMic: true,
-      aiReady,
-      hearingAudio: !!interim || lines.length > 0,
-      audioCaptureMode: "mock",
-      audioSource: null,
-      audioSetup: null,
-      clear,
-      triggerMock,
-    };
-  }
-
-  const lines = aiReady ? mergeLines(micSpeech.lines, whisperLines) : micSpeech.lines;
+  const lines = mergeLines(micSpeech.lines, whisperLines);
 
   const interim = normalizeTranscriptText(
     micSpeech.interim ||
-      (captureProcessing ? `${recentTranscriptText(lines)} …` : recentTranscriptText(lines)),
+      liveCaption ||
+      (isSpeaking ? "…" : "") ||
+      (captureProcessing ? "…" : ""),
   );
 
   const hasCallAudio = hasCallCapture || isCallAudioSource(audioSource) || callAudioActive;
   const micBlocked =
-    (micSpeech.error === "not-allowed" || captureError === "not-allowed") &&
+    micAccessGranted === false &&
     !hasMicCapture &&
-    micSpeech.lines.length === 0;
+    micSpeech.lines.length === 0 &&
+    whisperLines.length === 0;
 
   const error =
     captureError === "screen-blocked"
       ? "screen-blocked"
-      : micBlocked
-        ? "not-allowed"
-        : null;
+      : captureError === "no-api-key"
+        ? "no-api-key"
+        : micBlocked
+          ? "not-allowed"
+          : null;
 
   const hearingAudio =
+    isSpeaking ||
     !!micSpeech.interim.trim() ||
     captureProcessing ||
     callAudioActive ||
+    micAudioActive ||
+    !!liveCaption.trim() ||
     lines.length > 0;
 
   const mode: MeetingTranscriptionState["mode"] = !active
@@ -412,13 +526,16 @@ export function useMeetingTranscription(
     error,
     mode,
     hasSystemAudio: hasCallAudio,
-    hasMic: hasMicCapture || (!micBlocked && (!!micSpeech.interim.trim() || micSpeech.lines.length > 0)),
+    hasMic:
+      hasMicCapture ||
+      !!micSpeech.interim.trim() ||
+      micSpeech.lines.length > 0,
     aiReady,
     hearingAudio,
+    isSpeaking,
     audioCaptureMode,
     audioSource,
     audioSetup,
     clear,
-    triggerMock,
   };
 }

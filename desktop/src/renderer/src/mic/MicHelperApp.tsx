@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
+import { SessionMicBridge } from "../components/SessionMicBridge";
+import { bootstrapOpenAIKey } from "../services/whisper";
 
-export function MicHelperApp() {
+function MicHelperPermissionUI() {
+  const [visible, setVisible] = useState(false);
   const [status, setStatus] = useState<"idle" | "ready" | "denied">("idle");
   const [message, setMessage] = useState("");
 
   const requestMic = useCallback(async () => {
+    setVisible(true);
     setMessage("Requesting microphone…");
     try {
       const permitted = await window.ghost?.ensureMicrophone?.();
@@ -16,16 +20,19 @@ export function MicHelperApp() {
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
         },
         video: false,
       });
       stream.getTracks().forEach((t) => t.stop());
       setStatus("ready");
       setMessage("Microphone ready.");
-      window.ghost?.hideMicHelper?.();
+      window.setTimeout(() => {
+        setVisible(false);
+        window.ghost?.hideMicHelper?.();
+      }, 600);
     } catch {
       setStatus("denied");
       setMessage("Could not access microphone.");
@@ -33,9 +40,10 @@ export function MicHelperApp() {
   }, []);
 
   useEffect(() => {
-    void requestMic();
     return window.ghost?.onRequestMicPermission?.(() => void requestMic());
   }, [requestMic]);
+
+  if (!visible) return null;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-8 text-white">
@@ -60,5 +68,19 @@ export function MicHelperApp() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Hidden window — owns mic capture + Whisper transcription for overlay + dashboard. */
+export function MicHelperApp() {
+  useEffect(() => {
+    void bootstrapOpenAIKey();
+  }, []);
+
+  return (
+    <>
+      <SessionMicBridge />
+      <MicHelperPermissionUI />
+    </>
   );
 }

@@ -4,7 +4,8 @@ import { useAppStore } from "../store/useAppStore";
 
 /** Runs mic transcription in the dashboard window (reliable mic access on macOS). */
 export function SessionMicBridge() {
-  const [sessionActive, setSessionActive] = useState(false);
+  const sessionActive = useAppStore((s) => s.sessionActive);
+  const setSessionActive = useAppStore((s) => s.setSessionActive);
   const [listening, setListening] = useState(true);
   const meetingLanguage = useAppStore((s) => s.settings.meetingLanguage);
   const audioCaptureMode = useAppStore((s) => s.audioCaptureMode);
@@ -24,11 +25,11 @@ export function SessionMicBridge() {
       interim: t.interim,
       error: t.error,
       hearingAudio: t.hearingAudio,
+      isSpeaking: t.isSpeaking,
       hasMic: t.hasMic,
       hasSystemAudio: t.hasSystemAudio,
       aiReady: t.aiReady,
       audioSource: t.audioSource,
-      isDemo: t.mode === "mock",
     });
   };
 
@@ -37,6 +38,8 @@ export function SessionMicBridge() {
       setSessionActive(true);
       setListening(true);
       window.setTimeout(pushNow, 100);
+      window.setTimeout(pushNow, 500);
+      window.setTimeout(pushNow, 1500);
     };
     const onStopped = () => setSessionActive(false);
 
@@ -51,10 +54,14 @@ export function SessionMicBridge() {
       offStarted?.();
       offStopped?.();
     };
-  }, []);
+  }, [setSessionActive]);
 
   useEffect(() => {
     return window.ghost?.onSessionListening?.((active) => setListening(active));
+  }, []);
+
+  useEffect(() => {
+    return window.ghost?.onRequestLiveTranscript?.(() => pushNow());
   }, []);
 
   useEffect(() => {
@@ -62,16 +69,9 @@ export function SessionMicBridge() {
   }, []);
 
   useEffect(() => {
-    return window.ghost?.onTriggerMock?.(() => {
-      transcriptionRef.current.triggerMock();
-      window.setTimeout(pushNow, 50);
-    });
-  }, []);
-
-  useEffect(() => {
     if (!sessionActive) return;
     pushNow();
-    const id = window.setInterval(pushNow, 400);
+    const id = window.setInterval(pushNow, 200);
     return () => window.clearInterval(id);
   }, [
     sessionActive,
@@ -79,6 +79,7 @@ export function SessionMicBridge() {
     transcription.interim,
     transcription.error,
     transcription.hearingAudio,
+    transcription.isSpeaking,
     transcription.hasMic,
     transcription.hasSystemAudio,
     transcription.aiReady,

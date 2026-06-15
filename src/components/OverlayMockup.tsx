@@ -1,9 +1,16 @@
+import { GhostLogo } from "./GhostLogo";
+
 export function OverlayMockup({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`rounded-2xl border border-zinc-200/80 bg-zinc-950 p-1 shadow-2xl shadow-zinc-900/10 ${className}`}
+      className={`overflow-hidden rounded-2xl border border-black/10 bg-zinc-950 shadow-2xl shadow-zinc-900/20 ${className}`}
     >
-      <div className="overflow-hidden rounded-[14px] bg-[#1a1a1f]">
+      <div className="flex items-center gap-1.5 border-b border-white/5 bg-[#1e1e22] px-4 py-2.5">
+        <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+        <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+        <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+      </div>
+      <div className="overflow-hidden bg-[#1a1a1f]">
         {/* Fake meeting background */}
         <div className="relative aspect-[16/10] bg-gradient-to-br from-zinc-800 to-zinc-900 p-6">
           <div className="absolute inset-0 opacity-30">
@@ -21,7 +28,9 @@ export function OverlayMockup({ className = "" }: { className?: string }) {
           {/* Ghost overlay pill */}
           <div className="absolute left-4 top-4 z-10">
             <div className="flex items-center gap-0.5 rounded-full border border-white/10 bg-[#1C1C24] px-1 py-1 shadow-lg">
-              <div className="px-2 text-ghost-400">◉</div>
+              <div className="px-1.5">
+                <GhostLogo variant="mark" className="h-4 w-4" />
+              </div>
               <div className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-emerald-400">
                 <span className="inline-block h-1.5 w-1.5 animate-pulse-soft rounded-full bg-emerald-400" />
                 Live · 12:34
@@ -62,7 +71,9 @@ export function OverlayMockupCompact() {
   return (
     <div className="mx-auto max-w-md rounded-xl border border-zinc-200 bg-zinc-50 p-4">
       <div className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-white px-1 py-1 shadow-sm">
-        <div className="px-2 text-ghost-500">◉</div>
+        <div className="px-1.5">
+          <GhostLogo className="h-4 w-4" />
+        </div>
         <div className="rounded-full border border-ghost-200 bg-ghost-50 px-3 py-1 text-[11px] font-medium text-ghost-600">
           ▶ Start
         </div>

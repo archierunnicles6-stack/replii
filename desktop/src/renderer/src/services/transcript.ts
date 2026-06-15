@@ -25,16 +25,16 @@ const OBJECTION_PATTERN =
 export function isDirectQuestion(text: string): boolean {
   const t = normalizeTranscriptText(text).toLowerCase();
   if (!t || t.length < 4) return false;
-  if (/\?\s*$/.test(t)) return true;
+  if (/\?/.test(t)) return true;
   if (
-    /^(what|how|why|when|where|who|which|can|could|would|will|should|is|are|am|was|were|do|does|did|have|has)\b/.test(
+    /^(what|how|why|when|where|who|which|can|could|would|will|should|is|are|am|was|were|do|does|did|have|has|tell)\b/.test(
       t,
     )
   ) {
     return true;
   }
   if (
-    /\b(can you|could you|would you|will you|do you|does it|are you|is it|hear me|you there|anyone there|still there)\b/.test(
+    /\b(can you|could you|would you|will you|do you|does it|are you|is it|what about|how much|how does|why would|tell me|hear me|you there|anyone there|still there)\b/.test(
       t,
     )
   ) {
@@ -49,7 +49,7 @@ export function isLikelyProspectUtterance(text: string): boolean {
   if (trimmed.length < 8) return false;
   if (isDirectQuestion(trimmed)) return true;
   if (OBJECTION_PATTERN.test(trimmed)) return true;
-  return /\b(we're|we are|our team|our budget|already using|competitor|gong|salesforce|hubspot|think about|send over|not ready|next quarter)\b/i.test(
+  return /\b(we're|we are|our team|my team|our budget|already using|competitor|gong|salesforce|hubspot|think about|check with|need to check|send over|not ready|next quarter|team first|team approval)\b/i.test(
     trimmed,
   );
 }
@@ -69,12 +69,47 @@ export function buildLiveDisplayText(
   maxChars = 96,
 ): string {
   const interimTrimmed = normalizeTranscriptText(interim ?? "");
-  if (interimTrimmed) return interimTrimmed;
-
   const last = lines[lines.length - 1];
-  if (last) return normalizeTranscriptText(last.text).slice(-maxChars);
+  const lastText = last ? normalizeTranscriptText(last.text) : "";
 
-  return "";
+  if (interimTrimmed && interimTrimmed !== "…") {
+    return interimTrimmed.slice(-maxChars);
+  }
+
+  if (lastText) {
+    const clipped = lastText.slice(-maxChars);
+    return interimTrimmed === "…" ? `${clipped} …` : clipped;
+  }
+
+  return interimTrimmed === "…" ? "…" : "";
+}
+
+/** Whether a finalized line should trigger an auto-suggestion in the overlay. */
+export function shouldAutoSuggestLine(
+  line: TranscriptLine,
+  hasSystemAudio: boolean,
+  hasMic: boolean,
+): boolean {
+  const text = normalizeTranscriptText(line.text);
+  if (!text) return false;
+  if (line.speaker === "Prospect") return true;
+  if (isDirectQuestion(text)) return true;
+  if (!hasSystemAudio && hasMic && text.length >= 3) return true;
+  return false;
+}
+
+/** Stable key for deduping suggestion triggers. */
+export function suggestionTriggerKey(text: string): string {
+  const normalized = normalizeTranscriptText(text).toLowerCase();
+  if (!normalized) return "";
+  return isDirectQuestion(text) ? `q:${normalized}` : `s:${normalized}`;
+}
+
+/** Whether live/interim text should fire a suggestion while still speaking. */
+export function shouldSuggestFromInterim(text: string): boolean {
+  const normalized = normalizeTranscriptText(text);
+  if (normalized.length < 5) return false;
+  return isDirectQuestion(normalized);
 }
 
 export function autoTriggerDelayMs(text: string, isInterim: boolean): number | null {

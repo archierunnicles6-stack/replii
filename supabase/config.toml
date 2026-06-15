@@ -1,0 +1,9 @@
+project_id = "mcudsqyqtjupfvntryya"
+
+[auth.email]
+enable_confirmations = false
+
+[auth.external.google]
+enabled = true
+client_id = "821453006387-snrakrrq6n17m5pde2nfshmnf8nanmc6.apps.googleusercontent.com"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"

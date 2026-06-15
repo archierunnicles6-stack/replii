@@ -12,7 +12,6 @@ export function TryGhostPage() {
     onboardingComplete,
     completeShortcutTutorial,
   } = useAppStore();
-  const [shortcutUsed, setShortcutUsed] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
 
   const isMac = navigator.platform.toLowerCase().includes("mac");
@@ -30,7 +29,6 @@ export function TryGhostPage() {
 
   useEffect(() => {
     const unsubShortcut = window.ghost?.onShortcutToggle?.(() => {
-      setShortcutUsed(true);
       setOverlayVisible((visible) => !visible);
     });
 
@@ -44,6 +42,10 @@ export function TryGhostPage() {
     navigate("/paywall");
   }, [completeShortcutTutorial, navigate]);
 
+  const tryShortcut = useCallback(() => {
+    void window.ghost?.triggerShortcutToggle?.();
+  }, []);
+
   return (
     <div className="relative h-screen max-h-screen w-full overflow-hidden">
       <BackButton to="/onboarding" />
@@ -51,40 +53,33 @@ export function TryGhostPage() {
         rightVariant="grid"
         left={
           <div className="flex h-full min-h-0 flex-col px-12 py-10">
-            <div className="flex flex-1 flex-col items-center justify-center text-center">
-              <div className="w-full max-w-[380px]">
-                <p className="text-[13px] font-medium text-zinc-400">
-                  Try Ghost
-                </p>
+            <div className="flex flex-1 flex-col items-center justify-center">
+              <div className="w-full max-w-[380px] text-center">
+                <p className="text-[13px] font-medium text-zinc-400">Try Ghost</p>
                 <h1 className="mt-2 text-[32px] font-semibold leading-[1.15] tracking-[-0.025em] text-zinc-900">
                   Hide and show Ghost on the fly
                 </h1>
                 <p className="mt-3 text-[15px] leading-relaxed text-zinc-500">
-                  Press the keyboard shortcut to try hiding Ghost.
+                  Press the keyboard shortcut or click below to try hiding Ghost.
                 </p>
 
-                <div className="mt-9 flex items-center justify-center gap-3">
-                  <KeyCap label={modKey} />
-                  <KeyCap label="\" />
+                <div className="mt-9 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={tryShortcut}
+                    className="flex items-center justify-center gap-3 rounded-2xl p-1 transition-colors hover:bg-zinc-100/80"
+                    aria-label={`Try hide shortcut: ${modKey} backslash`}
+                  >
+                    <KeyCap label={modKey} />
+                    <KeyCap label="\" />
+                  </button>
                 </div>
 
-                <PillButton
-                  disabled={!shortcutUsed}
-                  onClick={finish}
-                  className="mt-8 h-[48px] disabled:cursor-not-allowed"
-                >
-                  {shortcutUsed ? "Continue" : "Use the shortcut to continue"}
+                <PillButton onClick={finish} className="mt-8 h-[48px]">
+                  Continue
                 </PillButton>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={finish}
-              className="pb-2 text-center text-[13px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
-            >
-              Skip &gt;
-            </button>
           </div>
         }
         right={<TryGhostPreview overlayVisible={overlayVisible} />}

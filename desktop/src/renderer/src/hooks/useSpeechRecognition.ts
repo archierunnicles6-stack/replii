@@ -148,10 +148,27 @@ export function useSpeechRecognition(
 
     recognition.onerror = (event) => {
       if (event.error === "no-speech" || event.error === "aborted") return;
-      setError(event.error);
+
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        activeRef.current = false;
+        void window.ghost?.getPermissionStatus?.().then((status) => {
+          if (status?.microphone) {
+            // Web Speech often false-positives in Electron when macOS mic is already granted.
+            setError(null);
+            if (!activeRef.current || !recognitionRef.current) return;
+            try {
+              recognitionRef.current.start();
+            } catch {
+              // already running
+            }
+            return;
+          }
+          setError(event.error);
+          activeRef.current = false;
+        });
+        return;
       }
+
+      setError(event.error);
     };
 
     recognition.onend = () => {
@@ -185,18 +202,23 @@ export function useSpeechRecognition(
     setError(null);
     if (!sessionStartRef.current) sessionStartRef.current = Date.now();
 
-    void window.ghost?.ensureMicrophone?.().then((permitted) => {
+    void (async () => {
+      await window.ghost?.ensureMicrophone?.();
       if (!activeRef.current || !recognitionRef.current) return;
-      if (!permitted) {
+
+      const status = await window.ghost?.getPermissionStatus?.();
+      if (!status?.microphone) {
         setError("not-allowed");
         return;
       }
+
+      setError(null);
       try {
         recognitionRef.current.start();
       } catch {
         // already running
       }
-    });
+    })();
   }, [active]);
 
   const clear = useCallback(() => {

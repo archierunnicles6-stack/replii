@@ -6,6 +6,7 @@ export interface LiveTranscriptFeed {
   interim: string;
   error: string | null;
   hearingAudio: boolean;
+  isSpeaking: boolean;
   hasMic: boolean;
   hasSystemAudio: boolean;
   aiReady: boolean;
@@ -18,6 +19,7 @@ const EMPTY: LiveTranscriptFeed = {
   interim: "",
   error: null,
   hearingAudio: false,
+  isSpeaking: false,
   hasMic: false,
   hasSystemAudio: false,
   aiReady: false,
@@ -34,9 +36,30 @@ export function useLiveTranscriptFeed(active: boolean): LiveTranscriptFeed {
       return;
     }
 
-    return window.ghost?.onLiveTranscript?.((state) => {
-      setFeed(state);
+    const off = window.ghost?.onLiveTranscript?.((state) => {
+      setFeed({
+        lines: state.lines,
+        interim: state.interim,
+        error: state.error,
+        hearingAudio: state.hearingAudio,
+        isSpeaking: state.isSpeaking ?? false,
+        hasMic: state.hasMic,
+        hasSystemAudio: state.hasSystemAudio,
+        aiReady: state.aiReady,
+        audioSource: state.audioSource,
+        isDemo: false,
+      });
     });
+
+    window.ghost?.requestLiveTranscript?.();
+    const pollId = window.setInterval(() => {
+      window.ghost?.requestLiveTranscript?.();
+    }, 250);
+
+    return () => {
+      off?.();
+      window.clearInterval(pollId);
+    };
   }, [active]);
 
   return feed;

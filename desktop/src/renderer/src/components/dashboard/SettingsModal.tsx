@@ -3,10 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { getSupabase, isSupabaseConfigured } from "../../lib/supabase";
 import { removeProfileAvatar, isAvatarImage, uploadProfileAvatar } from "../../lib/avatar";
 import { useAppStore } from "../../store/useAppStore";
+import {
+  canUseDetectabilityToggle,
+  effectiveContentProtection,
+  normalizedInvisibleSetting,
+} from "../../store/types";
+import { BillingPanel } from "../settings/BillingPanel";
+import { UpgradeModal } from "../pricing/UpgradeModal";
 import { UserAvatar } from "../ui/UserAvatar";
 
-type SettingsSection =
+export type SettingsSection =
   | "general"
+  | "billing"
   | "keybinds"
   | "profile"
   | "language"
@@ -16,6 +24,7 @@ type SettingsSection =
 
 const MAIN_NAV: { id: SettingsSection; label: string; icon: string }[] = [
   { id: "general", label: "General", icon: "settings" },
+  { id: "billing", label: "Billing", icon: "billing" },
   { id: "keybinds", label: "Keybinds", icon: "keyboard" },
   { id: "profile", label: "Profile", icon: "user" },
   { id: "language", label: "Language", icon: "language" },
@@ -51,7 +60,7 @@ const FAQ = [
   },
   {
     q: "Is Ghost visible on screen share?",
-    a: "No. With Detectable off (default), Ghost is hidden from Zoom, Meet, Teams, and recordings.",
+    a: "On Free, Solo, and Pro, Ghost is always detectable during screen share. Upgrade to Undetectable to hide the overlay from Zoom, Meet, Teams, and recordings.",
   },
   {
     q: "Does Ghost join my calls?",
@@ -73,6 +82,12 @@ function NavIcon({ name }: { name: string }) {
       return (
         <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      );
+    case "billing":
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
         </svg>
       );
     case "user":
@@ -125,17 +140,20 @@ function NavIcon({ name }: { name: string }) {
 function SettingsToggle({
   checked,
   onChange,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? "bg-blue-500" : "bg-zinc-200"}`}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? "bg-blue-500" : "bg-zinc-200"} ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
     >
       <span
         className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-[22px]" : "translate-x-0.5"}`}
@@ -196,13 +214,30 @@ function PanelHeader({ title, subtitle }: { title: string; subtitle: string }) {
   );
 }
 
-function GeneralPanel() {
-  const { settings, updateSettings } = useAppStore();
-  const detectable = !settings.invisible;
+function GeneralPanel({ onRequestUpgrade }: { onRequestUpgrade: () => void }) {
+  const { settings, updateSettings, plan } = useAppStore();
+  const detectabilityUnlocked = canUseDetectabilityToggle(plan);
+  const invisible = normalizedInvisibleSetting(plan, settings.invisible);
+  const detectable = !invisible;
 
   const handleDetectable = (value: boolean) => {
-    updateSettings({ invisible: !value });
-    void window.ghost?.setContentProtection(!value);
+    if (value) {
+      updateSettings({ invisible: false });
+      void window.ghost?.setContentProtection(
+        effectiveContentProtection(plan, false),
+      );
+      return;
+    }
+
+    if (!detectabilityUnlocked) {
+      onRequestUpgrade();
+      return;
+    }
+
+    updateSettings({ invisible: true });
+    void window.ghost?.setContentProtection(
+      effectiveContentProtection(plan, true),
+    );
   };
 
   return (
@@ -232,17 +267,25 @@ function GeneralPanel() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           }
-          title="Detectable"
+          title="Detectable on screen share"
           description={
-            detectable
-              ? "Ghost is currently detectable by screen-sharing software"
-              : "Ghost is hidden from screen-sharing software"
+            detectabilityUnlocked
+              ? detectable
+                ? "Ghost is visible to screen-sharing software"
+                : "Ghost is hidden from screen-sharing software"
+              : "Turn off to hide Ghost from Zoom, Meet, and recordings — requires Pro + Undetectability"
           }
-          action={<SettingsToggle checked={detectable} onChange={handleDetectable} />}
+          action={
+            <SettingsToggle checked={detectable} onChange={handleDetectable} />
+          }
         />
       </div>
     </div>
   );
+}
+
+function BillingSettingsPanel() {
+  return <BillingPanel />;
 }
 
 function KeybindsPanel() {
@@ -447,10 +490,18 @@ function ContactPanel() {
   );
 }
 
-function SettingsContent({ section }: { section: SettingsSection }) {
+function SettingsContent({
+  section,
+  onRequestUpgrade,
+}: {
+  section: SettingsSection;
+  onRequestUpgrade: () => void;
+}) {
   switch (section) {
     case "general":
-      return <GeneralPanel />;
+      return <GeneralPanel onRequestUpgrade={onRequestUpgrade} />;
+    case "billing":
+      return <BillingSettingsPanel />;
     case "keybinds":
       return <KeybindsPanel />;
     case "profile":
@@ -464,7 +515,7 @@ function SettingsContent({ section }: { section: SettingsSection }) {
     case "contact":
       return <ContactPanel />;
     default:
-      return <GeneralPanel />;
+      return <GeneralPanel onRequestUpgrade={onRequestUpgrade} />;
   }
 }
 
@@ -493,10 +544,21 @@ function SidebarNavItem({
   );
 }
 
-export function SettingsModal({ onClose }: { onClose: () => void }) {
+export function SettingsModal({
+  onClose,
+  initialSection = "general",
+}: {
+  onClose: () => void;
+  initialSection?: SettingsSection;
+}) {
   const navigate = useNavigate();
   const logout = useAppStore((s) => s.logout);
-  const [section, setSection] = useState<SettingsSection>("general");
+  const [section, setSection] = useState<SettingsSection>(initialSection);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const openBillingUpgrade = () => {
+    setUpgradeOpen(true);
+  };
 
   const handleSignOut = async () => {
     if (isSupabaseConfigured()) {
@@ -518,7 +580,13 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         onClick={onClose}
       />
 
-      <div className="no-drag relative flex h-[min(560px,calc(100vh-48px))] w-full max-w-[720px] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl">
+      <div
+        className={`no-drag relative flex w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl ${
+          section === "billing"
+            ? "h-[min(640px,calc(100vh-48px))] max-w-[min(900px,calc(100vw-48px))]"
+            : "h-[min(560px,calc(100vh-48px))] max-w-[720px]"
+        }`}
+      >
         {/* Sidebar */}
         <aside className="flex w-[200px] shrink-0 flex-col border-r border-zinc-200 bg-[#fafafa]">
           <div className="flex items-center px-3 pt-3">
@@ -579,9 +647,16 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
 
         {/* Content */}
         <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
-          <SettingsContent section={section} />
+          <SettingsContent
+            section={section}
+            onRequestUpgrade={openBillingUpgrade}
+          />
         </div>
       </div>
+
+      {upgradeOpen ? (
+        <UpgradeModal onClose={() => setUpgradeOpen(false)} />
+      ) : null}
     </div>
   );
 }

@@ -30,9 +30,10 @@ const PERMISSIONS: PermissionItem[] = [
   },
   {
     key: "screen",
-    icon: <ScreenIcon />,
-    title: "Allow Ghost to see your screen",
-    description: "Ghost can answer questions about what you're viewing.",
+    icon: <CallAudioIcon />,
+    title: "Allow Ghost to hear call audio",
+    description:
+      "Optional — macOS uses Screen Recording for Zoom, Meet, and Teams audio only. Ghost does not view your screen.",
   },
 ];
 
@@ -68,15 +69,14 @@ export function OnboardingPage() {
     setTimeout(() => void refreshStatus(), 1500);
   };
 
-  const allGranted =
-    granted.accessibility && granted.microphone && granted.screen;
+  const requiredGranted = granted.accessibility && granted.microphone;
 
   const settingsLabel =
     activeKey === "accessibility"
       ? "Open accessibility settings"
       : activeKey === "microphone"
         ? "Open microphone settings"
-        : "Open screen recording settings";
+        : "Open call audio settings";
 
   const finish = () => {
     completeOnboarding();
@@ -88,7 +88,7 @@ export function OnboardingPage() {
       <BackButton to="/auth" />
       <SplitScreenShell
         left={
-          <div className="flex h-full min-h-0 flex-col justify-between px-12 py-10">
+          <div className="flex h-full min-h-0 flex-col px-12 py-10">
             <div className="flex min-h-0 flex-1 flex-col justify-center">
               <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900">
                 Let&apos;s get you set up
@@ -111,7 +111,7 @@ export function OnboardingPage() {
                 ))}
               </div>
 
-              {allGranted ? (
+              {requiredGranted ? (
                 <button
                   type="button"
                   onClick={finish}
@@ -129,14 +129,6 @@ export function OnboardingPage() {
                 </button>
               )}
             </div>
-
-            <button
-              type="button"
-              onClick={finish}
-              className="self-start text-[13px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
-            >
-              Skip for now
-            </button>
           </div>
         }
         right={<PermissionPreview />}
@@ -222,10 +214,10 @@ function MicIcon() {
   );
 }
 
-function ScreenIcon() {
+function CallAudioIcon() {
   return (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
     </svg>
   );
 }

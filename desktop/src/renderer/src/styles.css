@@ -68,6 +68,13 @@ body.overlay.active-mode #root {
   -webkit-app-region: no-drag;
 }
 
+.no-drag input,
+.no-drag textarea,
+.no-drag select {
+  -webkit-app-region: no-drag;
+  user-select: text;
+}
+
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -81,10 +88,32 @@ body.overlay.active-mode #root {
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* Force crisp text rendering inside overlay pills — prevents WebKit
-   backdrop-filter from softening text on the same compositing layer */
-html.overlay * {
+/* Light frosted glass — blur layer separate from crisp text */
+html.overlay .overlay-glass {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+html.overlay .overlay-pill-inner {
+  position: relative;
+  z-index: 1;
+}
+
+html.overlay .overlay-pill-text {
+  position: relative;
+  z-index: 1;
+}
+
+html.overlay .overlay-pill-copy {
+  font-family:
+    system-ui,
+    -apple-system,
+    "SF Pro Text",
+    "Segoe UI",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+  text-rendering: geometricPrecision;
+  font-feature-settings: "kern" 1, "liga" 1;
+  letter-spacing: -0.01em;
 }

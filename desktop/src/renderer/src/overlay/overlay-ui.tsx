@@ -1,8 +1,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
-import ghostLogo from "../assets/ghost-logo.png";
+import ghostMark from "../assets/ghost-mark.png";
 import type { QuickAction } from "../services/ai";
-import { useStreamingDisplayText } from "../hooks/useStreamingDisplayText";
 import type { PillThemeStyles } from "../hooks/usePillBackdrop";
 
 export { pickAutoAction } from "../services/transcript";
@@ -52,7 +51,7 @@ export function ActionIcon({ type }: { type: (typeof QUICK_ACTIONS)[number]["ico
 export function GhostMark({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <img
-      src={ghostLogo}
+      src={ghostMark}
       alt=""
       aria-hidden
       draggable={false}
@@ -74,37 +73,25 @@ function LiveTranscriptStrip({
   isStreaming?: boolean;
   theme: PillThemeStyles;
 }) {
-  const streamed = useStreamingDisplayText(text, isStreaming && !!text);
   const display =
-    streamed ||
-    (listening && hearingAudio ? "…" : listening ? "Speak now" : "");
+    text.trim() ||
+    (listening && (hearingAudio || isStreaming) ? "…" : "");
 
-  const isPlaceholder = !text || display === "Speak now" || display === "…";
-  const textClass = isPlaceholder
-    ? hearingAudio
-      ? theme.transcriptMuted
-      : theme.transcriptMuted
-    : theme.transcript;
+  if (!display) return null;
+
+  const isPlaceholder = !text.trim() || display === "…";
 
   return (
-    <div className="relative min-w-0 flex-1 overflow-hidden pl-2">
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8"
-        style={{ background: theme.edgeFade }}
-      />
-      <p
-        className={`truncate whitespace-nowrap text-[14px] font-medium leading-snug ${textClass}`}
-        style={{
-          maskImage: "linear-gradient(to right, transparent 0%, black 24px, black 100%)",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 24px, black 100%)",
-        }}
-      >
-        {display}
-        {isStreaming && text && streamed !== text ? (
-          <span className="ml-0.5 inline-block h-[14px] w-[2px] animate-pulse bg-current opacity-60" />
-        ) : null}
-      </p>
-    </div>
+    <p
+      className={`overlay-pill-copy min-w-0 flex-1 truncate whitespace-nowrap text-[14px] leading-none ${
+        isPlaceholder ? theme.transcriptMuted : theme.transcript
+      }`}
+    >
+      {display}
+      {isStreaming && text.trim() ? (
+        <span className="ml-0.5 inline-block h-[13px] w-[2px] animate-pulse bg-zinc-500/70" />
+      ) : null}
+    </p>
   );
 }
 
@@ -116,7 +103,6 @@ export function ListeningPill({
   hearingAudio = false,
   hasMic = false,
   hasSystemAudio = false,
-  isDemo = false,
   aiReady = false,
   pillTheme,
 }: {
@@ -127,7 +113,6 @@ export function ListeningPill({
   hearingAudio?: boolean;
   hasMic?: boolean;
   hasSystemAudio?: boolean;
-  isDemo?: boolean;
   aiReady?: boolean;
   pillTheme: PillThemeStyles;
 }) {
@@ -140,22 +125,27 @@ export function ListeningPill({
   }, []);
 
   const statusText = (() => {
-    if (error === "mic-optional") return "Listening to call…";
-    if (error === "screen-blocked") return "Screen blocked";
+    if (error === "mic-optional") return "Listening…";
+    if (error === "screen-blocked") return "Call audio blocked";
+    if (error === "no-api-key") return "AI key missing";
     if (error) return "Mic blocked";
     if (!listening) return "Paused";
-    if (isDemo) return "Demo call…";
-    if (hasSystemAudio && hasMic) return "Listening to call…";
-    if (hasSystemAudio) return "Listening to call…";
-    if (!hasMic && aiReady) return "Connecting audio…";
     return "Listening…";
   })();
 
   return (
-    <div className="drag-region overflow-hidden rounded-full" style={pillTheme.glass}>
-      <div className="flex min-w-[340px] max-w-[520px] items-center gap-3 px-3.5 py-2.5">
+    <div className="overlay-glass drag-region overflow-hidden rounded-full" style={pillTheme.glass}>
+      <div className="overlay-pill-inner flex min-w-[340px] max-w-[520px] items-center gap-2.5 px-4 py-2.5">
         <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${hearingAudio && listening && (!error || error === "mic-optional") ? "animate-pulse-glow" : ""}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+            listening &&
+            (hearingAudio || hasMic) &&
+            (!error || error === "mic-optional")
+              ? hearingAudio
+                ? "animate-pulse-glow"
+                : "animate-pulse"
+              : ""
+          }`}
           style={{
             background:
               error && error !== "mic-optional"
@@ -167,17 +157,28 @@ export function ListeningPill({
           <GhostMark className="h-4 w-4" />
         </div>
 
-        <span className={`shrink-0 text-[15px] font-semibold tracking-tight ${pillTheme.status}`}>
-          {statusText}
-        </span>
+        <div className="overlay-pill-text flex min-w-0 flex-1 items-center gap-2">
+          <span
+            className={`overlay-pill-copy shrink-0 text-[14px] font-semibold leading-none tracking-[-0.01em] ${pillTheme.status}`}
+          >
+            {statusText}
+          </span>
 
-        <LiveTranscriptStrip
-          text={liveText?.trim() ?? ""}
-          listening={listening && (!error || error === "mic-optional")}
-          hearingAudio={hearingAudio}
-          isStreaming={isStreaming}
-          theme={pillTheme}
-        />
+          {(liveText?.trim() || (isStreaming && listening)) && (
+            <>
+              <span aria-hidden className="shrink-0 select-none text-[14px] leading-none text-zinc-300">
+                ·
+              </span>
+              <LiveTranscriptStrip
+                text={liveText?.trim() ?? ""}
+                listening={listening && (!error || error === "mic-optional")}
+                hearingAudio={hearingAudio}
+                isStreaming={isStreaming}
+                theme={pillTheme}
+              />
+            </>
+          )}
+        </div>
       </div>
 
       {error === "mic-optional" && (
@@ -200,9 +201,11 @@ export function ListeningPill({
           <p className="text-[11px] leading-snug text-red-600">
             {error === "screen-blocked" ? (
               <>
-                Allow <span className="font-semibold">Ghost</span> in System Settings → Privacy → Screen
-                Recording, then start a session and share your screen or call window when macOS prompts.
+                Enable <span className="font-semibold">Ghost</span> under System Settings → Privacy &amp;
+                Security → Screen Recording (macOS uses this for call audio only), then restart your session.
               </>
+            ) : error === "no-api-key" ? (
+              <>Ghost needs an OpenAI API key to transcribe speech. Add it in desktop/.env and restart.</>
             ) : (
               <>
                 System Settings → Privacy &amp; Security → Microphone → turn on{" "}
@@ -259,59 +262,35 @@ export function getSuggestionReadDurationMs(text: string): number {
 export function SuggestionPill({
   suggestion,
   loading,
-  visible = true,
-  dealHealth,
   pillTheme,
 }: {
   suggestion: string;
   loading: boolean;
-  visible?: boolean;
-  dealHealth?: number | null;
   pillTheme: PillThemeStyles;
 }) {
-  const streamed = useStreamingDisplayText(suggestion, loading && !!suggestion);
-  const healthColor =
-    dealHealth == null
-      ? pillTheme.label
-      : dealHealth >= 70
-        ? pillTheme.theme === "dark"
-          ? "text-emerald-300"
-          : "text-emerald-700"
-        : dealHealth >= 45
-          ? pillTheme.theme === "dark"
-            ? "text-amber-300"
-            : "text-amber-700"
-          : pillTheme.theme === "dark"
-            ? "text-red-300"
-            : "text-red-700";
+  const display = suggestion.trim();
+  if (!loading && !display) return null;
 
   return (
     <div
-      className={`no-drag w-full overflow-hidden rounded-2xl transition-all duration-300 ${
-        visible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0"
-      }`}
+      className="overlay-glass overlay-pill-text no-drag w-full overflow-hidden rounded-[20px]"
       style={pillTheme.glass}
     >
-      <div className="px-4 py-3">
-        <div className="mb-1.5 flex items-center justify-between gap-2">
-          <p className={`text-[11px] font-medium ${pillTheme.label}`}>Suggestion</p>
-          {dealHealth != null && !loading ? (
-            <p className={`text-[11px] font-semibold ${healthColor}`}>
-              Deal health {dealHealth}
-            </p>
-          ) : null}
-        </div>
+      <div className="overlay-pill-inner px-5 py-3.5">
+        <p className={`overlay-pill-copy mb-1.5 text-[11px] font-medium uppercase tracking-[0.06em] ${pillTheme.label}`}>
+          Suggestion
+        </p>
 
-        {loading && !suggestion ? (
-          <div className="flex items-center gap-2">
-            <span className={`inline-block h-1.5 w-1.5 animate-pulse rounded-full ${pillTheme.theme === "dark" ? "bg-white/50" : "bg-zinc-500"}`} />
-            <span className={`text-[14px] ${pillTheme.body}`}>Thinking…</span>
+        {loading && !display ? (
+          <div className="flex items-center gap-2 py-0.5">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400" />
+            <span className={`overlay-pill-copy text-[15px] ${pillTheme.transcriptMuted}`}>Thinking…</span>
           </div>
         ) : (
-          <p className={`whitespace-pre-wrap text-[15px] font-medium leading-relaxed ${pillTheme.body}`}>
-            {streamed || suggestion}
-            {loading && suggestion ? (
-              <span className={`ml-0.5 inline-block h-4 w-[2px] animate-pulse ${pillTheme.theme === "dark" ? "bg-white/70" : "bg-zinc-700"}`} />
+          <p className={`overlay-pill-copy text-[16px] font-semibold leading-snug tracking-[-0.01em] ${pillTheme.body}`}>
+            {display}
+            {loading ? (
+              <span className="ml-0.5 inline-block h-[16px] w-[2px] animate-pulse bg-zinc-500/70" />
             ) : null}
           </p>
         )}
@@ -355,21 +334,13 @@ function SideIconButton({
 }
 
 export function ControlButtons({
-  onAssist,
-  onTestAi,
-  onMock,
-  showTestAi = false,
-  showMock = false,
+  onToggleDashboard,
   listening,
   onToggleListening,
   onEndSession,
   pillTheme,
 }: {
-  onAssist: () => void;
-  onTestAi?: () => void;
-  onMock?: () => void;
-  showTestAi?: boolean;
-  showMock?: boolean;
+  onToggleDashboard: () => void;
   listening: boolean;
   onToggleListening: () => void;
   onEndSession: () => void;
@@ -384,39 +355,22 @@ export function ControlButtons({
     pillTheme.theme === "dark" ? "1.5px solid rgba(255,255,255,0.12)" : "1.5px solid rgba(0,0,0,0.10)";
   return (
     <div className="flex flex-col items-center gap-2">
-      {(showMock || showTestAi) && (
-        <div className="flex gap-2">
-          {showMock && onMock ? (
-            <button
-              type="button"
-              onClick={onMock}
-              className="no-drag rounded-full border border-yellow-300 bg-yellow-50 px-3 py-1 text-[11px] font-semibold text-yellow-900 hover:bg-yellow-100"
-            >
-              🎭 Mock
-            </button>
-          ) : null}
-          {showTestAi && onTestAi ? (
-            <button
-              type="button"
-              onClick={onTestAi}
-              className="no-drag rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-[11px] font-semibold text-violet-800 hover:bg-violet-100"
-            >
-              Test AI
-            </button>
-          ) : null}
-        </div>
-      )}
       <div
-        className="no-drag shrink-0 rounded-full"
+        className="overlay-glass no-drag shrink-0 rounded-full"
         style={{
           minWidth: 320,
           ...pillTheme.glass,
         }}
       >
       <div className="flex items-center justify-between gap-4 px-5 py-2">
-        <SideIconButton title="End session" onClick={onEndSession} bg={sideBg} border={sideBorder}>
+        <SideIconButton
+          title={listening ? "Turn Listen off" : "Turn Listen on"}
+          onClick={onToggleListening}
+          bg={listening ? sideBg : pillTheme.theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)"}
+          border={sideBorder}
+        >
           <svg
-            className={`h-[18px] w-[18px] ${iconClass}`}
+            className={`h-[18px] w-[18px] ${listening ? iconClass : pillTheme.theme === "dark" ? "text-white/35" : "text-zinc-400"}`}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -424,6 +378,9 @@ export function ControlButtons({
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
+            {!listening ? (
+              <path strokeLinecap="round" d="M4 4l16 16" strokeWidth={2} />
+            ) : null}
           </svg>
         </SideIconButton>
 
@@ -433,8 +390,8 @@ export function ControlButtons({
         >
           <button
             type="button"
-            onClick={onAssist}
-            title="Get AI suggestion"
+            onClick={onToggleDashboard}
+            title="Open or close dashboard"
             className="flex items-center justify-center rounded-full transition-all hover:scale-[1.03] active:scale-95"
             style={{
               height: 48,
@@ -447,26 +404,11 @@ export function ControlButtons({
           </button>
         </div>
 
-        <SideIconButton
-          title={listening ? "Pause listening" : "Resume listening"}
-          onClick={onToggleListening}
-          bg={sideBg}
-          border={sideBorder}
-        >
-          {listening ? (
-            <svg className={`h-[18px] w-[18px] ${iconClass}`} viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="5" width="4.5" height="14" rx="1" />
-              <rect x="13.5" y="5" width="4.5" height="14" rx="1" />
-            </svg>
-          ) : (
-            <svg
-              className={`h-[18px] w-[18px] translate-x-[1px] ${iconClass}`}
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l10.04-6.86a1 1 0 0 0 0-1.72L9.5 4.28A1 1 0 0 0 8 5.14z" />
-            </svg>
-          )}
+        <SideIconButton title="End session" onClick={onEndSession} bg={sideBg} border={sideBorder}>
+          <svg className={`h-[18px] w-[18px] ${iconClass}`} viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="5" width="4.5" height="14" rx="1" />
+            <rect x="13.5" y="5" width="4.5" height="14" rx="1" />
+          </svg>
         </SideIconButton>
       </div>
     </div>

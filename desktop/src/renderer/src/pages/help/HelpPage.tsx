@@ -7,7 +7,7 @@ const FAQ = [
   },
   {
     q: "Is Ghost visible on screen share?",
-    a: "No. With Invisibility enabled (default), Ghost is hidden from Zoom, Meet, Teams, and recordings. Only you see the overlay.",
+    a: "On Free and Pro, Ghost appears in Zoom, Meet, Teams, and recordings. Undetectable hides the overlay from screen share.",
   },
   {
     q: "Does Ghost join my calls?",

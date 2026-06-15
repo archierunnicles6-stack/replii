@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { PageHeader, SelectRow, Toggle } from "../../components/ui";
 import { useAppStore } from "../../store/useAppStore";
+import {
+  canUseDetectabilityToggle,
+  effectiveContentProtection,
+  normalizedInvisibleSetting,
+} from "../../store/types";
 
 const LANGUAGES = [
   "English",
@@ -13,7 +18,9 @@ const LANGUAGES = [
 ];
 
 export function SettingsPage() {
-  const { settings, updateSettings } = useAppStore();
+  const { settings, updateSettings, plan } = useAppStore();
+  const detectabilityUnlocked = canUseDetectabilityToggle(plan);
+  const invisible = normalizedInvisibleSetting(plan, settings.invisible);
   const [displays, setDisplays] = useState<
     Array<{ id: number; label: string }>
   >([]);
@@ -23,8 +30,9 @@ export function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    window.ghost?.setContentProtection(settings.invisible);
-  }, [settings.invisible]);
+    const protected_ = effectiveContentProtection(plan, settings.invisible);
+    void window.ghost?.setContentProtection(protected_);
+  }, [plan, settings.invisible]);
 
   useEffect(() => {
     if (settings.displayId != null) {
@@ -45,9 +53,19 @@ export function SettingsPage() {
         </h2>
         <Toggle
           label="Invisible to screen share"
-          checked={settings.invisible}
-          onChange={(v) => updateSettings({ invisible: v })}
+          checked={invisible}
+          disabled={!detectabilityUnlocked}
+          onChange={(v) => {
+            if (!detectabilityUnlocked) return;
+            updateSettings({ invisible: v });
+          }}
         />
+        {!detectabilityUnlocked && (
+          <p className="text-[12px] text-zinc-500">
+            Ghost is visible on screen share on your current plan. Upgrade to
+            Undetectable to hide the overlay from captures.
+          </p>
+        )}
         <Toggle
           label="Hide from taskbar during sessions"
           checked={settings.hideFromTaskbar}

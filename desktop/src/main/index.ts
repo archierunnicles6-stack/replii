@@ -4,6 +4,7 @@ import {
   desktopCapturer,
   globalShortcut,
   ipcMain,
+  nativeImage,
   screen,
   session,
   shell,
@@ -13,12 +14,87 @@ import path from "node:path";
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 
+function parseEnvFile(contents: string): Record<string, string> {
+  const vars: Record<string, string> = {};
+  for (const line of contents.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    vars[key] = value;
+  }
+  return vars;
+}
+
+function loadOpenAIKey(): string | undefined {
+  const candidates = [
+    path.join(app.getPath("userData"), ".env"),
+    path.join(process.resourcesPath, ".env"),
+    path.join(app.getAppPath(), "../../.env"),
+    path.join(__dirname, "../../.env"),
+  ];
+
+  for (const file of candidates) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const key = parseEnvFile(fs.readFileSync(file, "utf8")).VITE_OPENAI_API_KEY?.trim();
+      if (key) return key;
+    } catch {
+      // ignore
+    }
+  }
+
+  return process.env.VITE_OPENAI_API_KEY?.trim() || undefined;
+}
+
+const isDev = !!process.env.ELECTRON_RENDERER_URL;
+
+function setDockIcon(): void {
+  if (process.platform !== "darwin" || !app.dock) return;
+
+  const candidates = [
+    path.join(process.resourcesPath, "icon.png"),
+    path.join(process.resourcesPath, "icon.icns"),
+    path.join(app.getAppPath(), "build/icon.png"),
+    path.join(__dirname, "../../build/icon.png"),
+    path.join(__dirname, "../../../build/icon.png"),
+  ];
+
+  for (const iconPath of candidates) {
+    if (!fs.existsSync(iconPath)) continue;
+    const image = nativeImage.createFromPath(iconPath);
+    if (image.isEmpty()) continue;
+    app.dock.setIcon(image);
+    return;
+  }
+}
+
+app.setName("Ghost");
+
+// Prevent dev crashes when stdout/stderr pipe closes (EPIPE on console.warn).
+for (const stream of [process.stdout, process.stderr]) {
+  stream?.on?.("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EPIPE") return;
+  });
+}
+
+// Dev and packaged builds share the same app name — separate userData so both can run.
+if (isDev) {
+  app.setPath("userData", path.join(app.getPath("appData"), "ghost-desktop-dev"));
+}
+
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();
 }
-
-app.setName("Ghost");
 
 // Register custom protocol for OAuth callbacks (ghost://auth/callback)
 if (process.defaultApp) {
@@ -36,8 +112,52 @@ let overlayWindow: BrowserWindow | null = null;
 let micHelperWindow: BrowserWindow | null = null;
 let isOverlayHidden = false;
 let overlayPendingShow = false;
-let contentProtection = true;
+let contentProtection = false;
 let sessionActive = false;
+
+const FREE_SESSION_LIMIT = 3;
+const PLAN_STATE_PATH = () => path.join(app.getPath("userData"), "plan-state.json");
+
+interface PlanLimitsState {
+  plan: string;
+  freeSessionsUsed: number;
+}
+
+function readPlanLimits(): PlanLimitsState {
+  try {
+    const file = PLAN_STATE_PATH();
+    if (fs.existsSync(file)) {
+      const parsed = JSON.parse(fs.readFileSync(file, "utf8")) as Partial<PlanLimitsState>;
+      return {
+        plan: parsed.plan ?? "free",
+        freeSessionsUsed: parsed.freeSessionsUsed ?? 0,
+      };
+    }
+  } catch {
+    // ignore corrupt state
+  }
+  return { plan: "free", freeSessionsUsed: 0 };
+}
+
+function writePlanLimits(state: PlanLimitsState): void {
+  try {
+    fs.writeFileSync(PLAN_STATE_PATH(), JSON.stringify(state), "utf8");
+  } catch {
+    // ignore write failures
+  }
+}
+
+function isPaidPlan(plan: string): boolean {
+  return plan !== "free";
+}
+
+function canStartSessionFromLimits(state: PlanLimitsState): boolean {
+  return isPaidPlan(state.plan) || state.freeSessionsUsed < FREE_SESSION_LIMIT;
+}
+
+function canDisableContentProtection(state: PlanLimitsState): boolean {
+  return state.plan === "undetectable";
+}
 
 function consumeCallAudioSetupFlag(): boolean {
   const flagPath = path.join(app.getPath("userData"), "use-call-audio.flag");
@@ -70,8 +190,6 @@ function runGhostAudioSetup(): boolean {
   return false;
 }
 
-const isDev = !!process.env.ELECTRON_RENDERER_URL;
-
 function getRendererUrl(route: string): string {
   if (isDev) {
     return `${process.env.ELECTRON_RENDERER_URL}#${route}`;
@@ -87,6 +205,18 @@ function loadRoute(win: BrowserWindow, route: string): void {
 
   const hash = route.startsWith("/") ? route : `/${route}`;
   win.loadFile(path.join(__dirname, "../renderer/index.html"), { hash });
+}
+
+function sendWhenReady(win: BrowserWindow | null, channel: string, ...args: unknown[]): void {
+  if (!win || win.isDestroyed()) return;
+  const deliver = () => {
+    if (!win.isDestroyed()) win.webContents.send(channel, ...args);
+  };
+  if (win.webContents.isLoading()) {
+    win.webContents.once("did-finish-load", deliver);
+  } else {
+    deliver();
+  }
 }
 
 function createDashboardWindow(): void {
@@ -111,8 +241,11 @@ function createDashboardWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      backgroundThrottling: false,
     },
   });
+
+  dashboardWindow.webContents.setBackgroundThrottling(false);
 
   dashboardWindow.once("ready-to-show", () => {
     dashboardWindow?.center();
@@ -202,12 +335,20 @@ function createOverlayWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      backgroundThrottling: false,
     },
   });
 
-  overlayWindow.setContentProtection(contentProtection);
+  overlayWindow.webContents.setBackgroundThrottling(false);
   overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   overlayWindow.setAlwaysOnTop(true, "screen-saver", 1);
+
+  const limits = readPlanLimits();
+  const initialProtection = canDisableContentProtection(limits)
+    ? contentProtection
+    : false;
+  contentProtection = initialProtection;
+  overlayWindow.setContentProtection(initialProtection);
 
   loadRoute(overlayWindow, "/overlay");
   repositionOverlayBottomCenter();
@@ -334,6 +475,29 @@ async function fixMicAccess(): Promise<boolean> {
   return true;
 }
 
+async function capturePrimaryScreenJpeg(): Promise<string | null> {
+  try {
+    const display = screen.getPrimaryDisplay();
+    const { width, height } = display.bounds;
+    const thumbW = Math.min(width, 1920);
+    const thumbH = Math.min(height, 1080);
+
+    const list = await desktopCapturer.getSources({
+      types: ["screen"],
+      thumbnailSize: { width: thumbW, height: thumbH },
+    });
+
+    const source =
+      list.find((s) => s.display_id === String(display.id)) ?? list[0];
+    if (!source?.thumbnail || source.thumbnail.isEmpty()) return null;
+
+    return source.thumbnail.toJPEG(75).toString("base64");
+  } catch (err) {
+    console.warn("[ghost] Screen capture failed:", err);
+    return null;
+  }
+}
+
 async function sampleBackdropLuminanceAsync(rect: {
   x: number;
   y: number;
@@ -412,8 +576,11 @@ function createMicHelperWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      backgroundThrottling: false,
     },
   });
+
+  micHelperWindow.webContents.setBackgroundThrottling(false);
 
   loadRoute(micHelperWindow, "/mic-helper");
 
@@ -437,22 +604,34 @@ function hideMicHelperWindow(): void {
 
 type PermissionKey = "accessibility" | "microphone" | "screen";
 
-function getPermissionStatus(): {
+async function getPermissionStatus(): Promise<{
   accessibility: boolean;
   microphone: boolean;
   screen: boolean;
-} {
+}> {
   if (process.platform !== "darwin") {
     return { accessibility: true, microphone: true, screen: true };
   }
 
   const mic = systemPreferences.getMediaAccessStatus("microphone");
-  const screenStatus = systemPreferences.getMediaAccessStatus("screen");
+  let screenGranted = systemPreferences.getMediaAccessStatus("screen") === "granted";
+
+  if (screenGranted) {
+    try {
+      const sources = await desktopCapturer.getSources({
+        types: ["screen"],
+        thumbnailSize: { width: 1, height: 1 },
+      });
+      screenGranted = sources.length > 0;
+    } catch {
+      screenGranted = false;
+    }
+  }
 
   return {
     accessibility: systemPreferences.isTrustedAccessibilityClient(false),
     microphone: mic === "granted",
-    screen: screenStatus === "granted",
+    screen: screenGranted,
   };
 }
 
@@ -504,12 +683,13 @@ function setupMediaPermissions(): void {
           audio: "loopback",
         });
       },
-      { useSystemPicker: true },
+      { useSystemPicker: false },
     );
   }
 }
 
 app.whenReady().then(async () => {
+  setDockIcon();
   setupMediaPermissions();
   const startupUrl = process.argv.find((arg) => arg.startsWith("ghost://"));
   if (startupUrl) handleDeepLink(startupUrl);
@@ -521,11 +701,15 @@ app.whenReady().then(async () => {
 
   ipcMain.handle("ghost:ensure-microphone", async () => fixMicAccess());
 
+  ipcMain.handle("ghost:get-openai-key", () => loadOpenAIKey());
+
   ipcMain.handle(
     "ghost:sample-backdrop",
     async (_event, rect: { x: number; y: number; width: number; height: number }) =>
       sampleBackdropLuminanceAsync(rect),
   );
+
+  ipcMain.handle("ghost:capture-screen", async () => capturePrimaryScreenJpeg());
 
   ipcMain.handle("ghost:ensure-audio-setup", async () => true);
 
@@ -542,19 +726,36 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.on("ghost:trigger-mock", () => {
+    micHelperWindow?.webContents.send("ghost:trigger-mock");
     dashboardWindow?.webContents.send("ghost:trigger-mock");
   });
 
-  ipcMain.on("ghost:live-transcript-push", (_event, payload) => {
+  ipcMain.on("ghost:request-live-transcript", () => {
+    micHelperWindow?.webContents.send("ghost:request-live-transcript");
+    dashboardWindow?.webContents.send("ghost:request-live-transcript");
+  });
+
+  /** Prefer mic-helper as transcription source; dashboard only as fallback. */
+  ipcMain.on("ghost:live-transcript-push", (event, payload) => {
+    const fromMicHelper =
+      micHelperWindow &&
+      !micHelperWindow.isDestroyed() &&
+      event.sender.id === micHelperWindow.webContents.id;
+    if (!fromMicHelper && micHelperWindow && !micHelperWindow.isDestroyed()) {
+      return;
+    }
     overlayWindow?.webContents.send("ghost:live-transcript", payload);
+    dashboardWindow?.webContents.send("ghost:live-transcript", payload);
   });
 
   ipcMain.on("ghost:session-listening", (_event, listening: boolean) => {
+    micHelperWindow?.webContents.send("ghost:session-listening", listening);
     dashboardWindow?.webContents.send("ghost:session-listening", listening);
     overlayWindow?.webContents.send("ghost:session-listening", listening);
   });
 
   ipcMain.on("ghost:clear-live-transcript", () => {
+    micHelperWindow?.webContents.send("ghost:clear-live-transcript");
     dashboardWindow?.webContents.send("ghost:clear-live-transcript");
   });
 
@@ -570,6 +771,10 @@ app.whenReady().then(async () => {
   }));
 
   ipcMain.handle("ghost:set-content-protection", (_event, enabled: boolean) => {
+    const limits = readPlanLimits();
+    if (enabled && !canDisableContentProtection(limits)) {
+      enabled = false;
+    }
     contentProtection = enabled;
     overlayWindow?.setContentProtection(enabled);
     return contentProtection;
@@ -588,7 +793,8 @@ app.whenReady().then(async () => {
   ipcMain.handle("ghost:overlay-ready", () => {
     if (overlayPendingShow) revealOverlay();
     if (sessionActive) {
-      overlayWindow?.webContents.send("ghost:session-started");
+      sendWhenReady(overlayWindow, "ghost:session-started");
+      sendWhenReady(micHelperWindow, "ghost:session-started");
     }
   });
 
@@ -612,6 +818,11 @@ app.whenReady().then(async () => {
 
   ipcMain.handle("ghost:show", () => showOverlay());
 
+  ipcMain.handle("ghost:trigger-shortcut-toggle", () => {
+    handleHideShowShortcut();
+    return true;
+  });
+
   ipcMain.handle("ghost:get-displays", () =>
     screen.getAllDisplays().map((d, i) => ({
       id: d.id,
@@ -628,6 +839,21 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle("ghost:start-session", async () => {
+    if (sessionActive) {
+      createDashboardWindow();
+      createOverlayWindow();
+      setOverlayMode("active");
+      showOverlay();
+      dashboardWindow?.show();
+      dashboardWindow?.focus();
+      return true;
+    }
+
+    const limits = readPlanLimits();
+    if (!canStartSessionFromLimits(limits)) {
+      return false;
+    }
+
     const micGranted = await requestMicAccess();
     sessionActive = true;
     createDashboardWindow();
@@ -637,9 +863,11 @@ app.whenReady().then(async () => {
     createOverlayWindow();
     setOverlayMode("active");
     showOverlay();
-    micHelperWindow?.webContents.send("ghost:session-started");
-    dashboardWindow?.webContents.send("ghost:session-started");
-    overlayWindow?.webContents.send("ghost:session-started");
+    sendWhenReady(micHelperWindow, "ghost:session-started");
+    sendWhenReady(dashboardWindow, "ghost:session-started");
+    sendWhenReady(overlayWindow, "ghost:session-started");
+    micHelperWindow?.webContents.setBackgroundThrottling(false);
+    dashboardWindow?.webContents.setBackgroundThrottling(false);
     if (!micGranted) {
       showMicHelperWindow();
     }
@@ -650,11 +878,21 @@ app.whenReady().then(async () => {
     sessionActive = false;
     overlayMode = "pill";
     closeOverlay();
+    micHelperWindow?.webContents.send("ghost:session-stopped");
     dashboardWindow?.webContents.send("ghost:session-stopped");
     return true;
   });
 
   ipcMain.handle("ghost:open-dashboard", () => {
+    createDashboardWindow();
+    return true;
+  });
+
+  ipcMain.handle("ghost:toggle-dashboard", () => {
+    if (dashboardWindow?.isVisible()) {
+      dashboardWindow.hide();
+      return false;
+    }
     createDashboardWindow();
     return true;
   });
@@ -670,6 +908,17 @@ app.whenReady().then(async () => {
     overlayWindow?.webContents.send("ghost:store-changed");
     return true;
   });
+
+  ipcMain.handle(
+    "ghost:sync-plan-limits",
+    (_event, state: PlanLimitsState) => {
+      writePlanLimits({
+        plan: state.plan ?? "free",
+        freeSessionsUsed: Math.max(0, state.freeSessionsUsed ?? 0),
+      });
+      return true;
+    },
+  );
 
   ipcMain.handle("ghost:quit", () => {
     app.quit();
@@ -728,10 +977,14 @@ app.on("open-url", (event, url) => {
 app.on("second-instance", (_event, argv) => {
   const url = argv.find((a) => a.startsWith("ghost://"));
   if (url) handleDeepLink(url);
+  if (process.platform === "darwin") app.dock?.show();
   if (dashboardWindow) {
+    dashboardWindow.show();
     if (dashboardWindow.isMinimized()) dashboardWindow.restore();
     dashboardWindow.focus();
+    return;
   }
+  createDashboardWindow();
 });
 
 app.on("will-quit", () => {

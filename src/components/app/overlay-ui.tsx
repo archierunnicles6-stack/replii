@@ -8,7 +8,7 @@ import type { PillThemeStyles } from "@/lib/pill-theme";
 export function GhostMark({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <Image
-      src="/ghost-logo.png"
+      src="/ghost-mark.png"
       alt=""
       width={20}
       height={20}

@@ -10,6 +10,7 @@ export interface LiveTranscriptPayload {
   interim: string;
   error: string | null;
   hearingAudio: boolean;
+  isSpeaking?: boolean;
   hasMic: boolean;
   hasSystemAudio: boolean;
   aiReady: boolean;
@@ -43,6 +44,7 @@ export interface GhostAPI {
   startSession: () => Promise<boolean>;
   stopSession: () => Promise<boolean>;
   openDashboard: () => Promise<boolean>;
+  toggleDashboard: () => Promise<boolean>;
   focusDashboard: (path?: string) => Promise<boolean>;
   quit: () => Promise<void>;
   getPermissionStatus: () => Promise<{
@@ -58,15 +60,21 @@ export interface GhostAPI {
   onClearSession: (callback: () => void) => () => void;
   onVisibility: (callback: (visible: boolean) => void) => () => void;
   onShortcutToggle: (callback: () => void) => () => void;
+  triggerShortcutToggle: () => Promise<boolean>;
   onSessionStarted: (callback: () => void) => () => void;
   onSessionStopped: (callback: () => void) => () => void;
   onNavigate: (callback: (path: string) => void) => () => void;
   onStoreChanged: (callback: () => void) => () => void;
   notifyStoreChanged: () => Promise<boolean>;
+  syncPlanLimits: (state: {
+    plan: string;
+    freeSessionsUsed: number;
+  }) => Promise<boolean>;
   onAuthCallback?: (callback: (url: string) => void) => () => void;
   openExternal?: (url: string) => Promise<void>;
   getDesktopAudioSources: () => Promise<Array<{ id: string; name: string }>>;
   ensureMicrophone: () => Promise<boolean>;
+  getOpenAIKey: () => Promise<string | undefined>;
   onMicGranted: (callback: () => void) => () => void;
   sampleBackdrop: (rect: {
     x: number;
@@ -74,6 +82,7 @@ export interface GhostAPI {
     width: number;
     height: number;
   }) => Promise<{ luminance: number; isDark: boolean }>;
+  captureScreen: () => Promise<string | null>;
   triggerMock: () => void;
   onTriggerMock: (callback: () => void) => () => void;
   ensureAudioSetup: () => Promise<boolean>;
@@ -83,6 +92,8 @@ export interface GhostAPI {
   onRequestMicPermission: (callback: () => void) => () => void;
   pushLiveTranscript: (state: LiveTranscriptPayload) => void;
   onLiveTranscript: (callback: (state: LiveTranscriptPayload) => void) => () => void;
+  requestLiveTranscript: () => void;
+  onRequestLiveTranscript: (callback: () => void) => () => void;
   setSessionListening: (listening: boolean) => void;
   onSessionListening: (callback: (listening: boolean) => void) => () => void;
   onClearLiveTranscript: (callback: () => void) => () => void;
@@ -100,6 +111,8 @@ export interface GhostAPI {
 }
 
 const ghostAPI: GhostAPI = {
+  syncPlanLimits: (state: { plan: string; freeSessionsUsed: number }) =>
+    ipcRenderer.invoke("ghost:sync-plan-limits", state),
   getSettings: () => ipcRenderer.invoke("ghost:get-settings"),
   setContentProtection: (enabled) =>
     ipcRenderer.invoke("ghost:set-content-protection", enabled),
@@ -117,6 +130,7 @@ const ghostAPI: GhostAPI = {
   startSession: () => ipcRenderer.invoke("ghost:start-session"),
   stopSession: () => ipcRenderer.invoke("ghost:stop-session"),
   openDashboard: () => ipcRenderer.invoke("ghost:open-dashboard"),
+  toggleDashboard: () => ipcRenderer.invoke("ghost:toggle-dashboard"),
   focusDashboard: (path) => ipcRenderer.invoke("ghost:focus-dashboard", path),
   quit: () => ipcRenderer.invoke("ghost:quit"),
   getPermissionStatus: () => ipcRenderer.invoke("ghost:get-permission-status"),
@@ -145,6 +159,8 @@ const ghostAPI: GhostAPI = {
     ipcRenderer.on("ghost:shortcut-toggle", handler);
     return () => ipcRenderer.removeListener("ghost:shortcut-toggle", handler);
   },
+  triggerShortcutToggle: () =>
+    ipcRenderer.invoke("ghost:trigger-shortcut-toggle"),
   onSessionStarted: (callback) => {
     const handler = () => callback();
     ipcRenderer.on("ghost:session-started", handler);
@@ -176,12 +192,14 @@ const ghostAPI: GhostAPI = {
     return sources.map(({ id, name }) => ({ id, name }));
   },
   ensureMicrophone: () => ipcRenderer.invoke("ghost:ensure-microphone"),
+  getOpenAIKey: () => ipcRenderer.invoke("ghost:get-openai-key"),
   onMicGranted: (callback) => {
     const handler = () => callback();
     ipcRenderer.on("ghost:mic-granted", handler);
     return () => ipcRenderer.removeListener("ghost:mic-granted", handler);
   },
   sampleBackdrop: (rect) => ipcRenderer.invoke("ghost:sample-backdrop", rect),
+  captureScreen: () => ipcRenderer.invoke("ghost:capture-screen"),
   triggerMock: () => {
     ipcRenderer.send("ghost:trigger-mock");
   },
@@ -207,6 +225,14 @@ const ghostAPI: GhostAPI = {
       callback(state);
     ipcRenderer.on("ghost:live-transcript", handler);
     return () => ipcRenderer.removeListener("ghost:live-transcript", handler);
+  },
+  requestLiveTranscript: () => {
+    ipcRenderer.send("ghost:request-live-transcript");
+  },
+  onRequestLiveTranscript: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on("ghost:request-live-transcript", handler);
+    return () => ipcRenderer.removeListener("ghost:request-live-transcript", handler);
   },
   setSessionListening: (listening) => {
     ipcRenderer.send("ghost:session-listening", listening);

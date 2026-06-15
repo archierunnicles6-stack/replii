@@ -6,7 +6,7 @@ export function AuthLayout() {
     <div className="flex min-h-screen bg-zinc-50">
       <div className="hidden w-1/2 flex-col justify-between bg-zinc-900 p-12 lg:flex">
         <div className="flex items-center gap-3">
-          <GhostLogo />
+          <GhostLogo variant="mark" className="h-8 w-8" />
           <span className="text-lg font-semibold text-white">Ghost</span>
         </div>
         <div>

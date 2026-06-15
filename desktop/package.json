@@ -8,13 +8,15 @@
     "dev": "node scripts/prepare-dev-app.mjs && node scripts/dev.mjs",
     "dev:raw": "electron-vite dev",
     "open-app": "node scripts/open-ghost-app.mjs",
+    "open-app:dev": "node scripts/open-ghost-app.mjs --dev",
     "setup:blackhole": "node scripts/setup-blackhole.mjs",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "package": "npm run build && electron-builder --mac --dir",
-    "package:mac": "npm run build && electron-builder --mac",
+    "icons": "python3 scripts/generate-app-icon.py",
+    "package": "npm run icons && npm run build && electron-builder --mac --dir",
+    "package:mac": "npm run icons && npm run build && electron-builder --mac",
     "fix:installed": "node scripts/sign-mac-app.mjs /Applications/Ghost.app",
-    "fix:dev": "node scripts/sign-mac-app.mjs .ghost-dev/Electron.app"
+    "test:audio": "node scripts/test-audio-suggestions.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",
@@ -47,7 +49,7 @@
       "gatekeeperAssess": false,
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Ghost needs microphone access to transcribe your voice during sales calls.",
-        "NSScreenCaptureDescription": "Ghost needs screen capture to hear your sales call audio from Zoom, Meet, or Teams."
+        "NSScreenCaptureDescription": "Ghost uses Screen Recording to capture call audio from Zoom, Meet, or Teams. Ghost does not view or record your screen."
       },
       "target": [
         "dmg",
@@ -59,12 +61,24 @@
       "contents": [
         { "x": 130, "y": 220 },
         { "x": 410, "y": 220, "type": "link", "path": "/Applications" },
-        { "x": 130, "y": 360, "type": "file", "path": "build/Install Ghost.command" }
+        { "x": 130, "y": 360, "type": "file", "path": "build/Install Ghost.command" },
+        { "x": 410, "y": 360, "type": "file", "path": "build/Open Ghost.command" }
       ]
     },
     "directories": {
       "output": "release"
     },
+    "extraResources": [
+      {
+        "from": ".env",
+        "to": ".env",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      }
+    ],
     "files": [
       "out/**/*"
     ]

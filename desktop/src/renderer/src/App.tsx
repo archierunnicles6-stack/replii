@@ -1,5 +1,7 @@
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuthBootstrap } from "./hooks/useAuthBootstrap";
+import { bootstrapOpenAIKey } from "./services/whisper";
 import { MicHelperApp } from "./mic/MicHelperApp";
 import { useAppStore } from "./store/useAppStore";
 import { WelcomePage } from "./pages/welcome/WelcomePage";
@@ -68,6 +70,10 @@ function AppRoutes() {
 
 export default function App() {
   useAuthBootstrap();
+
+  useEffect(() => {
+    void bootstrapOpenAIKey();
+  }, []);
 
   return (
     <HashRouter>

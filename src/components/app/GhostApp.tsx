@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { GhostLogo } from "@/components/GhostLogo";
 import { RecapScreen } from "@/components/app/RecapScreen";
 import {
   ControlButtons,
@@ -169,9 +170,7 @@ export function GhostApp() {
         <div className="relative z-10 flex min-h-screen flex-col">
           <header className="flex items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-2 text-sm text-white/60 hover:text-white">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ghost-500 text-xs font-bold text-white">
-                ◉
-              </span>
+              <GhostLogo variant="mark" className="h-7 w-7" />
               Ghost
             </Link>
             <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white/50 backdrop-blur-sm">

@@ -18,7 +18,7 @@ export function MicPermissionBanner() {
     return () => window.clearInterval(id);
   }, [refresh]);
 
-  if (!setup || setup.microphoneGranted || audioCaptureMode === "mock") return null;
+  if (!setup || setup.microphoneGranted) return null;
 
   const enableMic = async () => {
     setBusy(true);

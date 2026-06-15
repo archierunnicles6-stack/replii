@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { SettingsModal } from "./SettingsModal";
+import { SettingsModal, type SettingsSection } from "./SettingsModal";
 import { UserAvatar } from "../ui/UserAvatar";
 import { useAppStore } from "../../store/useAppStore";
 
@@ -14,17 +14,24 @@ export function DashboardTopBar({
   const navigate = useNavigate();
   const location = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const user = useAppStore((s) => s.user);
 
   const canGoBack = location.pathname !== "/";
 
   return (
-    <header className="drag-region relative flex h-[52px] shrink-0 items-center border-b border-zinc-200/70 bg-[#f7f8fa] px-4 pl-[72px] pr-4">
+    <header className="relative flex h-[52px] shrink-0 items-center border-b border-zinc-100 bg-white px-4 pl-[72px] pr-4">
+      {/* Draggable title-bar regions — keep interactive controls in no-drag layers */}
+      <div
+        className="drag-region absolute inset-y-0 left-0 w-[72px]"
+        aria-hidden
+      />
+
       <button
         type="button"
         onClick={() => (canGoBack ? navigate(-1) : undefined)}
         disabled={!canGoBack}
-        className={`no-drag absolute left-[72px] top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg transition-colors ${
+        className={`no-drag absolute left-[72px] top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg transition-colors ${
           canGoBack
             ? "text-zinc-400 hover:bg-zinc-200/60 hover:text-zinc-700"
             : "cursor-default text-zinc-300"
@@ -42,8 +49,8 @@ export function DashboardTopBar({
           </svg>
       </button>
 
-      <div className="no-drag mx-auto flex w-full max-w-[520px] items-center gap-3">
-        <div className="relative flex-1">
+      <div className="no-drag relative z-10 mx-auto flex w-full max-w-[520px] items-center gap-3">
+        <div className="relative min-w-0 flex-1">
           <svg
             className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
             fill="none"
@@ -58,18 +65,25 @@ export function DashboardTopBar({
             />
           </svg>
           <input
-            type="search"
+            type="text"
+            role="search"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search or ask anything..."
-            className="h-9 w-full rounded-full border border-zinc-200/80 bg-white pl-10 pr-4 text-[13px] text-zinc-800 outline-none transition-shadow placeholder:text-zinc-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+            spellCheck={false}
+            autoComplete="off"
+            autoCorrect="off"
+            className="no-drag h-9 w-full select-text rounded-full border border-zinc-200/80 bg-white pl-10 pr-4 text-[13px] text-zinc-900 caret-zinc-900 outline-none transition-shadow placeholder:text-zinc-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
           />
         </div>
 
         <div className="relative shrink-0">
           <button
             type="button"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => {
+              setSettingsSection("general");
+              setSettingsOpen(true);
+            }}
             className="shrink-0 overflow-hidden rounded-lg shadow-sm"
             aria-label="Open settings"
           >
@@ -81,7 +95,10 @@ export function DashboardTopBar({
             />
           </button>
           {settingsOpen && (
-            <SettingsModal onClose={() => setSettingsOpen(false)} />
+            <SettingsModal
+              initialSection={settingsSection}
+              onClose={() => setSettingsOpen(false)}
+            />
           )}
         </div>
       </div>

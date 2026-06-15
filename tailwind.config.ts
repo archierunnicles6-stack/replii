@@ -30,6 +30,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        serif: ["var(--font-instrument-serif)", "Georgia", "serif"],
       },
       animation: {
         "fade-up": "fadeUp 0.6s ease-out forwards",
