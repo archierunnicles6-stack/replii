@@ -3,13 +3,6 @@ import Link from "next/link";
 import { GhostLogo } from "./GhostLogo";
 import { MacDownloadLink } from "./MacDownloadLink";
 
-const navLinks = [
-  { label: "Product", href: "/#product" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Download", href: "/download" },
-];
-
 export function Navbar({ variant = "solid" }: { variant?: "landing" | "solid" }) {
   const isLanding = variant === "landing";
 
@@ -42,18 +35,6 @@ export function Navbar({ variant = "solid" }: { variant?: "landing" | "solid" })
             </>
           )}
         </Link>
-
-        <nav className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-[14px] font-medium text-[#5f6b7a] transition-colors hover:text-[#0a0a0a]"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
 
         <div className="flex items-center gap-3">
           <Link

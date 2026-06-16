@@ -1,7 +1,7 @@
 import { MAC_DOWNLOAD_FILENAME, MAC_DOWNLOAD_URL } from "@/lib/download";
 
 const buttonClassName =
-  "inline-flex h-[46px] items-center gap-2.5 rounded-[14px] bg-gradient-to-b from-[#6ea8ff] to-[#4b8bf5] px-6 text-[15px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(59,130,246,0.35),0_8px_28px_rgba(75,139,245,0.38)] transition-transform hover:scale-[1.02] active:scale-[0.98]";
+  "inline-flex h-11 items-center gap-2.5 rounded-full bg-[#0a0a0a] px-6 text-[15px] font-medium text-white transition-colors hover:bg-[#1a1a1a]";
 
 function AppleIcon() {
   return (
