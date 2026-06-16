@@ -1,0 +1,17 @@
+# Desktop app — not needed for Next.js deployment
+desktop/
+
+# Dependencies and build artifacts
+node_modules/
+.next/
+out/
+.tools/
+
+# Large binaries
+public/downloads/
+
+# Local env and tooling
+.env*
+!.env.example
+supabase/.temp/
+.git/
