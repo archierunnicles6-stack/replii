@@ -1,7 +1,12 @@
 import { MAC_DOWNLOAD_FILENAME, MAC_DOWNLOAD_URL } from "@/lib/download";
 
-const buttonClassName =
-  "inline-flex h-11 items-center gap-2.5 rounded-full bg-[#0a0a0a] px-6 text-[15px] font-medium text-white transition-colors hover:bg-[#1a1a1a]";
+const baseClassName =
+  "inline-flex items-center rounded-full bg-[#4b8bf5] font-medium text-white shadow-[0_4px_14px_rgba(75,139,245,0.35)] transition-colors hover:bg-[#3d7de8]";
+
+const sizeClassName = {
+  default: "h-11 gap-2.5 px-6 text-[15px]",
+  sm: "h-10 gap-2 px-4 text-[13px] sm:px-5 sm:text-[14px]",
+};
 
 function AppleIcon() {
   return (
@@ -13,9 +18,11 @@ function AppleIcon() {
 
 export function MacDownloadLink({
   className,
+  size = "default",
   children = "Get for Mac",
 }: {
   className?: string;
+  size?: "default" | "sm";
   children?: React.ReactNode;
 }) {
   const isLocal = MAC_DOWNLOAD_URL.startsWith("/");
@@ -24,7 +31,7 @@ export function MacDownloadLink({
     <a
       href={MAC_DOWNLOAD_URL}
       {...(isLocal ? { download: MAC_DOWNLOAD_FILENAME } : { target: "_blank", rel: "noopener noreferrer" })}
-      className={className ?? buttonClassName}
+      className={className ?? `${baseClassName} ${sizeClassName[size]}`}
     >
       <AppleIcon />
       {children}

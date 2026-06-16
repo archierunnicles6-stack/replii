@@ -43,7 +43,7 @@ export function Navbar({ variant = "solid" }: { variant?: "landing" | "solid" })
           >
             Log in
           </Link>
-          <MacDownloadLink className="inline-flex h-10 items-center gap-2 rounded-full bg-[#0a0a0a] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#1a1a1a] sm:px-5 sm:text-[14px]" />
+          <MacDownloadLink size="sm" />
         </div>
       </div>
     </header>
