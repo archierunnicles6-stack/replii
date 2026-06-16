@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { MacDownloadLink } from "@/components/MacDownloadLink";
 
 const SCREENS = [
   "Login & signup (email + Google)",
@@ -33,12 +34,9 @@ export default function DownloadPage() {
           </p>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <a
-              href="/downloads/Ghost.dmg"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-zinc-900 px-6 text-[14px] font-medium text-white transition-colors hover:bg-zinc-800"
-            >
+            <MacDownloadLink className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-zinc-900 px-6 text-[14px] font-medium text-white transition-colors hover:bg-zinc-800">
               Download Ghost for Mac
-            </a>
+            </MacDownloadLink>
             <Link
               href="/app"
               className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-6 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"

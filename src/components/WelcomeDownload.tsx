@@ -14,7 +14,9 @@ export function WelcomeDownload() {
         <div className="mt-8">
           <a
             href={MAC_DOWNLOAD_URL}
-            download={MAC_DOWNLOAD_FILENAME}
+            {...(MAC_DOWNLOAD_URL.startsWith("/")
+              ? { download: MAC_DOWNLOAD_FILENAME }
+              : { target: "_blank", rel: "noopener noreferrer" })}
             className="inline-flex h-11 items-center gap-2.5 rounded-full bg-[#0a0a0a] px-6 text-[14px] font-medium text-white transition-colors hover:bg-[#1a1a1a]"
           >
             <AppleIcon />
@@ -26,7 +28,7 @@ export function WelcomeDownload() {
           href="/download"
           className="mt-4 text-[13px] text-[#a1a1aa] underline underline-offset-[3px] transition-colors hover:text-[#71717a]"
         >
-          Download for Windows
+          Install guide &amp; troubleshooting
         </a>
       </div>
     </section>

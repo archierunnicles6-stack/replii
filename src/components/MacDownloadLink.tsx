@@ -18,10 +18,12 @@ export function MacDownloadLink({
   className?: string;
   children?: React.ReactNode;
 }) {
+  const isLocal = MAC_DOWNLOAD_URL.startsWith("/");
+
   return (
     <a
       href={MAC_DOWNLOAD_URL}
-      download={MAC_DOWNLOAD_FILENAME}
+      {...(isLocal ? { download: MAC_DOWNLOAD_FILENAME } : { target: "_blank", rel: "noopener noreferrer" })}
       className={className ?? buttonClassName}
     >
       <AppleIcon />
