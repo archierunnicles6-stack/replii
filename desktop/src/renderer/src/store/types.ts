@@ -80,6 +80,8 @@ export type MeetingStatus = "processing" | "ready" | "failed";
 export interface SummarySection {
   heading: string;
   items: string[];
+  /** When "paragraphs", items render as prose blocks instead of bullet points. */
+  format?: "paragraphs" | "bullets";
 }
 
 export interface MeetingRecord {
@@ -359,11 +361,6 @@ export const DEMO_MEETINGS: MeetingRecord[] = [
 export function isUserMeeting(meeting: MeetingRecord): boolean {
   return meeting.id.startsWith("mtg-");
 }
-
-/** Demo sessions shown on Activity when the user has no saved meetings yet. */
-export const ACTIVITY_PLACEHOLDER_MEETINGS = DEMO_MEETINGS.filter(
-  (m) => m.id !== "demo-welcome",
-);
 
 export const DEFAULT_MEETINGS: MeetingRecord[] = [];
 

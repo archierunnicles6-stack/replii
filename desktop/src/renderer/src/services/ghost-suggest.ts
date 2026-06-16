@@ -114,14 +114,50 @@ function parseStreamChunk(line: string): string | null {
   }
 }
 
+function appendCoachingContext(base: string, coachingContext?: string): string {
+  if (!coachingContext?.trim()) return base;
+  return `${base}\n\n${coachingContext.trim()}`;
+}
+
 function buildSystemPrompt(
   product: string,
   objections: string,
   coachingContext?: string,
 ): string {
   const base = suggestSystemPrompt(product, objections);
-  if (!coachingContext?.trim()) return base;
-  return `${base}\n\nCoaching style for this call:\n${coachingContext.trim()}`;
+  return appendCoachingContext(base, coachingContext);
+}
+
+function buildStreamSystemPrompt(
+  product: string,
+  objections: string,
+  coachingContext: string | undefined,
+  fast: boolean,
+  isQuestion: boolean,
+): string {
+  if (isQuestion) {
+    return appendCoachingContext(
+      `Live sales call copilot. Product: ${product}. The prospect asked a direct question. Reply with ONLY the exact words the rep should say to answer it — under 18 words. No quotes, labels, or preamble.`,
+      coachingContext,
+    );
+  }
+
+  if (fast) {
+    return appendCoachingContext(
+      `Live sales call copilot. Product: ${product}. Reply with ONLY the exact words the rep should say next (under 18 words). No quotes, labels, or preamble.`,
+      coachingContext,
+    );
+  }
+
+  return appendCoachingContext(
+    `You are a real-time meeting copilot embedded in an invisible overlay.
+The rep sells: ${product}
+Known objections: ${objections}
+
+Give ONE thing to say right now — under 20 words, exact words they can say verbatim.
+No preamble, no bullet lists, no JSON.`,
+    coachingContext,
+  );
 }
 
 function buildPipelineUserPrompt(
@@ -259,17 +295,13 @@ export async function streamGhostSuggestion(
     ? ""
     : (options.screenContent ?? (await getScreenContext()));
 
-  const system = isQuestion
-    ? `Live sales call copilot. Product: ${product}. The prospect asked a direct question. Reply with ONLY the exact words the rep should say to answer it — under 18 words. No quotes, labels, or preamble.`
-    : fast
-      ? `Live sales call copilot. Product: ${product}. Reply with ONLY the exact words the rep should say next (under 18 words). No quotes, labels, or preamble.`
-      : `You are a real-time meeting copilot embedded in an invisible overlay.
-The rep sells: ${product}
-Known objections: ${objections}
-${options.coachingContext?.trim() ? `\nCoaching style:\n${options.coachingContext.trim()}` : ""}
-
-Give ONE thing to say right now — under 20 words, exact words they can say verbatim.
-No preamble, no bullet lists, no JSON.`;
+  const system = buildStreamSystemPrompt(
+    product,
+    objections,
+    options.coachingContext,
+    fast,
+    isQuestion,
+  );
 
   const userContent = isQuestion
     ? `QUESTION: "${prospectText}"\n\nGive the exact answer the rep should say right now. One short sentence they can read verbatim.`

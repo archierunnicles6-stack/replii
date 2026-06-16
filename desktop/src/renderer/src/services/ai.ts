@@ -221,6 +221,7 @@ export async function askGhost(
 export interface SummarySection {
   heading: string;
   items: string[];
+  format?: "paragraphs" | "bullets";
 }
 
 export interface MeetingSummaryResult {
@@ -232,23 +233,57 @@ export interface MeetingSummaryResult {
   dealScore?: number;
 }
 
+export const EMPTY_SESSION_PLACEHOLDER: MeetingSummaryResult = {
+  title: "Live session",
+  company: "Meeting",
+  sections: [
+    {
+      heading: "Summary",
+      format: "paragraphs",
+      items: [
+        "This session ran for approximately 42 minutes and covered an initial discovery conversation with a mid-market SaaS prospect evaluating sales coaching tools for their 18-person revenue team. The prospect described ongoing challenges with new rep ramp time, inconsistent discovery quality across the team, and limited visibility into live deal conversations without relying on post-call recordings.",
+        "The discussion opened with context on their current stack — they use Gong for call recording and Salesforce for CRM, but reps rarely review recordings and managers lack bandwidth for live coaching. The prospect expressed strong interest in **real-time assistance during calls** rather than retrospective analysis, particularly for handling pricing objections and competitive comparisons against incumbents in their space.",
+        "Key pain points surfaced around quota attainment: three of their eight new hires from the last quarter are still below 60% of target after 90 days. They estimated the cost of slow ramp at roughly **$180K per underperforming rep annually** when factoring in salary, lost pipeline, and manager time spent on remediation. Leadership has flagged rep productivity as a Q3 priority.",
+        "On objections, the prospect raised concerns about **rep adoption** (whether sellers would actually use an in-call tool), **data security** (SOC 2 and GDPR requirements), and **overlap with Gong** (whether Ghost replaces or complements their existing investment). These were acknowledged and partially addressed during the call, though a technical deep-dive with RevOps was deferred.",
+        "The conversation ended on a positive note — the prospect agreed that live coaching during calls addresses a gap their current tools do not fill. They requested a follow-up demo focused on the invisible overlay workflow and asked for customer references from similar-sized B2B SaaS teams.",
+      ],
+    },
+    {
+      heading: "Action Items",
+      items: [
+        "Send security one-pager and SOC 2 summary to prospect's RevOps contact by Thursday",
+        "Schedule 45-minute product demo with Head of Revenue Ops and two senior AEs",
+        "Prepare Gong differentiation doc highlighting live coaching vs post-call review",
+        "Share two customer case studies from 15–25 rep SaaS teams",
+      ],
+    },
+    {
+      heading: "Key Discussion Points",
+      items: [
+        "18-rep team using Gong + Salesforce; low adoption of post-call review workflows",
+        "New rep ramp averaging 3+ months to quota; 3 of 8 recent hires under 60% attainment",
+        "Strong interest in invisible overlay and real-time objection handling during live calls",
+        "Budget cycle aligns with Q3 planning — decision timeline estimated at 4–6 weeks",
+        "Competitive evaluation includes Gong (incumbent) and one unnamed startup alternative",
+      ],
+    },
+  ],
+  nextSteps: [
+    "Send security one-pager before end of week",
+    "Schedule demo with RevOps stakeholder",
+    "Follow up on Gong comparison with differentiation doc",
+  ],
+  objections: ["Rep adoption", "Data security / SOC 2", "Overlap with Gong"],
+  dealScore: 58,
+};
+
 function formatFullTranscript(transcript: TranscriptLine[]): string {
   return transcript.map((l) => `${l.speaker}: ${l.text}`).join("\n");
 }
 
 function mockMeetingSummary(transcript: TranscriptLine[]): MeetingSummaryResult {
   if (transcript.length === 0) {
-    return {
-      title: "Live session",
-      company: "Meeting",
-      sections: [
-        {
-          heading: "Summary",
-          items: ["No transcript was captured during this session."],
-        },
-      ],
-      nextSteps: [],
-    };
+    return EMPTY_SESSION_PLACEHOLDER;
   }
 
   const highlights = transcript
@@ -377,7 +412,13 @@ ${fullTranscript || "(empty)"}`;
 
 function sectionsToPlainText(sections: SummarySection[]): string {
   return sections
-    .map((s) => `${s.heading}\n${s.items.map((i) => `• ${i}`).join("\n")}`)
+    .map((s) => {
+      const body =
+        s.format === "paragraphs"
+          ? s.items.join("\n\n")
+          : s.items.map((i) => `• ${i}`).join("\n");
+      return `${s.heading}\n${body}`;
+    })
     .join("\n\n");
 }
 

@@ -1,7 +1,13 @@
 import { ActionIcon, KeyHint, QUICK_ACTIONS } from "../../overlay/overlay-ui";
 import { GhostLogo } from "../ui";
 
-export function OverlayPreview() {
+export function OverlayPreview({
+  showTagline = true,
+  overlayVisible = true,
+}: {
+  showTagline?: boolean;
+  overlayVisible?: boolean;
+}) {
   return (
     <div className="flex w-full max-w-[480px] shrink-0 flex-col items-center">
       <div className="flex items-center gap-0.5 rounded-full border border-black/[0.08] bg-white/90 px-1.5 py-1 shadow-[0_4px_24px_rgba(0,0,0,0.10)] backdrop-blur-xl">
@@ -20,8 +26,17 @@ export function OverlayPreview() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </span>
-        <span className="mr-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/[0.05]">
-          <span className="inline-block h-2.5 w-2.5 rounded-[2px] bg-gray-600" />
+        <span
+          className={`mr-0.5 flex h-6 w-6 items-center justify-center rounded-full transition-colors ${
+            overlayVisible ? "bg-[#3b82f6]/15" : "bg-black/[0.05]"
+          }`}
+          aria-hidden
+        >
+          <span
+            className={`inline-block h-2.5 w-2.5 rounded-[2px] transition-colors ${
+              overlayVisible ? "bg-[#3b82f6]" : "bg-gray-400"
+            }`}
+          />
         </span>
       </div>
 
@@ -100,11 +115,13 @@ export function OverlayPreview() {
         </div>
       </div>
 
-      <p className="mt-7 text-center text-[15px] font-semibold tracking-[-0.01em] text-zinc-400">
-        Real-time sales coach,
-        <br />
-        always ready to help
-      </p>
+      {showTagline ? (
+        <p className="mt-7 text-center text-[15px] font-semibold tracking-[-0.01em] text-zinc-400">
+          Real-time sales coach,
+          <br />
+          always ready to help
+        </p>
+      ) : null}
     </div>
   );
 }

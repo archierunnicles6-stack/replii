@@ -1,100 +1,83 @@
 import Link from "next/link";
 import { GhostLogo } from "./GhostLogo";
 
+const columns = [
+  {
+    title: "Resources",
+    links: [
+      { label: "Desktop", href: "/download", badge: "New" },
+      { label: "Manifesto", href: "/#about" },
+      { label: "Press", href: "mailto:press@ghost.ai" },
+      { label: "Bug Bounty", href: "mailto:security@ghost.ai" },
+    ],
+  },
+  {
+    title: "Support",
+    links: [
+      { label: "Help Center", href: "/#faq" },
+      { label: "Contact Us", href: "mailto:support@ghost.ai" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy Policy", href: "/legal/privacy" },
+      { label: "Terms of Service", href: "/legal/terms" },
+      { label: "Subprocessors", href: "/legal/privacy" },
+    ],
+  },
+];
+
 export function Footer() {
   return (
-    <footer className="border-t border-zinc-200 bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="flex flex-col gap-10 md:flex-row md:justify-between">
-          <div>
-            <Link href="/" className="flex items-center gap-2">
-              <GhostLogo />
-              <span className="text-[15px] font-semibold">Ghost</span>
-            </Link>
-            <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-zinc-500">
-              Live AI coaching for sales calls. Real-time suggestions, invisible
-              overlay, no bots in your meetings.
-            </p>
-          </div>
+    <footer className="bg-[#f7f8fa]">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-6 py-14 md:flex-row md:items-start md:justify-between md:py-16">
+        <Link href="/" className="flex items-center gap-2.5">
+          <GhostLogo className="h-6 w-6" />
+          <span className="text-[16px] font-semibold tracking-[-0.01em] text-[#0a0a0a]">
+            Ghost
+          </span>
+        </Link>
 
-          <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
-            <div>
-              <p className="text-[12px] font-semibold uppercase tracking-wider text-zinc-400">
-                Product
+        <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 sm:gap-16">
+          {columns.map((col) => (
+            <div key={col.title}>
+              <p className="text-[14px] font-semibold text-[#0a0a0a]">
+                {col.title}
               </p>
-              <ul className="mt-4 space-y-2.5">
-                {["How it works", "Features", "Pricing", "Download"].map(
-                  (item) => (
-                    <li key={item}>
-                      <Link
-                        href={
-                          item === "Pricing"
-                            ? "/pricing"
-                            : item === "Download"
-                              ? "#download"
-                              : `#${item.toLowerCase().replace(/ /g, "-")}`
-                        }
-                        className="text-[13px] text-zinc-500 transition-colors hover:text-zinc-900"
+              <ul className="mt-4 space-y-3">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    {link.href.startsWith("mailto:") ? (
+                      <a
+                        href={link.href}
+                        className="inline-flex items-center gap-2 text-[14px] text-[#5f6b7a] transition-colors hover:text-[#0a0a0a]"
                       >
-                        {item}
+                        {link.label}
+                        {"badge" in link && link.badge ? (
+                          <span className="rounded-full bg-[#4b8bf5] px-2 py-0.5 text-[10px] font-medium text-white">
+                            {link.badge}
+                          </span>
+                        ) : null}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="inline-flex items-center gap-2 text-[14px] text-[#5f6b7a] transition-colors hover:text-[#0a0a0a]"
+                      >
+                        {link.label}
+                        {"badge" in link && link.badge ? (
+                          <span className="rounded-full bg-[#4b8bf5] px-2 py-0.5 text-[10px] font-medium text-white">
+                            {link.badge}
+                          </span>
+                        ) : null}
                       </Link>
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-            <div>
-              <p className="text-[12px] font-semibold uppercase tracking-wider text-zinc-400">
-                Company
-              </p>
-              <ul className="mt-4 space-y-2.5">
-                {["About", "Blog", "Careers", "Contact"].map((item) => (
-                  <li key={item}>
-                    <span className="cursor-default text-[13px] text-zinc-400">
-                      {item}
-                    </span>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
-            <div>
-              <p className="text-[12px] font-semibold uppercase tracking-wider text-zinc-400">
-                Legal
-              </p>
-              <ul className="mt-4 space-y-2.5">
-                <li>
-                  <Link
-                    href="/legal/privacy"
-                    className="text-[13px] text-zinc-500 transition-colors hover:text-zinc-900"
-                  >
-                    Privacy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/legal/terms"
-                    className="text-[13px] text-zinc-500 transition-colors hover:text-zinc-900"
-                  >
-                    Terms
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/legal/acceptable-use"
-                    className="text-[13px] text-zinc-500 transition-colors hover:text-zinc-900"
-                  >
-                    Acceptable Use
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-12 border-t border-zinc-100 pt-8">
-          <p className="text-[12px] text-zinc-400">
-            © {new Date().getFullYear()} Ghost. All rights reserved.
-          </p>
+          ))}
         </div>
       </div>
     </footer>

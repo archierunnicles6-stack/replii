@@ -11,6 +11,8 @@ const ghostApp = path.join(ghostDevDir, "Ghost.app");
 const ghostExec = path.join(ghostApp, "Contents", "MacOS", "Electron");
 
 const env = { ...process.env };
+// Cursor sets this and breaks Electron's main-process APIs.
+delete env.ELECTRON_RUN_AS_NODE;
 
 if (process.platform === "darwin" && existsSync(ghostExec)) {
   signMacApp(ghostApp);

@@ -95,17 +95,30 @@ function SummaryView({
               </button>
             )}
           </div>
-          <ul className="space-y-3">
-            {section.items.map((item, i) => (
-              <li
-                key={i}
-                className="flex gap-3 text-[15px] leading-relaxed text-zinc-700"
-              >
-                <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-zinc-400" />
-                <span>{renderItemText(item)}</span>
-              </li>
-            ))}
-          </ul>
+          {section.format === "paragraphs" ? (
+            <div className="space-y-4">
+              {section.items.map((item, i) => (
+                <p
+                  key={i}
+                  className="text-[15px] leading-relaxed text-zinc-700"
+                >
+                  {renderItemText(item)}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {section.items.map((item, i) => (
+                <li
+                  key={i}
+                  className="flex gap-3 text-[15px] leading-relaxed text-zinc-700"
+                >
+                  <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-zinc-400" />
+                  <span>{renderItemText(item)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       ))}
     </div>

@@ -22,7 +22,7 @@ CORNER_RADIUS = int(SHAPE * 0.223)  # ~184px, matches common macOS template
 
 
 def make_macos_icon(src: Image.Image) -> Image.Image:
-    content = src.convert("RGB").resize((SHAPE, SHAPE), Image.Resampling.LANCZOS)
+    content = src.convert("RGBA").resize((SHAPE, SHAPE), Image.Resampling.LANCZOS)
 
     mask = Image.new("L", (SHAPE, SHAPE), 0)
     ImageDraw.Draw(mask).rounded_rectangle(
@@ -31,6 +31,10 @@ def make_macos_icon(src: Image.Image) -> Image.Image:
 
     shaped = Image.new("RGBA", (SHAPE, SHAPE), (0, 0, 0, 0))
     shaped.paste(content, (0, 0), mask)
+    # Preserve source transparency inside the squircle.
+    src_alpha = content.split()[3]
+    shaped_alpha = Image.composite(src_alpha, Image.new("L", (SHAPE, SHAPE), 0), mask)
+    shaped.putalpha(shaped_alpha)
 
     # Subtle drop shadow like native app icons
     shadow = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
@@ -64,7 +68,7 @@ def main() -> None:
     if source is None:
         raise SystemExit("No icon source image found")
 
-    raw = Image.open(source).convert("RGB")
+    raw = Image.open(source).convert("RGBA")
     if raw.width != 1024 or raw.height != 1024:
         raw = raw.resize((1024, 1024), Image.Resampling.LANCZOS)
 

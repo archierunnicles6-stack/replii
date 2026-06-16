@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
+  clampCompanyInfo,
+  DEFAULT_COMPANY_INFO,
+  type CompanyInfo,
+} from "../lib/company-info";
+import {
   applyAccountProfile,
   createDefaultAccountProfile,
   extractAccountProfile,
@@ -64,6 +69,7 @@ interface AppState {
   plan: Plan;
   activeMode: SalesMode;
   customSystemPrompt: string;
+  companyInfo: CompanyInfo;
   knowledgeFiles: string[];
   settings: UserSettings;
   meetings: MeetingRecord[];
@@ -90,6 +96,7 @@ interface AppState {
   setOnboardingStep: (step: number) => void;
   setActiveMode: (mode: SalesMode) => void;
   setCustomSystemPrompt: (prompt: string) => void;
+  updateCompanyInfo: (partial: Partial<CompanyInfo>) => void;
   addKnowledgeFile: (name: string) => void;
   removeKnowledgeFile: (name: string) => void;
   updateSettings: (partial: Partial<UserSettings>) => void;
@@ -132,6 +139,7 @@ export const useAppStore = create<AppState>()(
       plan: "free" as Plan,
       activeMode: "sales",
       customSystemPrompt: SALES_MODES[0].systemPrompt,
+      companyInfo: { ...DEFAULT_COMPANY_INFO },
       knowledgeFiles: [],
       settings: DEFAULT_SETTINGS,
       meetings: DEFAULT_MEETINGS,
@@ -248,9 +256,20 @@ export const useAppStore = create<AppState>()(
       setActiveMode: (mode) => {
         const config = SALES_MODES.find((m) => m.id === mode) ?? SALES_MODES[0];
         set({ activeMode: mode, customSystemPrompt: config.systemPrompt });
+        notifyAppStoreChanged();
       },
 
-      setCustomSystemPrompt: (prompt) => set({ customSystemPrompt: prompt }),
+      setCustomSystemPrompt: (prompt) => {
+        set({ customSystemPrompt: prompt });
+        notifyAppStoreChanged();
+      },
+
+      updateCompanyInfo: (partial) => {
+        set((s) => ({
+          companyInfo: clampCompanyInfo({ ...s.companyInfo, ...partial }),
+        }));
+        notifyAppStoreChanged();
+      },
 
       addKnowledgeFile: (name) =>
         set((s) => ({
@@ -279,7 +298,11 @@ export const useAppStore = create<AppState>()(
       setPlan: (plan) => {
         set((s) => {
           const updates: Partial<AppState> = { plan };
-          const invisible = normalizedInvisibleSetting(plan, s.settings.invisible);
+          let invisible = s.settings.invisible;
+          if (plan === "undetectable" && s.plan !== "undetectable") {
+            invisible = true;
+          }
+          invisible = normalizedInvisibleSetting(plan, invisible);
           if (invisible !== s.settings.invisible) {
             updates.settings = { ...s.settings, invisible };
           }
@@ -353,7 +376,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "ghost-app-storage",
-      version: 7,
+      version: 8,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
         if (version < 5) {
@@ -380,6 +403,22 @@ export const useAppStore = create<AppState>()(
           }
           state.accountProfiles = profiles;
         }
+        if (version < 8) {
+          const profiles =
+            (state.accountProfiles as AccountProfiles | undefined) ?? {};
+          for (const id of Object.keys(profiles)) {
+            const profile = profiles[id];
+            if (!profile.companyInfo) {
+              profiles[id] = {
+                ...profile,
+                companyInfo: { ...DEFAULT_COMPANY_INFO },
+              };
+            }
+          }
+          if (!state.companyInfo) {
+            state.companyInfo = { ...DEFAULT_COMPANY_INFO };
+          }
+        }
         return state as AppState;
       },
       partialize: (state) => {
@@ -399,6 +438,7 @@ export const useAppStore = create<AppState>()(
           plan: state.plan,
           activeMode: state.activeMode,
           customSystemPrompt: state.customSystemPrompt,
+          companyInfo: state.companyInfo,
           knowledgeFiles: state.knowledgeFiles,
           settings: state.settings,
           meetings: state.meetings,

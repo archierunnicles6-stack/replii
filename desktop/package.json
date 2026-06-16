@@ -13,8 +13,8 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "icons": "python3 scripts/generate-app-icon.py",
-    "package": "npm run icons && npm run build && electron-builder --mac --dir",
-    "package:mac": "npm run icons && npm run build && electron-builder --mac",
+    "package": "node scripts/ensure-icon.mjs && npm run build && electron-builder --mac --dir",
+    "package:mac": "node scripts/ensure-icon.mjs && npm run build && electron-builder --mac",
     "fix:installed": "node scripts/sign-mac-app.mjs /Applications/Ghost.app",
     "test:audio": "node scripts/test-audio-suggestions.mjs"
   },

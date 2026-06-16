@@ -24,6 +24,10 @@ export function PaywallPage() {
   });
 
   useEffect(() => {
+    void window.ghost?.setDashboardLayout?.("paywall");
+  }, []);
+
+  useEffect(() => {
     if (!isAuthenticated) {
       navigate("/auth", { replace: true });
       return;
@@ -61,10 +65,10 @@ export function PaywallPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-y-auto bg-[#f7f8fa]">
+    <div className="no-drag relative flex h-screen max-h-screen w-full flex-col overflow-y-auto overscroll-contain bg-[#f5f5f7]">
       <BackButton to="/try" />
 
-      <div className="mx-auto flex w-full max-w-[900px] flex-1 flex-col items-center justify-center px-8 py-12">
+      <div className="mx-auto flex min-h-full w-full max-w-[820px] flex-1 flex-col items-center justify-start px-8 pb-8 pt-14">
         {error ? (
           <p className="mb-6 text-center text-[13px] text-red-600">{error}</p>
         ) : null}

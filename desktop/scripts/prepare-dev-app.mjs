@@ -18,8 +18,19 @@ if (process.platform !== "darwin") {
   process.exit(0);
 }
 
-if (existsSync(iconScript)) {
-  execSync(`python3 "${iconScript}"`, { stdio: "inherit" });
+function tryGenerateIcons() {
+  const iconSource = path.join(desktopRoot, "build/icon-source.png");
+  const iconPng = path.join(desktopRoot, "build/icon.png");
+  if (!existsSync(iconScript)) return;
+  if (!existsSync(iconSource) && !existsSync(iconPng)) {
+    console.warn("[ghost] Skipping icon generation — add desktop/build/icon-source.png");
+    return;
+  }
+  try {
+    execSync(`python3 "${iconScript}"`, { stdio: "inherit" });
+  } catch {
+    console.warn("[ghost] Icon generation skipped (install Xcode CLT + Pillow for icons)");
+  }
 }
 
 const require = createRequire(import.meta.url);
@@ -50,9 +61,7 @@ if (existsSync(stampFile) && (existsSync(destApp) || existsSync(legacyDevApp))) 
   ensureDevAppBundle();
   const stamp = readFileSync(stampFile, "utf8");
   if (stamp === electronVersion) {
-    if (existsSync(iconScript)) {
-      execSync(`python3 "${iconScript}"`, { stdio: "inherit" });
-    }
+    tryGenerateIcons();
     installAppIcon(destApp);
     writeFileSync(iconStampFile, iconSourceStamp());
     signMacApp(destApp);

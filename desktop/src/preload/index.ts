@@ -25,7 +25,7 @@ export interface GhostAPI {
     sessionActive: boolean;
     useCallAudio?: boolean;
   }>;
-  setContentProtection: (enabled: boolean) => Promise<boolean>;
+  setContentProtection: (enabled: boolean, plan?: string) => Promise<boolean>;
   resize: (width: number, height: number) => Promise<void>;
   setOverlayMode: (mode: "pill" | "active") => Promise<void>;
   setIgnoreMouseEvents: (ignore: boolean, options?: { forward?: boolean }) => Promise<void>;
@@ -55,7 +55,7 @@ export interface GhostAPI {
   openPermissionSettings: (
     key: "accessibility" | "microphone" | "screen",
   ) => Promise<boolean>;
-  setDashboardLayout: (layout: "onboarding" | "dashboard") => Promise<boolean>;
+  setDashboardLayout: (layout: "onboarding" | "dashboard" | "paywall") => Promise<boolean>;
   onAssist: (callback: () => void) => () => void;
   onClearSession: (callback: () => void) => () => void;
   onVisibility: (callback: (visible: boolean) => void) => () => void;
@@ -114,8 +114,8 @@ const ghostAPI: GhostAPI = {
   syncPlanLimits: (state: { plan: string; freeSessionsUsed: number }) =>
     ipcRenderer.invoke("ghost:sync-plan-limits", state),
   getSettings: () => ipcRenderer.invoke("ghost:get-settings"),
-  setContentProtection: (enabled) =>
-    ipcRenderer.invoke("ghost:set-content-protection", enabled),
+  setContentProtection: (enabled, plan) =>
+    ipcRenderer.invoke("ghost:set-content-protection", enabled, plan),
   resize: (width, height) => ipcRenderer.invoke("ghost:resize", width, height),
   setOverlayMode: (mode) => ipcRenderer.invoke("ghost:set-overlay-mode", mode),
   setIgnoreMouseEvents: (ignore, options) =>

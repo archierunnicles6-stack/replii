@@ -5,9 +5,9 @@ import { MeetingSummaryWorker } from "../../components/MeetingSummaryWorker";
 import { DashboardTopBar } from "../../components/dashboard/DashboardTopBar";
 import { DashboardHeader } from "../../components/dashboard/DashboardHeader";
 import { UpgradeModal } from "../../components/pricing/UpgradeModal";
+import { useContentProtectionSync } from "../../hooks/useContentProtectionSync";
 import { useStartGhostSession } from "../../hooks/useStartGhostSession";
 import { rehydrateAppStoreFromStorage, syncPlanLimitsToMain, useAppStore } from "../../store/useAppStore";
-import { effectiveContentProtection } from "../../store/types";
 
 const SUB_PAGE_PATHS: string[] = ["/meetings"];
 
@@ -16,17 +16,14 @@ export function DashboardLayout() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const { setSessionActive, plan, settings } = useAppStore();
+  const { setSessionActive } = useAppStore();
   const { startSession, canStart, sessionActive, sessionsRemaining, isPaid } =
     useStartGhostSession();
 
   const isSubPage = SUB_PAGE_PATHS.some((p) => location.pathname.startsWith(p));
   const showMainHeader = !isSubPage;
 
-  useEffect(() => {
-    const protected_ = effectiveContentProtection(plan, settings.invisible);
-    void window.ghost?.setContentProtection(protected_);
-  }, [plan, settings.invisible]);
+  useContentProtectionSync();
 
   useEffect(() => {
     void window.ghost?.setDashboardLayout?.("dashboard");

@@ -1,85 +1,154 @@
-import { GhostLogo } from "./GhostLogo";
+import { lightPillTheme } from "@/lib/pill-theme";
 
 export function OverlayMockup({ className = "" }: { className?: string }) {
   return (
+    <div className={`flex flex-col items-center gap-3 ${className}`}>
+      <ControlBar />
+      <ResponsePanel />
+    </div>
+  );
+}
+
+function ControlBar() {
+  return (
     <div
-      className={`overflow-hidden rounded-2xl border border-black/10 bg-zinc-950 shadow-2xl shadow-zinc-900/20 ${className}`}
+      className="flex items-center gap-3 rounded-full px-3 py-2"
+      style={{
+        background: "rgba(255, 255, 255, 0.85)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255, 255, 255, 0.9)",
+        boxShadow: "0 4px 24px rgba(0, 0, 0, 0.08)",
+      }}
     >
-      <div className="flex items-center gap-1.5 border-b border-white/5 bg-[#1e1e22] px-4 py-2.5">
-        <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-        <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-        <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+      <div className="flex items-center gap-2 rounded-full bg-[#3b82f6] px-2.5 py-1.5">
+        <MicIcon />
+        <span className="text-[12px] font-medium tabular-nums text-white">
+          00:00
+        </span>
       </div>
-      <div className="overflow-hidden bg-[#1a1a1f]">
-        {/* Fake meeting background */}
-        <div className="relative aspect-[16/10] bg-gradient-to-br from-zinc-800 to-zinc-900 p-6">
-          <div className="absolute inset-0 opacity-30">
-            <div className="grid h-full grid-cols-2 gap-3 p-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="rounded-lg bg-zinc-700/50"
-                  style={{ height: i <= 2 ? "60%" : "40%" }}
-                />
-              ))}
-            </div>
-          </div>
 
-          {/* Ghost overlay pill */}
-          <div className="absolute left-4 top-4 z-10">
-            <div className="flex items-center gap-0.5 rounded-full border border-white/10 bg-[#1C1C24] px-1 py-1 shadow-lg">
-              <div className="px-1.5">
-                <GhostLogo variant="mark" className="h-4 w-4" />
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-emerald-400">
-                <span className="inline-block h-1.5 w-1.5 animate-pulse-soft rounded-full bg-emerald-400" />
-                Live · 12:34
-              </div>
-              <div className="mx-0.5 h-4 w-px bg-white/10" />
-              <button className="px-2 text-[11px] text-white/40">⌃</button>
-            </div>
+      <div className="hidden items-center gap-4 sm:flex">
+        <span className="text-[12px] text-[#52525b]">
+          Ask AI{" "}
+          <kbd className="ml-0.5 rounded bg-[#f4f4f5] px-1 py-0.5 text-[10px] font-medium text-[#71717a]">
+            ⌘ ↵
+          </kbd>
+        </span>
+        <span className="text-[12px] text-[#52525b]">
+          Show/Hide{" "}
+          <kbd className="ml-0.5 rounded bg-[#f4f4f5] px-1 py-0.5 text-[10px] font-medium text-[#71717a]">
+            ⌘ \
+          </kbd>
+        </span>
+      </div>
 
-            {/* Suggestion panel */}
-            <div className="mt-1.5 w-[220px] rounded-[14px] border border-white/10 bg-[#1C1C24] p-3">
-              <div className="rounded-[10px] border border-ghost-500/25 bg-ghost-500/10 p-2.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-ghost-400">
-                  Say this
-                </p>
-                <p className="mt-1 text-[12px] leading-relaxed text-white/85">
-                  &ldquo;What would need to be true for you to move forward this
-                  quarter?&rdquo;
-                </p>
-              </div>
-              <div className="mt-2.5">
-                <div className="mb-1 flex justify-between text-[10px] text-white/35">
-                  <span>Deal health</span>
-                  <span className="font-medium text-white/60">72</span>
-                </div>
-                <div className="h-1 rounded-full bg-white/8">
-                  <div className="h-full w-[72%] rounded-full bg-ghost-500" />
-                </div>
-              </div>
-            </div>
-          </div>
+      <button
+        type="button"
+        className="ml-1 flex h-7 w-7 items-center justify-center rounded-full text-[#71717a] transition-colors hover:bg-[#f4f4f5]"
+        aria-label="Settings"
+      >
+        <GearIcon />
+      </button>
+    </div>
+  );
+}
+
+function ResponsePanel() {
+  return (
+    <div
+      className="w-full max-w-[680px] rounded-[20px] p-5 text-left"
+      style={{
+        ...lightPillTheme.glass,
+        background: "rgba(255, 255, 255, 0.72)",
+        backdropFilter: "blur(24px) saturate(180%)",
+        WebkitBackdropFilter: "blur(24px) saturate(180%)",
+        boxShadow: "0 8px 40px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+      }}
+    >
+      <div className="mb-3 flex items-center gap-2">
+        <SparkleIcon />
+        <span className="text-[13px] font-semibold text-[#0a0a0a]">
+          AI Response
+        </span>
+      </div>
+
+      <div className="space-y-3 text-[13px] leading-[1.65] text-[#3f3f46]">
+        <p>
+          I can see you&apos;re currently viewing the Ghost website homepage.
+          This page introduces Ghost as an AI assistant that provides real-time
+          help during meetings, interviews, sales calls, and other live
+          conversations.
+        </p>
+
+        <div>
+          <p className="font-semibold text-[#0a0a0a]">What is Ghost?</p>
+          <p className="mt-1">
+            Ghost is a desktop AI assistant that runs invisibly on your computer,
+            providing real-time insights, answers, and support during any
+            conversation or task.
+          </p>
+        </div>
+
+        <div>
+          <p className="font-semibold text-[#0a0a0a]">Features:</p>
+          <ol className="mt-1 list-decimal space-y-1 pl-4">
+            <li>Screen monitoring — sees what you see</li>
+            <li>Audio listening — hears your calls and meetings</li>
+            <li>Real-time AI responses — instant answers without asking</li>
+          </ol>
         </div>
       </div>
     </div>
   );
 }
 
+function MicIcon() {
+  return (
+    <svg
+      className="h-3.5 w-3.5 text-white"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+    </svg>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
+  );
+}
+
+function SparkleIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-[#3b82f6]"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M12 2l1.09 3.36L16.5 6.5l-3.36 1.09L12 11l-1.09-3.41L7.5 6.5l3.41-1.14L12 2zM5 14l.72 2.22L8 17l-2.28.78L5 20l-.72-2.22L2 17l2.28-.78L5 14zm14 0l.72 2.22L22 17l-2.28.78L19 20l-.72-2.22L16 17l2.28-.78L19 14z" />
+    </svg>
+  );
+}
+
 export function OverlayMockupCompact() {
   return (
     <div className="mx-auto max-w-md rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-      <div className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-white px-1 py-1 shadow-sm">
-        <div className="px-1.5">
-          <GhostLogo className="h-4 w-4" />
-        </div>
-        <div className="rounded-full border border-ghost-200 bg-ghost-50 px-3 py-1 text-[11px] font-medium text-ghost-600">
-          ▶ Start
-        </div>
-        <div className="mx-0.5 h-4 w-px bg-zinc-200" />
-        <button className="px-2 text-[11px] text-zinc-400">⌃</button>
-      </div>
+      <ControlBar />
     </div>
   );
 }

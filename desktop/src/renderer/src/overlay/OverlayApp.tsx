@@ -19,8 +19,13 @@ import {
 } from "../services/transcript";
 import { clearScreenContext, getScreenContext } from "../services/screen-context";
 import { bootstrapOpenAIKey } from "../services/whisper";
+import {
+  buildAiCoachingContext,
+  getEffectiveObjections,
+  getEffectiveProduct,
+} from "../lib/company-info";
+import { useContentProtectionSync } from "../hooks/useContentProtectionSync";
 import { useAppStore, notifyAppStoreChanged, rehydrateAppStoreFromStorage } from "../store/useAppStore";
-import { effectiveContentProtection } from "../store/types";
 import {
   ControlButtons,
   getSuggestionReadDurationMs,
@@ -42,9 +47,11 @@ export function OverlayApp() {
   const [dealHealth, setDealHealth] = useState<number | null>(null);
   const [topPanelHidden, setTopPanelHidden] = useState(false);
 
-  const { activeMode, customSystemPrompt, settings, saveMeetingFromSession } =
+  const { activeMode, customSystemPrompt, companyInfo, settings, saveMeetingFromSession } =
     useAppStore();
-  const plan = useAppStore((s) => s.plan);
+  const aiCoachingContext = buildAiCoachingContext(customSystemPrompt, companyInfo);
+  const aiProduct = getEffectiveProduct(companyInfo);
+  const aiObjections = getEffectiveObjections(companyInfo);
   const sessionStartRef = useRef<number | null>(null);
   const suggestionUsesRef = useRef(0);
   const hideSuggestionTimerRef = useRef<number | null>(null);
@@ -148,10 +155,7 @@ export function OverlayApp() {
     };
   }, [activateListening]);
 
-  useEffect(() => {
-    const protected_ = effectiveContentProtection(plan, settings.invisible);
-    void window.ghost?.setContentProtection(protected_);
-  }, [plan, settings.invisible]);
+  useContentProtectionSync(true);
 
   useEffect(() => {
     return window.ghost?.onSessionStarted?.(() => void activateListening());
@@ -205,11 +209,10 @@ export function OverlayApp() {
       setLoading(true);
       setStreamingText("");
 
-      const modeConfig = useAppStore.getState().getActiveModeConfig();
-
       void streamGhostSuggestion(text, linesRef.current, {
-        coachingContext: customSystemPrompt,
-        product: modeConfig.description,
+        product: aiProduct,
+        objections: aiObjections,
+        coachingContext: aiCoachingContext,
         micOnly: !hasSystemAudio && hasMic,
         fast: true,
         isQuestion,
@@ -241,7 +244,7 @@ export function OverlayApp() {
           }
         });
     },
-    [customSystemPrompt, hasMic, hasSystemAudio, clearHideSuggestionTimer, scheduleHideSuggestion],
+    [aiCoachingContext, aiObjections, aiProduct, hasMic, hasSystemAudio, clearHideSuggestionTimer, scheduleHideSuggestion],
   );
 
   const runAssist = useCallback(
@@ -264,7 +267,7 @@ export function OverlayApp() {
       try {
         const response = await askGhost(action, snapshotLines, {
           customPrompt,
-          systemPrompt: customSystemPrompt,
+          systemPrompt: aiCoachingContext,
           smartMode,
           interimText: snapshotInterim,
           outputLanguage: settings.outputLanguage,
@@ -298,7 +301,7 @@ export function OverlayApp() {
         }
       }
     },
-    [customSystemPrompt, smartMode, settings.outputLanguage, clearHideSuggestionTimer, scheduleHideSuggestion],
+    [aiCoachingContext, smartMode, settings.outputLanguage, clearHideSuggestionTimer, scheduleHideSuggestion],
   );
 
   runAssistRef.current = runAssist;

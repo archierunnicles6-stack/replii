@@ -1,4 +1,8 @@
 import {
+  DEFAULT_COMPANY_INFO,
+  type CompanyInfo,
+} from "../lib/company-info";
+import {
   DEFAULT_SETTINGS,
   DEFAULT_UPCOMING,
   SALES_MODES,
@@ -18,6 +22,7 @@ export interface AccountProfile {
   plan: Plan;
   activeMode: SalesMode;
   customSystemPrompt: string;
+  companyInfo: CompanyInfo;
   knowledgeFiles: string[];
   settings: UserSettings;
   meetings: MeetingRecord[];
@@ -36,6 +41,7 @@ export function createDefaultAccountProfile(): AccountProfile {
     plan: "free",
     activeMode: "sales",
     customSystemPrompt: SALES_MODES[0].systemPrompt,
+    companyInfo: { ...DEFAULT_COMPANY_INFO },
     knowledgeFiles: [],
     settings: { ...DEFAULT_SETTINGS },
     meetings: [],
@@ -52,6 +58,7 @@ export function extractAccountProfile(state: {
   plan: Plan;
   activeMode: SalesMode;
   customSystemPrompt: string;
+  companyInfo: CompanyInfo;
   knowledgeFiles: string[];
   settings: UserSettings;
   meetings: MeetingRecord[];
@@ -66,6 +73,7 @@ export function extractAccountProfile(state: {
     plan: state.plan,
     activeMode: state.activeMode,
     customSystemPrompt: state.customSystemPrompt,
+    companyInfo: { ...state.companyInfo },
     knowledgeFiles: [...state.knowledgeFiles],
     settings: { ...state.settings },
     meetings: [...state.meetings],
@@ -83,6 +91,9 @@ export function applyAccountProfile(profile: AccountProfile) {
     plan: profile.plan,
     activeMode: profile.activeMode,
     customSystemPrompt: profile.customSystemPrompt,
+    companyInfo: profile.companyInfo
+      ? { ...DEFAULT_COMPANY_INFO, ...profile.companyInfo }
+      : { ...DEFAULT_COMPANY_INFO },
     knowledgeFiles: [...profile.knowledgeFiles],
     settings: { ...profile.settings },
     meetings: [...profile.meetings],
@@ -104,6 +115,9 @@ export function extractLegacyAccountProfile(
     activeMode: (state.activeMode as SalesMode) ?? defaults.activeMode,
     customSystemPrompt:
       (state.customSystemPrompt as string) ?? defaults.customSystemPrompt,
+    companyInfo: state.companyInfo
+      ? { ...DEFAULT_COMPANY_INFO, ...(state.companyInfo as CompanyInfo) }
+      : defaults.companyInfo,
     knowledgeFiles: Array.isArray(state.knowledgeFiles)
       ? [...(state.knowledgeFiles as string[])]
       : defaults.knowledgeFiles,

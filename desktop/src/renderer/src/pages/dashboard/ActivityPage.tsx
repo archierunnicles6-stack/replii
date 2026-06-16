@@ -63,9 +63,11 @@ function groupMeetingsByDate(meetings: MeetingRecord[]): [string, MeetingRecord[
 function ActivityRow({
   meeting,
   onDelete,
+  canDelete,
 }: {
   meeting: MeetingRecord;
   onDelete: (event: React.MouseEvent, id: string) => void;
+  canDelete: boolean;
 }) {
   return (
     <div className="group relative">
@@ -92,27 +94,29 @@ function ActivityRow({
         </div>
       </Link>
 
-      <button
-        type="button"
-        onClick={(event) => onDelete(event, meeting.id)}
-        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-zinc-300 opacity-0 transition-all hover:bg-zinc-100 hover:text-red-500 group-hover:opacity-100"
-        aria-label={`Delete ${meeting.title}`}
-        title="Delete session"
-      >
-        <svg
-          className="h-3.5 w-3.5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.75}
+      {canDelete && (
+        <button
+          type="button"
+          onClick={(event) => onDelete(event, meeting.id)}
+          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-zinc-300 opacity-0 transition-all hover:bg-zinc-100 hover:text-red-500 group-hover:opacity-100"
+          aria-label={`Delete ${meeting.title}`}
+          title="Delete session"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
-        </svg>
-      </button>
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.75}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
@@ -140,7 +144,9 @@ export function ActivityPage() {
     .filter(isUserMeeting)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const filtered = userSessions.filter((m) => {
+  const displaySessions = userSessions;
+
+  const filtered = displaySessions.filter((m) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     const transcriptText = m.transcript.map((line) => line.text).join(" ");
@@ -163,24 +169,6 @@ export function ActivityPage() {
     deleteMeeting(id);
   };
 
-  if (userSessions.length === 0) {
-    return (
-      <div>
-        {searchQuery.trim() ? (
-          <p className="py-12 text-center text-[14px] text-zinc-500">
-            No results for &ldquo;{searchQuery}&rdquo;
-          </p>
-        ) : sessionActive ? (
-          <p className="py-12 text-center text-[14px] text-zinc-500">
-            Session active — live coaching runs in the overlay.
-          </p>
-        ) : (
-          <SessionEmptyState onStart={() => void handleStart()} />
-        )}
-      </div>
-    );
-  }
-
   return (
     <div>
       {searchQuery.trim() && filtered.length === 0 ? (
@@ -196,11 +184,24 @@ export function ActivityPage() {
               </h2>
               <div>
                 {items.map((m) => (
-                  <ActivityRow key={m.id} meeting={m} onDelete={handleDelete} />
+                  <ActivityRow
+                    key={m.id}
+                    meeting={m}
+                    onDelete={handleDelete}
+                    canDelete={isUserMeeting(m)}
+                  />
                 ))}
               </div>
             </section>
           ))}
+          {userSessions.length === 0 && !searchQuery.trim() && !sessionActive && (
+            <SessionEmptyState onStart={() => void handleStart()} />
+          )}
+          {userSessions.length === 0 && !searchQuery.trim() && sessionActive && (
+            <p className="py-8 text-center text-[14px] text-zinc-500">
+              Session active — live coaching runs in the overlay.
+            </p>
+          )}
         </div>
       )}
     </div>

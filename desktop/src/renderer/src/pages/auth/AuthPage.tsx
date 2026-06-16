@@ -332,9 +332,9 @@ export function AuthPage() {
 
 function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex h-screen max-h-screen w-full items-center justify-center overflow-hidden bg-white px-8">
+    <div className="no-drag relative flex h-screen max-h-screen w-full overflow-y-auto overscroll-contain bg-white px-8">
       <BackButton to="/welcome" />
-      <div className="flex w-full max-w-[320px] flex-col items-center text-center">
+      <div className="mx-auto flex min-h-full w-full max-w-[320px] flex-col items-center justify-center py-10 text-center">
         {children}
       </div>
     </div>

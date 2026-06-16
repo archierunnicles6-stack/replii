@@ -647,7 +647,9 @@ function openPermissionSettings(key: PermissionKey): void {
       "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture",
   };
 
-  if (key === "microphone") {
+  if (key === "accessibility") {
+    systemPreferences.isTrustedAccessibilityClient(true);
+  } else if (key === "microphone") {
     void systemPreferences.askForMediaAccess("microphone");
   }
 
@@ -770,15 +772,25 @@ app.whenReady().then(async () => {
     useCallAudio: consumeCallAudioSetupFlag(),
   }));
 
-  ipcMain.handle("ghost:set-content-protection", (_event, enabled: boolean) => {
-    const limits = readPlanLimits();
-    if (enabled && !canDisableContentProtection(limits)) {
-      enabled = false;
-    }
-    contentProtection = enabled;
-    overlayWindow?.setContentProtection(enabled);
-    return contentProtection;
-  });
+  ipcMain.handle(
+    "ghost:set-content-protection",
+    (_event, enabled: boolean, plan?: string) => {
+      const limits = readPlanLimits();
+      const activePlan = plan ?? limits.plan;
+
+      if (plan && plan !== limits.plan) {
+        writePlanLimits({ ...limits, plan });
+      }
+
+      if (enabled && activePlan !== "undetectable") {
+        enabled = false;
+      }
+
+      contentProtection = enabled;
+      overlayWindow?.setContentProtection(enabled);
+      return contentProtection;
+    },
+  );
 
   ipcMain.handle("ghost:resize", (_event, width: number, height: number) => {
     if (!overlayWindow || overlayMode === "active") return;
@@ -937,12 +949,16 @@ app.whenReady().then(async () => {
 
   ipcMain.handle(
     "ghost:set-dashboard-layout",
-    (_event, layout: "onboarding" | "dashboard") => {
+    (_event, layout: "onboarding" | "dashboard" | "paywall") => {
       if (!dashboardWindow) return false;
       if (layout === "onboarding") {
         dashboardWindow.setMinimumSize(800, 560);
         dashboardWindow.setSize(1000, 660, true);
         dashboardWindow.setBackgroundColor("#0a0a0a");
+      } else if (layout === "paywall") {
+        dashboardWindow.setMinimumSize(800, 640);
+        dashboardWindow.setSize(1000, 760, true);
+        dashboardWindow.setBackgroundColor("#f5f5f7");
       } else {
         dashboardWindow.setMinimumSize(960, 640);
         dashboardWindow.setSize(1180, 780, true);

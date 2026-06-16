@@ -16,12 +16,12 @@ const faqs = [
     a: "Ghost offers a free starter tier with limited AI responses. Pro plans unlock unlimited coaching, custom playbooks, and screen-share invisibility.",
   },
   {
-    q: "How is it invisible in meetings?",
+    q: "How is it undetectable in meetings?",
     a: "Ghost uses native OS-level window protection so the overlay never appears in screen shares or recordings. Only you see the coaching panel.",
   },
   {
-    q: "What platforms are supported?",
-    a: "Ghost works on macOS and Windows with Zoom, Google Meet, Microsoft Teams, Webex, and any browser-based calling tool.",
+    q: "What languages and apps are supported?",
+    a: "Ghost works on macOS with Zoom, Google Meet, Microsoft Teams, Webex, and any browser-based calling tool. Real-time transcription is available across 12+ languages.",
   },
   {
     q: "Can I talk to customer support?",
@@ -30,41 +30,57 @@ const faqs = [
 ];
 
 export function FAQ() {
-  const [open, setOpen] = useState<number | null>(0);
+  const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="border-t border-zinc-200">
-      <div className="mx-auto max-w-6xl px-6 py-24 md:py-32">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-            Frequently asked questions
-          </h2>
-          <div className="mx-auto my-5 h-px w-12 bg-zinc-300" />
-        </div>
+    <section id="faq" className="bg-white">
+      <div className="mx-auto max-w-[1200px] px-6 py-24 md:py-32">
+        <h2 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#0a0a0a] md:text-[2.5rem]">
+          Frequently asked questions
+        </h2>
 
-        <div className="mx-auto mt-12 max-w-2xl divide-y divide-zinc-200">
+        <div className="mt-12 border-t border-[#ececef]">
           {faqs.map((faq, i) => (
-            <div key={i} className="py-5">
+            <div key={faq.q} className="border-b border-[#ececef]">
               <button
+                type="button"
                 onClick={() => setOpen(open === i ? null : i)}
-                className="flex w-full items-start justify-between gap-4 text-left"
+                className="flex w-full items-center justify-between gap-6 py-5 text-left md:py-6"
               >
-                <span className="text-[15px] font-medium text-zinc-900">
+                <span className="text-[15px] font-normal text-[#0a0a0a] md:text-[16px]">
                   {faq.q}
                 </span>
-                <span className="mt-0.5 shrink-0 text-zinc-400">
-                  {open === i ? "−" : "+"}
-                </span>
+                <ChevronIcon
+                  className={`h-4 w-4 shrink-0 text-[#a1a1aa] transition-transform duration-200 ${
+                    open === i ? "rotate-180" : ""
+                  }`}
+                />
               </button>
-              {open === i && (
-                <p className="mt-3 text-[14px] leading-relaxed text-zinc-500">
+              {open === i ? (
+                <p className="pb-5 pr-10 text-[14px] leading-[1.65] text-[#71717a] md:pb-6 md:text-[15px]">
                   {faq.a}
                 </p>
-              )}
+              ) : null}
             </div>
           ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function ChevronIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
   );
 }

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { PageHeader, SelectRow, Toggle } from "../../components/ui";
+import { useContentProtectionSync } from "../../hooks/useContentProtectionSync";
 import { useAppStore } from "../../store/useAppStore";
 import {
   canUseDetectabilityToggle,
-  effectiveContentProtection,
   normalizedInvisibleSetting,
 } from "../../store/types";
 
@@ -29,10 +29,7 @@ export function SettingsPage() {
     window.ghost?.getDisplays().then(setDisplays);
   }, []);
 
-  useEffect(() => {
-    const protected_ = effectiveContentProtection(plan, settings.invisible);
-    void window.ghost?.setContentProtection(protected_);
-  }, [plan, settings.invisible]);
+  useContentProtectionSync();
 
   useEffect(() => {
     if (settings.displayId != null) {

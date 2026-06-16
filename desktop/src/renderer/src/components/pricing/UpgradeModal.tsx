@@ -13,8 +13,8 @@ export function UpgradeModal({ onClose }: { onClose: () => void }) {
         onClick={onClose}
       />
 
-      <div className="no-drag relative flex max-h-[calc(100vh-48px)] w-full max-w-[900px] flex-col overflow-y-auto rounded-2xl border border-zinc-200 bg-[#f7f8fa] shadow-2xl">
-        <div className="sticky top-0 z-10 flex justify-end bg-[#f7f8fa]/95 px-4 pt-4 backdrop-blur-sm">
+      <div className="no-drag relative flex max-h-[calc(100vh-48px)] w-full max-w-[900px] flex-col overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-2xl">
+        <div className="sticky top-0 z-10 flex justify-end bg-white/95 px-4 pt-4 backdrop-blur-sm">
           <button
             type="button"
             onClick={onClose}

@@ -16,7 +16,7 @@ export function WelcomePage() {
   return (
     <SplitScreenShell
       left={
-        <div className="flex h-full min-h-0 flex-col px-12 py-10">
+        <div className="flex min-h-full flex-col px-12 py-10">
           {/* Center group */}
           <div className="flex flex-1 flex-col items-center justify-center text-center">
             <h1 className="text-[34px] font-semibold leading-[1.15] tracking-[-0.025em] text-zinc-900">
