@@ -1,3 +1,4 @@
+import { OVERLAY_KEYBINDS, shortcutModLabel } from "../../lib/keybinds";
 import { useEffect, useState } from "react";
 import { PageHeader, SelectRow, Toggle } from "../../components/ui";
 import { useContentProtectionSync } from "../../hooks/useContentProtectionSync";
@@ -41,15 +42,15 @@ export function SettingsPage() {
     <div className="max-w-xl">
       <PageHeader
         title="Settings"
-        description="Configure Ghost for your sales workflow — shortcuts, languages, and invisibility."
+        description="Configure Ghost for your sales workflow — shortcuts, languages, and overlay display."
       />
 
       <section className="space-y-3">
         <h2 className="text-[12px] font-semibold uppercase tracking-wider text-zinc-400">
-          Invisibility
+          Overlay display
         </h2>
         <Toggle
-          label="Invisible to screen share"
+          label="Hide overlay from screen share"
           checked={invisible}
           disabled={!detectabilityUnlocked}
           onChange={(v) => {
@@ -59,8 +60,7 @@ export function SettingsPage() {
         />
         {!detectabilityUnlocked && (
           <p className="text-[12px] text-zinc-500">
-            Ghost is visible on screen share on your current plan. Upgrade to
-            Undetectable to hide the overlay from captures.
+            The overlay is visible on screen share on your current plan.
           </p>
         )}
         <Toggle
@@ -127,19 +127,14 @@ export function SettingsPage() {
           Keyboard shortcuts
         </h2>
         <div className="rounded-xl border border-zinc-200 bg-white divide-y divide-zinc-100">
-          {[
-            ["⌘ Enter", "Ask AI / Assist"],
-            ["⌘ R", "Clear session context"],
-            ["⌘ ← →", "Move overlay"],
-            ["⌘ \\", "Hide / show overlay"],
-          ].map(([key, desc]) => (
+          {OVERLAY_KEYBINDS.map((bind) => (
             <div
-              key={key}
+              key={bind.description}
               className="flex items-center justify-between px-4 py-3"
             >
-              <span className="text-[13px] text-zinc-700">{desc}</span>
+              <span className="text-[13px] text-zinc-700">{bind.description}</span>
               <kbd className="rounded bg-zinc-100 px-2 py-1 text-[11px] font-medium text-zinc-600">
-                {key}
+                {bind.keys(shortcutModLabel())}
               </kbd>
             </div>
           ))}

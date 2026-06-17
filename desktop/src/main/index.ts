@@ -232,8 +232,12 @@ function createDashboardWindow(): void {
     minWidth: 800,
     minHeight: 560,
     title: "Ghost",
-    titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 16, y: 16 },
+    ...(process.platform === "darwin"
+      ? {
+          titleBarStyle: "hiddenInset" as const,
+          trafficLightPosition: { x: 16, y: 16 },
+        }
+      : {}),
     backgroundColor: "#ffffff",
     show: false,
     webPreferences: {
@@ -636,6 +640,16 @@ async function getPermissionStatus(): Promise<{
 }
 
 function openPermissionSettings(key: PermissionKey): void {
+  if (process.platform === "win32") {
+    const urls: Record<PermissionKey, string> = {
+      accessibility: "ms-settings:privacy-accessibility",
+      microphone: "ms-settings:privacy-microphone",
+      screen: "ms-settings:privacy",
+    };
+    void shell.openExternal(urls[key]);
+    return;
+  }
+
   if (process.platform !== "darwin") return;
 
   const urls: Record<PermissionKey, string> = {
@@ -651,6 +665,11 @@ function openPermissionSettings(key: PermissionKey): void {
     systemPreferences.isTrustedAccessibilityClient(true);
   } else if (key === "microphone") {
     void systemPreferences.askForMediaAccess("microphone");
+  } else if (key === "screen") {
+    void desktopCapturer.getSources({
+      types: ["screen"],
+      thumbnailSize: { width: 1, height: 1 },
+    });
   }
 
   void shell.openExternal(urls[key]);

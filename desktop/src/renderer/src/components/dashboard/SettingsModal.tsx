@@ -11,7 +11,9 @@ import {
 import { BillingPanel } from "../settings/BillingPanel";
 import { CompanyPanel } from "../settings/CompanyPanel";
 import { UpgradeModal } from "../pricing/UpgradeModal";
+import { Switch } from "../ui";
 import { UserAvatar } from "../ui/UserAvatar";
+import { OVERLAY_KEYBINDS, shortcutModLabel } from "../../lib/keybinds";
 
 export type SettingsSection =
   | "general"
@@ -49,21 +51,14 @@ const LANGUAGES = [
   "Japanese",
 ];
 
-const KEYBINDS = [
-  ["⌘ Enter", "Ask AI / Assist"],
-  ["⌘ R", "Clear session context"],
-  ["⌘ ← →", "Move overlay"],
-  ["⌘ \\", "Hide / show overlay"],
-];
-
 const FAQ = [
   {
     q: "How do I start Ghost on a sales call?",
     a: "Click Start Ghost from the dashboard. The overlay appears on your screen and begins listening automatically.",
   },
   {
-    q: "Is Ghost visible on screen share?",
-    a: "On Free, Solo, and Pro, Ghost is always detectable during screen share. Upgrade to Undetectable to hide the overlay from Zoom, Meet, Teams, and recordings.",
+    q: "Is my call history saved?",
+    a: "Every call is saved with transcripts, coaching suggestions, and deal scores. Review past sessions in your dashboard to see what worked.",
   },
   {
     q: "Does Ghost join my calls?",
@@ -144,31 +139,6 @@ function NavIcon({ name }: { name: string }) {
     default:
       return null;
   }
-}
-
-function SettingsToggle({
-  checked,
-  onChange,
-  disabled = false,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => !disabled && onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? "bg-blue-500" : "bg-zinc-200"} ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
-    >
-      <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-[22px]" : "translate-x-0.5"}`}
-      />
-    </button>
-  );
 }
 
 function SettingsRow({
@@ -264,16 +234,20 @@ function GeneralPanel({ onRequestUpgrade }: { onRequestUpgrade: () => void }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
             </svg>
           }
-          title="Invisible to screen share"
+          title="Hide overlay from screen share"
           description={
             detectabilityUnlocked
               ? invisible
-                ? "Ghost is hidden from Zoom, Meet, Teams, and recordings"
-                : "Ghost is visible to screen-sharing software"
-              : "Turn on to hide Ghost from Zoom, Meet, and recordings — requires Pro + Undetectability"
+                ? "The overlay is hidden from Zoom, Meet, Teams, and recordings"
+                : "The overlay is visible to screen-sharing software"
+              : "Not available on your plan"
           }
           action={
-            <SettingsToggle checked={invisible} onChange={handleInvisible} />
+            <Switch
+              checked={invisible}
+              checkedClassName="bg-blue-500"
+              onClick={() => handleInvisible(!invisible)}
+            />
           }
         />
       </div>
@@ -286,18 +260,19 @@ function BillingSettingsPanel() {
 }
 
 function KeybindsPanel() {
+  const mod = shortcutModLabel();
   return (
     <div>
       <PanelHeader title="Keybinds" subtitle="Keyboard shortcuts for Ghost overlay" />
       <div className="overflow-hidden rounded-xl border border-zinc-200">
-        {KEYBINDS.map(([key, desc], i) => (
+        {OVERLAY_KEYBINDS.map((bind, i) => (
           <div
-            key={key}
+            key={bind.description}
             className={`flex items-center justify-between px-4 py-3 ${i > 0 ? "border-t border-zinc-100" : ""}`}
           >
-            <span className="text-[13px] text-zinc-700">{desc}</span>
+            <span className="text-[13px] text-zinc-700">{bind.description}</span>
             <kbd className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-600">
-              {key}
+              {bind.keys(mod)}
             </kbd>
           </div>
         ))}

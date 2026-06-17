@@ -1,13 +1,69 @@
-/** GitHub Release asset — hosted outside Vercel (DMG exceeds deploy size limits). */
-export const MAC_DOWNLOAD_RELEASE_TAG = "v0.1.0";
+import type { DownloadPlatform } from "./platform";
 
-export const MAC_DOWNLOAD_GITHUB_URL = `https://github.com/archierunnicles6-stack/ghost/releases/download/${MAC_DOWNLOAD_RELEASE_TAG}/Ghost.dmg`;
+/** GitHub Release assets — hosted outside Vercel (installers exceed deploy size limits). */
+export const DOWNLOAD_RELEASE_TAG = "v0.1.0";
 
-/** Local path for dev; production uses GitHub release URL. */
-export const MAC_DOWNLOAD_URL =
-  process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL?.trim() ||
-  (process.env.NODE_ENV === "development"
-    ? "/downloads/Ghost.dmg"
-    : MAC_DOWNLOAD_GITHUB_URL);
+export const RELEASE_PAGE_URL =
+  "https://github.com/archierunnicles6-stack/ghost/releases/latest";
+
+export const MAC_DOWNLOAD_GITHUB_URL = `https://github.com/archierunnicles6-stack/ghost/releases/download/${DOWNLOAD_RELEASE_TAG}/Ghost.dmg`;
+export const WINDOWS_DOWNLOAD_GITHUB_URL = `https://github.com/archierunnicles6-stack/ghost/releases/download/${DOWNLOAD_RELEASE_TAG}/Ghost-Setup.exe`;
 
 export const MAC_DOWNLOAD_FILENAME = "Ghost.dmg";
+export const WINDOWS_DOWNLOAD_FILENAME = "Ghost-Setup.exe";
+
+/** @deprecated Use DOWNLOAD_RELEASE_TAG */
+export const MAC_DOWNLOAD_RELEASE_TAG = DOWNLOAD_RELEASE_TAG;
+
+/** Direct asset URL (GitHub release or local dev file). */
+export function getDownloadAssetUrl(platform: DownloadPlatform): string {
+  if (platform === "windows") {
+    return (
+      process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL?.trim() ||
+      (process.env.NODE_ENV === "development"
+        ? `/downloads/${WINDOWS_DOWNLOAD_FILENAME}`
+        : WINDOWS_DOWNLOAD_GITHUB_URL)
+    );
+  }
+
+  return (
+    process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL?.trim() ||
+    (process.env.NODE_ENV === "development"
+      ? `/downloads/${MAC_DOWNLOAD_FILENAME}`
+      : MAC_DOWNLOAD_GITHUB_URL)
+  );
+}
+
+/** User-facing download href (API route verifies availability in production). */
+export function getDownloadHref(platform: DownloadPlatform): string {
+  const assetUrl = getDownloadAssetUrl(platform);
+  if (assetUrl.startsWith("/") && !assetUrl.startsWith("/api/")) {
+    return assetUrl;
+  }
+  if (process.env.NODE_ENV === "development") {
+    return assetUrl;
+  }
+  return `/api/download?platform=${platform}`;
+}
+
+export function getDownloadInfo(platform: DownloadPlatform) {
+  if (platform === "windows") {
+    return {
+      platform,
+      url: getDownloadHref(platform),
+      assetUrl: getDownloadAssetUrl(platform),
+      filename: WINDOWS_DOWNLOAD_FILENAME,
+      label: "Get for Windows",
+      longLabel: "Download Ghost for Windows",
+    } as const;
+  }
+
+  return {
+    platform,
+    url: getDownloadHref(platform),
+    assetUrl: getDownloadAssetUrl(platform),
+    filename: MAC_DOWNLOAD_FILENAME,
+    label: "Get for Mac",
+    longLabel: "Download Ghost for Mac",
+  } as const;
+}

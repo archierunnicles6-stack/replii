@@ -14,7 +14,8 @@
     "preview": "electron-vite preview",
     "icons": "python3 scripts/generate-app-icon.py",
     "package": "node scripts/ensure-icon.mjs && npm run build && electron-builder --mac --dir",
-    "package:mac": "node scripts/ensure-icon.mjs && npm run build && electron-builder --mac",
+    "package:mac": "node scripts/prepare-ci-build.mjs && node scripts/ensure-icon.mjs && npm run build && electron-builder --mac",
+    "package:win": "node scripts/prepare-ci-build.mjs && node scripts/ensure-icon.mjs && npm run build && electron-builder --win",
     "fix:installed": "node scripts/sign-mac-app.mjs /Applications/Ghost.app",
     "test:audio": "node scripts/test-audio-suggestions.mjs"
   },
@@ -42,6 +43,21 @@
     "appId": "com.ghost.app",
     "productName": "Ghost",
     "afterPack": "./scripts/after-pack.mjs",
+    "win": {
+      "icon": "build/icon.png",
+      "target": ["nsis"],
+      "artifactName": "Ghost-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Ghost",
+      "installerIcon": "build/icon.png",
+      "uninstallerIcon": "build/icon.png",
+      "installerHeaderIcon": "build/icon.png"
+    },
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
