@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url:
         body.successUrl?.trim() ||
-        `${origin}/billing/success?plan=${encodeURIComponent(plan)}`,
+        `${origin}/billing/success?plan=${encodeURIComponent(plan)}&to=billing`,
       cancel_url: body.cancelUrl?.trim() || `${origin}/billing/cancel`,
       client_reference_id: body.userId,
       metadata: {

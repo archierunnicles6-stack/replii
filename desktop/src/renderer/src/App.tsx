@@ -1,6 +1,7 @@
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthBootstrap } from "./hooks/useAuthBootstrap";
+import { useBillingReturn } from "./hooks/useBillingReturn";
 import { bootstrapOpenAIKey } from "./services/whisper";
 import { MicHelperApp } from "./mic/MicHelperApp";
 import { hasDashboardAccess } from "./lib/dashboard-access";
@@ -75,6 +76,7 @@ function AppRoutes() {
 
 export default function App() {
   useAuthBootstrap();
+  useBillingReturn();
 
   useEffect(() => {
     void bootstrapOpenAIKey();

@@ -7,7 +7,9 @@ import { useAppStore } from "../../store/useAppStore";
 
 export function BillingPanel() {
   const user = useAppStore((s) => s.user);
-  const { loadingTier, error, handleSelect, handleContactSales } = usePricingCheckout();
+  const { loadingTier, error, handleSelect, handleContactSales } = usePricingCheckout({
+    returnToAfterPurchase: "billing",
+  });
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
   useBillingSync();

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SettingsModal, type SettingsSection } from "./SettingsModal";
 import { UserAvatar } from "../ui/UserAvatar";
 import { useAppStore } from "../../store/useAppStore";
@@ -16,6 +16,15 @@ export function DashboardTopBar({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const user = useAppStore((s) => s.user);
+  const pendingSettingsSection = useAppStore((s) => s.pendingSettingsSection);
+  const clearPendingSettingsOpen = useAppStore((s) => s.clearPendingSettingsOpen);
+
+  useEffect(() => {
+    if (!pendingSettingsSection) return;
+    setSettingsSection(pendingSettingsSection as SettingsSection);
+    setSettingsOpen(true);
+    clearPendingSettingsOpen();
+  }, [pendingSettingsSection, clearPendingSettingsOpen]);
 
   const canGoBack = location.pathname !== "/";
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Enable Google OAuth on the linked Supabase project (mcudsqyqtjupfvntryya).
+# Enable Google OAuth on the linked Supabase project (see supabase/config.toml).
 #
 # Prerequisites:
-#   1. Google Cloud OAuth client with redirect URI:
-#      https://mcudsqyqtjupfvntryya.supabase.co/auth/v1/callback
+#   1. Google Cloud → OAuth client → Authorized redirect URIs must include:
+#      https://<project-ref>.supabase.co/auth/v1/callback
 #   2. OAuth client ID (already in supabase/config.toml)
 #   3. OAuth client secret from Google Cloud Console
 #
@@ -14,7 +14,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PROJECT_REF="mcudsqyqtjupfvntryya"
+PROJECT_REF="$(grep '^project_id' "$ROOT/supabase/config.toml" | sed 's/.*= *"\(.*\)".*/\1/')"
 GOOGLE_CLIENT_ID="821453006387-snrakrrq6n17m5pde2nfshmnf8nanmc6.apps.googleusercontent.com"
 
 if command -v supabase >/dev/null 2>&1; then

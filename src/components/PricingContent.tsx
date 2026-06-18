@@ -19,14 +19,6 @@ const PRO_FEATURES = [
   "Priority support",
 ];
 
-const ENTERPRISE_FEATURES = [
-  "Post-call coaching and analytics",
-  "RAG knowledge base",
-  "User provisioning & role-based access",
-  "Single sign-on & IDP integration",
-  "Enterprise security & no data training",
-];
-
 const CARD_CLASS =
   "flex flex-col rounded-[24px] border border-white/80 bg-white p-8 shadow-[0_8px_40px_rgba(15,23,42,0.08)]";
 
@@ -223,14 +215,10 @@ export function PricingContent() {
               Custom
             </span>
           </div>
-          <Link href={SUPPORT_ROUTES.contact} className={PRIMARY_BUTTON_CLASS}>
-            Talk to sales
-          </Link>
           <p className="mt-4 text-[13px] text-zinc-500">Custom knowledge for teams.</p>
-          <FeatureList
-            features={ENTERPRISE_FEATURES}
-            includesLabel="Everything in Pro, plus..."
-          />
+          <Link href={SUPPORT_ROUTES.contact} className={PRIMARY_BUTTON_CLASS}>
+            Contact Sales
+          </Link>
         </div>
       </div>
     </div>

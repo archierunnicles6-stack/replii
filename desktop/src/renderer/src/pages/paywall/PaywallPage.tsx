@@ -23,7 +23,6 @@ export function PaywallPage() {
 
   const { loadingTier, error, handleSelect, handleContactSales } = usePricingCheckout({
     onComplete: finishFree,
-    completePaywallOnSuccess: true,
   });
   useBillingSync();
 

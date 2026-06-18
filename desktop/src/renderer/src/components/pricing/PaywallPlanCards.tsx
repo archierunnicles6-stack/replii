@@ -1,7 +1,6 @@
 import type { BillingInterval } from "../../lib/pricing";
 import {
   ANNUAL_DISCOUNT_PERCENT,
-  ENTERPRISE_FEATURES,
   ENTERPRISE_TAGLINE,
   PRO_CARD_FEATURES,
   priceForInterval,
@@ -180,12 +179,7 @@ export function EnterprisePlanCard({
 }) {
   return (
     <div className="flex min-h-[440px] flex-col rounded-[24px] border border-zinc-200 bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[14px] font-medium text-zinc-600">Enterprise</p>
-        <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
-          Popular
-        </span>
-      </div>
+      <p className="text-[14px] font-medium text-zinc-600">Enterprise</p>
 
       <div className="mt-4 flex items-baseline gap-2">
         <span className="text-[40px] font-bold leading-none tracking-[-0.03em] text-zinc-900">
@@ -195,18 +189,7 @@ export function EnterprisePlanCard({
 
       <p className="mt-2 text-[13px] text-zinc-500">{ENTERPRISE_TAGLINE}</p>
 
-      <ul className="mt-8 flex flex-1 flex-col gap-3">
-        {ENTERPRISE_FEATURES.map((feature) => (
-          <li key={feature} className="flex items-start gap-3">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b82f6]">
-              <CheckIcon className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="text-[13px] leading-snug text-zinc-600">{feature}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-8">
+      <div className="mt-auto pt-8">
         <button
           type="button"
           onClick={onContactSales}

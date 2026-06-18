@@ -1,3 +1,5 @@
+import type { PurchaseReturnTo } from "../lib/billing-return";
+import { billingDeepLink, billingPortalDeepLink } from "../lib/billing-return";
 import type { Plan } from "../store/types";
 import type { BillingInterval, PricingTierId } from "../lib/pricing";
 import { pricingTierToPlan } from "../lib/pricing";
@@ -28,6 +30,7 @@ export async function startStripeCheckout(
   userId: string,
   email: string,
   interval: BillingInterval = "monthly",
+  returnTo: PurchaseReturnTo = "dashboard",
 ): Promise<CheckoutResult> {
   if (!PAID.includes(plan)) {
     return { ok: false, error: "Invalid plan" };
@@ -44,7 +47,7 @@ export async function startStripeCheckout(
         interval,
         userId,
         email,
-        successUrl: `${base}/billing/success?plan=${encodeURIComponent(plan)}`,
+        successUrl: billingDeepLink(plan, returnTo),
         cancelUrl: `${base}/billing/cancel`,
       }),
     });
@@ -86,7 +89,7 @@ export async function openStripeBillingPortal(userId: string): Promise<PortalRes
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       userId,
-      returnUrl: `${base}/billing/success`,
+      returnUrl: billingPortalDeepLink("billing"),
     }),
   });
 
@@ -111,8 +114,15 @@ export async function startPricingCheckout(
   userId: string,
   email: string,
   interval: BillingInterval = "monthly",
+  returnTo: PurchaseReturnTo = "dashboard",
 ): Promise<CheckoutResult> {
-  return startStripeCheckout(pricingTierToPlan(tier), userId, email, interval);
+  return startStripeCheckout(
+    pricingTierToPlan(tier),
+    userId,
+    email,
+    interval,
+    returnTo,
+  );
 }
 
 export async function syncPlanFromProfile(userId: string): Promise<Plan | null> {

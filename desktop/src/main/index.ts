@@ -996,10 +996,15 @@ app.whenReady().then(async () => {
   });
 });
 
-// Handle OAuth deep link callback: ghost://auth/callback?code=... or #access_token=...
+// Handle deep links: ghost://auth/callback, ghost://billing/success, etc.
 function handleDeepLink(url: string) {
   if (!url.startsWith("ghost://")) return;
-  sendWhenReady(dashboardWindow, "ghost:auth-callback", url);
+  const path = url.slice("ghost://".length).split("?")[0]?.replace(/\/$/, "") ?? "";
+  if (path.startsWith("billing/")) {
+    sendWhenReady(dashboardWindow, "ghost:billing-callback", url);
+  } else {
+    sendWhenReady(dashboardWindow, "ghost:auth-callback", url);
+  }
   if (!dashboardWindow) createDashboardWindow();
   else {
     dashboardWindow.show();

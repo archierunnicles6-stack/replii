@@ -71,6 +71,7 @@ export interface GhostAPI {
     freeSessionsUsed: number;
   }) => Promise<boolean>;
   onAuthCallback?: (callback: (url: string) => void) => () => void;
+  onBillingCallback?: (callback: (url: string) => void) => () => void;
   openExternal?: (url: string) => Promise<void>;
   getDesktopAudioSources: () => Promise<Array<{ id: string; name: string }>>;
   ensureMicrophone: () => Promise<boolean>;
@@ -269,6 +270,12 @@ const ghostAPI: GhostAPI = {
       callback(url);
     ipcRenderer.on("ghost:auth-callback", handler);
     return () => ipcRenderer.removeListener("ghost:auth-callback", handler);
+  },
+  onBillingCallback: (callback) => {
+    const handler = (_event: Electron.IpcRendererEvent, url: string) =>
+      callback(url);
+    ipcRenderer.on("ghost:billing-callback", handler);
+    return () => ipcRenderer.removeListener("ghost:billing-callback", handler);
   },
 };
 

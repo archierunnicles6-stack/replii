@@ -79,6 +79,7 @@ interface AppState {
   audioCaptureMode: "auto" | "mic" | "system";
   currentMeetingId: string | null;
   freeSessionsUsed: number;
+  pendingSettingsSection: string | null;
 
   login: (
     email: string,
@@ -107,6 +108,8 @@ interface AppState {
   setCurrentMeetingId: (id: string | null) => void;
   incrementFreeSessionUsage: () => void;
   refundFreeSessionUsage: () => void;
+  requestSettingsOpen: (section: string) => void;
+  clearPendingSettingsOpen: () => void;
   saveMeetingFromSession: (data: {
     title: string;
     company: string;
@@ -155,6 +158,7 @@ export const useAppStore = create<AppState>()(
       audioCaptureMode: "mic" as const,
       currentMeetingId: null,
       freeSessionsUsed: 0,
+      pendingSettingsSection: null,
 
       login: (email, name, id, avatar, isNewAccount = false) => {
         const userId = id ?? `local-${email}`;
@@ -340,6 +344,14 @@ export const useAppStore = create<AppState>()(
           freeSessionsUsed: Math.max(0, s.freeSessionsUsed - 1),
         }));
         notifyAppStoreChanged();
+      },
+
+      requestSettingsOpen: (section) => {
+        set({ pendingSettingsSection: section });
+      },
+
+      clearPendingSettingsOpen: () => {
+        set({ pendingSettingsSection: null });
       },
 
       saveMeetingFromSession: (data) => {
