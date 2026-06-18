@@ -34,16 +34,9 @@ export function getDownloadAssetUrl(platform: DownloadPlatform): string {
   );
 }
 
-/** User-facing download href (API route verifies availability in production). */
+/** User-facing download href — direct GitHub release asset (no API hop). */
 export function getDownloadHref(platform: DownloadPlatform): string {
-  const assetUrl = getDownloadAssetUrl(platform);
-  if (assetUrl.startsWith("/") && !assetUrl.startsWith("/api/")) {
-    return assetUrl;
-  }
-  if (process.env.NODE_ENV === "development") {
-    return assetUrl;
-  }
-  return `/api/download?platform=${platform}`;
+  return getDownloadAssetUrl(platform);
 }
 
 export function getDownloadInfo(platform: DownloadPlatform) {

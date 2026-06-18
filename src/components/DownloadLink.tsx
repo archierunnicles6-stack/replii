@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { getDownloadInfo, RELEASE_PAGE_URL } from "@/lib/download";
+import { Suspense } from "react";
+import { getDownloadInfo } from "@/lib/download";
 import type { DownloadPlatform } from "@/lib/platform";
 import { useDownloadPlatform } from "@/hooks/useDownloadPlatform";
 
@@ -47,64 +47,17 @@ function DownloadLinkContent({
   const detectedPlatform = useDownloadPlatform();
   const platform = platformProp ?? detectedPlatform;
   const { url, filename, label } = getDownloadInfo(platform);
-  const isLocal = url.startsWith("/") && !url.startsWith("/api/");
-  const [unavailable, setUnavailable] = useState(false);
-
-  async function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
-    if (!url.startsWith("/api/")) return;
-
-    event.preventDefault();
-    setUnavailable(false);
-
-    try {
-      const response = await fetch(url, { method: "HEAD", redirect: "manual" });
-      if (response.status === 404) {
-        setUnavailable(true);
-        return;
-      }
-      if (response.status >= 300 && response.status < 400) {
-        const location = response.headers.get("location");
-        if (location) {
-          window.location.href = location;
-          return;
-        }
-      }
-      if (response.ok) {
-        window.location.href = url;
-        return;
-      }
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      window.location.href = url;
-    }
-  }
+  const isLocal = url.startsWith("/");
 
   return (
-    <>
-      <a
-        href={url}
-        onClick={handleClick}
-        {...(isLocal ? { download: filename } : {})}
-        className={className ?? `${baseClassName} ${sizeClassName[size]}`}
-      >
-        {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}
-        {children ?? label}
-      </a>
-      {unavailable && (
-        <p className="mt-2 text-[13px] text-amber-800">
-          The Windows installer is being published. Try again in a few minutes or visit{" "}
-          <a
-            href={RELEASE_PAGE_URL}
-            className="font-medium underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub Releases
-          </a>
-          .
-        </p>
-      )}
-    </>
+    <a
+      href={url}
+      {...(isLocal ? { download: filename } : {})}
+      className={className ?? `${baseClassName} ${sizeClassName[size]}`}
+    >
+      {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}
+      {children ?? label}
+    </a>
   );
 }
 
@@ -117,7 +70,7 @@ function DownloadLinkFallback({
 }: DownloadLinkProps) {
   const platform = platformProp ?? "mac";
   const { url, filename, label } = getDownloadInfo(platform);
-  const isLocal = url.startsWith("/") && !url.startsWith("/api/");
+  const isLocal = url.startsWith("/");
 
   return (
     <a

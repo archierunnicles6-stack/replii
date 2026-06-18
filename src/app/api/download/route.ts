@@ -15,12 +15,21 @@ function parsePlatform(value: string | null): DownloadPlatform {
 
 async function assetIsAvailable(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url, {
+    const head = await fetch(url, {
       method: "HEAD",
       redirect: "follow",
       cache: "no-store",
     });
-    return response.ok;
+    if (head.ok) return true;
+
+    // Some CDNs reject HEAD; a tiny ranged GET still confirms the asset exists.
+    const probe = await fetch(url, {
+      method: "GET",
+      headers: { Range: "bytes=0-0" },
+      redirect: "follow",
+      cache: "no-store",
+    });
+    return probe.ok || probe.status === 206;
   } catch {
     return false;
   }
