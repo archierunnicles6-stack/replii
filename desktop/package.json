@@ -45,7 +45,12 @@
     "afterPack": "./scripts/after-pack.mjs",
     "win": {
       "icon": "build/icon.png",
-      "target": ["nsis"],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
       "artifactName": "Ghost-Setup.${ext}"
     },
     "nsis": {
