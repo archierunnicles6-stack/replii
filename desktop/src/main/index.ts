@@ -956,7 +956,7 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle("ghost:open-external", (_event, url: string) => {
-    void shell.openExternal(url);
+    return shell.openExternal(url);
   });
 
   ipcMain.handle("ghost:get-permission-status", () => getPermissionStatus());
@@ -996,10 +996,16 @@ app.whenReady().then(async () => {
   });
 });
 
-// Handle OAuth deep link callback: ghost://auth/callback#access_token=...
+// Handle OAuth deep link callback: ghost://auth/callback?code=... or #access_token=...
 function handleDeepLink(url: string) {
   if (!url.startsWith("ghost://")) return;
-  dashboardWindow?.webContents.send("ghost:auth-callback", url);
+  sendWhenReady(dashboardWindow, "ghost:auth-callback", url);
+  if (!dashboardWindow) createDashboardWindow();
+  else {
+    dashboardWindow.show();
+    if (dashboardWindow.isMinimized()) dashboardWindow.restore();
+    dashboardWindow.focus();
+  }
 }
 
 // macOS: open-url fired when app is already running

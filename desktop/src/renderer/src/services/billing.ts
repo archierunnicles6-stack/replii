@@ -10,6 +10,14 @@ function apiBase(): string {
   return (import.meta.env.VITE_API_BASE_URL ?? "https://ghost.ai").replace(/\/$/, "");
 }
 
+async function openCheckoutUrl(url: string): Promise<void> {
+  if (window.ghost?.openExternal) {
+    await window.ghost.openExternal(url);
+    return;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 export type CheckoutResult =
   | { ok: true; url: string }
   | { ok: false; error: string };
@@ -26,18 +34,30 @@ export async function startStripeCheckout(
   }
 
   const base = apiBase();
-  const res = await fetch(`${base}/api/stripe/checkout`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      plan,
-      interval,
-      userId,
-      email,
-      successUrl: `${base}/billing/success?plan=${encodeURIComponent(plan)}`,
-      cancelUrl: `${base}/billing/cancel`,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${base}/api/stripe/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        plan,
+        interval,
+        userId,
+        email,
+        successUrl: `${base}/billing/success?plan=${encodeURIComponent(plan)}`,
+        cancelUrl: `${base}/billing/cancel`,
+      }),
+    });
+  } catch {
+    const hint =
+      base.includes("localhost") || base.includes("127.0.0.1")
+        ? " Start the billing API with `npm run dev` at the repo root."
+        : " Check your connection and try again.";
+    return {
+      ok: false,
+      error: `Billing server unreachable.${hint}`,
+    };
+  }
 
   const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
   if (!res.ok) {
@@ -50,7 +70,7 @@ export async function startStripeCheckout(
     return { ok: false, error: "Checkout session did not return a URL." };
   }
 
-  await window.ghost?.openExternal?.(data.url);
+  await openCheckoutUrl(data.url);
   return { ok: true, url: data.url };
 }
 
@@ -81,7 +101,7 @@ export async function openStripeBillingPortal(userId: string): Promise<PortalRes
     return { ok: false, error: "Billing portal did not return a URL." };
   }
 
-  await window.ghost?.openExternal?.(data.url);
+  await openCheckoutUrl(data.url);
   return { ok: true, url: data.url };
 }
 

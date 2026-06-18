@@ -47,7 +47,7 @@ export function GhostLogo({
 
   return (
     <Image
-      src="/app-icon.png"
+      src={tone === "light" ? "/ghost-mark.png" : "/ghost-logo.png"}
       alt=""
       width={ICON.width}
       height={ICON.height}

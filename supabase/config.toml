@@ -1,4 +1,13 @@
-project_id = "mcudsqyqtjupfvntryya"
+project_id = "epeitwkgbfabevxyznrh"
+
+[auth]
+site_url = "https://ghost.ai"
+additional_redirect_urls = [
+  "ghost://auth/callback",
+  "ghost://**",
+  "http://localhost:3000/**",
+  "https://ghost.ai/**",
+]
 
 [auth.email]
 enable_confirmations = false

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "desktop:dev": "npm run dev --prefix desktop",
+    "desktop:dev": "node scripts/dev-desktop.mjs",
     "desktop:open": "npm run open-app --prefix desktop",
     "desktop:open:dev": "npm run open-app:dev --prefix desktop",
     "desktop:build": "npm run build --prefix desktop",

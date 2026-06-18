@@ -10,9 +10,9 @@ export function CalendarLinkPrompt({
         onClick={onRequestUpgrade}
         className="font-medium text-blue-600 transition-colors hover:text-blue-700"
       >
-        Link your calendar
+        Unlock to Pro
       </button>{" "}
-      to get notifications for upcoming meetings.
+      to access all features.
     </p>
   );
 }

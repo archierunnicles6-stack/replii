@@ -26,10 +26,7 @@ def default_source() -> Path:
     env = os.environ.get("GHOST_LOGO_SOURCE")
     if env:
         return Path(env)
-    repo_default = ROOT / "desktop" / "build" / "logo-source.png"
-    if repo_default.exists():
-        return repo_default
-    return Path("/Users/archie/Downloads/Create-2.png")
+    return ROOT / "desktop" / "build" / "logo-source.png"
 
 
 def extract_mask_white_on_black(src: Image.Image) -> Image.Image:
@@ -49,9 +46,7 @@ def default_landing_source() -> Path:
     env = os.environ.get("GHOST_LANDING_LOGO_SOURCE")
     if env:
         return Path(env)
-    if LANDING_SOURCE.exists():
-        return LANDING_SOURCE
-    return Path("/Users/archie/Downloads/Create-3.png")
+    return LANDING_SOURCE
 
 
 def extract_mask(src: Image.Image) -> Image.Image:
@@ -142,7 +137,7 @@ def process(source: Path) -> None:
 
 def process_landing(source: Path) -> Image.Image:
     src = Image.open(source).convert("RGBA")
-    mask = trim(extract_mask_white_on_black(src))
+    mask = trim(extract_mask(src))
     return tint(mask, (0, 0, 0))
 
 

@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getSupabase, toAppUser, isSupabaseConfigured } from "../../lib/supabase";
+import {
+  getSupabase,
+  toAppUser,
+  isSupabaseConfigured,
+  isGoogleAuthEnabled,
+} from "../../lib/supabase";
 import { legalLinks, openLegalLink } from "../../lib/legal-urls";
 import {
   recordTermsAcceptance,
@@ -69,6 +74,11 @@ export function AuthPage() {
       setLoading(true);
       try {
         const parsed = new URL(url);
+        const oauthError = parsed.searchParams.get("error_description") ?? parsed.searchParams.get("error");
+        if (oauthError) {
+          setError(decodeURIComponent(oauthError.replace(/\+/g, " ")));
+          return;
+        }
         const code = parsed.searchParams.get("code");
         if (code) {
           const { data, error } =
@@ -139,6 +149,12 @@ export function AuthPage() {
       if (!supabase) {
         afterAuth("demo@ghost.ai", "Demo User");
         return;
+      }
+      const googleEnabled = await isGoogleAuthEnabled();
+      if (!googleEnabled) {
+        throw new Error(
+          "Google sign-in is not enabled yet. Ask your admin to enable Google in Supabase Auth and add the OAuth client secret.",
+        );
       }
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",

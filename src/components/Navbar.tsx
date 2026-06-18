@@ -4,7 +4,7 @@ import { GhostLogo } from "./GhostLogo";
 import { DownloadLink } from "./DownloadLink";
 import { PRICING_PAGE_BG_CLASS } from "@/lib/brand";
 
-const LANDING_LOGO = { width: 1648, height: 435 } as const;
+const LANDING_LOGO = { width: 1746, height: 458 } as const;
 
 export function Navbar({
   variant = "solid",

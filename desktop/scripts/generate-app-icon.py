@@ -55,12 +55,7 @@ def make_macos_icon(src: Image.Image) -> Image.Image:
 def main() -> None:
     source_candidates = [
         SRC,
-        Path(
-            os.environ.get(
-                "GHOST_ICON_SOURCE",
-                "/Users/runny1/.cursor/projects/Users-runny1-Desktop-Ghost/assets/image-b2470f99-cddf-48b5-93d6-5447e81b48f1.png",
-            )
-        ),
+        *([Path(os.environ["GHOST_ICON_SOURCE"])] if os.environ.get("GHOST_ICON_SOURCE") else []),
         ICON_OUT,
     ]
 
@@ -69,6 +64,11 @@ def main() -> None:
         raise SystemExit("No icon source image found")
 
     raw = Image.open(source).convert("RGBA")
+    if raw.width != raw.height:
+        side = min(raw.width, raw.height)
+        left = (raw.width - side) // 2
+        top = (raw.height - side) // 2
+        raw = raw.crop((left, top, left + side, top + side))
     if raw.width != 1024 or raw.height != 1024:
         raw = raw.resize((1024, 1024), Image.Resampling.LANCZOS)
 
@@ -82,8 +82,8 @@ def main() -> None:
     icon.save(PUBLIC / "app-icon.png", "PNG", optimize=True)
     icon.save(PUBLIC / "apple-touch-icon.png", "PNG", optimize=True)
 
-    print(f"[ghost] Generated macOS squircle icon from {source}")
-    print(f"  canvas={CANVAS} shape={SHAPE} padding={PADDING} radius={CORNER_RADIUS}")
+    print(f"[ghost] Generated app icon from {source}")
+    print(f"  canvas={icon.width}x{icon.height}")
 
 
 if __name__ == "__main__":

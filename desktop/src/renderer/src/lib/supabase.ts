@@ -8,6 +8,21 @@ let client: SupabaseClient | null = null;
 export const isSupabaseConfigured = () =>
   Boolean(supabaseUrl.trim() && supabaseAnonKey.trim());
 
+/** True when Supabase has the Google provider enabled for this project. */
+export async function isGoogleAuthEnabled(): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/settings`, {
+      headers: { apikey: supabaseAnonKey },
+    });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { external?: { google?: boolean } };
+    return data.external?.google === true;
+  } catch {
+    return false;
+  }
+}
+
 /** Lazy client so packaged builds without .env don't crash on import. */
 export function getSupabase(): SupabaseClient | null {
   if (!isSupabaseConfigured()) return null;

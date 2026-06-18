@@ -64,8 +64,12 @@ export function usePricingCheckout({
         window.clearInterval(poll);
         setLoadingTier(null);
       }, 300_000);
-    } catch {
-      setError("Could not start checkout. Try again or continue on the free plan.");
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message.trim()
+          ? err.message
+          : "Could not start checkout. Try again or continue on the free plan.";
+      setError(message);
       setLoadingTier(null);
     }
   };
