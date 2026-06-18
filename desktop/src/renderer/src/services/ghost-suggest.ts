@@ -150,7 +150,7 @@ function buildStreamSystemPrompt(
   }
 
   return appendCoachingContext(
-    `You are a real-time meeting copilot embedded in an invisible overlay.
+    `You are a real-time meeting copilot embedded in a live coaching overlay.
 The rep sells: ${product}
 Known objections: ${objections}
 

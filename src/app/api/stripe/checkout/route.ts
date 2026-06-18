@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-import { stripePriceIdForPlan, type StripePlanId } from "@/lib/stripe-plans";
+import {
+  stripePriceIdForPlan,
+  type StripeBillingInterval,
+  type StripePlanId,
+} from "@/lib/stripe-plans";
 
-const PAID_PLANS = new Set<StripePlanId>(["pro", "undetectable"]);
+const PAID_PLANS = new Set<StripePlanId>(["pro"]);
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       plan?: string;
+      interval?: string;
       userId?: string;
       email?: string;
       successUrl?: string;
@@ -18,12 +23,14 @@ export async function POST(request: Request) {
     if (!plan || !PAID_PLANS.has(plan)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
+    const interval: StripeBillingInterval =
+      body.interval === "annual" ? "annual" : "monthly";
     if (!body.userId?.trim()) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
 
     const stripe = getStripe();
-    const priceId = stripePriceIdForPlan(plan);
+    const priceId = stripePriceIdForPlan(plan, interval);
     if (!stripe || !priceId) {
       return NextResponse.json(
         { error: "Stripe is not configured on the server" },
@@ -47,11 +54,13 @@ export async function POST(request: Request) {
       metadata: {
         userId: body.userId,
         plan,
+        interval,
       },
       subscription_data: {
         metadata: {
           userId: body.userId,
           plan,
+          interval,
         },
       },
     });

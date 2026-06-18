@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAuthBootstrap } from "./hooks/useAuthBootstrap";
 import { bootstrapOpenAIKey } from "./services/whisper";
 import { MicHelperApp } from "./mic/MicHelperApp";
+import { hasDashboardAccess } from "./lib/dashboard-access";
 import { useAppStore } from "./store/useAppStore";
 import { WelcomePage } from "./pages/welcome/WelcomePage";
 import { AuthPage } from "./pages/auth/AuthPage";
@@ -13,19 +14,21 @@ import { OverlayApp } from "./overlay/OverlayApp";
 import { DashboardLayout } from "./pages/dashboard/DashboardLayout";
 import { ActivityPage } from "./pages/dashboard/ActivityPage";
 import { MeetingDetailPage } from "./pages/dashboard/MeetingDetailPage";
+import { UpcomingPage } from "./pages/dashboard/UpcomingPage";
 
 function RootRedirect() {
   const welcomeComplete = useAppStore((s) => s.welcomeComplete);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const onboardingComplete = useAppStore((s) => s.onboardingComplete);
   const shortcutTutorialComplete = useAppStore((s) => s.shortcutTutorialComplete);
+  const plan = useAppStore((s) => s.plan);
   const paywallComplete = useAppStore((s) => s.paywallComplete);
 
   if (!welcomeComplete) return <Navigate to="/welcome" replace />;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
   if (!onboardingComplete) return <Navigate to="/onboarding" replace />;
   if (!shortcutTutorialComplete) return <Navigate to="/try" replace />;
-  if (!paywallComplete) return <Navigate to="/paywall" replace />;
+  if (!hasDashboardAccess(plan, paywallComplete)) return <Navigate to="/paywall" replace />;
 
   return <Navigate to="/" replace />;
 }
@@ -35,13 +38,14 @@ function DashboardGuard() {
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const onboardingComplete = useAppStore((s) => s.onboardingComplete);
   const shortcutTutorialComplete = useAppStore((s) => s.shortcutTutorialComplete);
+  const plan = useAppStore((s) => s.plan);
   const paywallComplete = useAppStore((s) => s.paywallComplete);
 
   if (!welcomeComplete) return <Navigate to="/welcome" replace />;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
   if (!onboardingComplete) return <Navigate to="/onboarding" replace />;
   if (!shortcutTutorialComplete) return <Navigate to="/try" replace />;
-  if (!paywallComplete) return <Navigate to="/paywall" replace />;
+  if (!hasDashboardAccess(plan, paywallComplete)) return <Navigate to="/paywall" replace />;
 
   return <DashboardLayout />;
 }
@@ -61,6 +65,7 @@ function AppRoutes() {
       <Route path="/paywall" element={<PaywallPage />} />
       <Route element={<DashboardGuard />}>
         <Route path="/" element={<ActivityPage />} />
+        <Route path="/upcoming" element={<UpcomingPage />} />
         <Route path="/meetings/:id" element={<MeetingDetailPage />} />
       </Route>
       <Route path="/*" element={<RootRedirect />} />

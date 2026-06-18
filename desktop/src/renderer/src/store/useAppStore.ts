@@ -24,6 +24,7 @@ import {
   type MeetingStatus,
   type Plan,
   type SalesMode,
+  type SuggestionRecord,
   type SummarySection,
   type TranscriptLine,
   type UpcomingCall,
@@ -119,8 +120,14 @@ interface AppState {
     dealScore: number;
     objections: string[];
     suggestionUses?: number;
+    suggestions?: SuggestionRecord[];
   }) => MeetingRecord;
   updateMeeting: (id: string, partial: Partial<MeetingRecord>) => void;
+  updateSuggestion: (
+    meetingId: string,
+    suggestionId: string,
+    partial: Partial<SuggestionRecord>,
+  ) => void;
   deleteMeeting: (id: string) => void;
   getActiveModeConfig: () => (typeof SALES_MODES)[number];
 }
@@ -249,7 +256,10 @@ export const useAppStore = create<AppState>()(
 
       completeShortcutTutorial: () => set({ shortcutTutorialComplete: true }),
 
-      completePaywall: () => set({ paywallComplete: true }),
+      completePaywall: () => {
+        set({ paywallComplete: true });
+        notifyAppStoreChanged();
+      },
 
       setOnboardingStep: (step) => set({ onboardingStep: step }),
 
@@ -298,11 +308,10 @@ export const useAppStore = create<AppState>()(
       setPlan: (plan) => {
         set((s) => {
           const updates: Partial<AppState> = { plan };
-          let invisible = s.settings.invisible;
-          if (plan === "undetectable" && s.plan !== "undetectable") {
-            invisible = true;
+          if (isPaidPlan(plan) && !s.paywallComplete) {
+            updates.paywallComplete = true;
           }
-          invisible = normalizedInvisibleSetting(plan, invisible);
+          const invisible = normalizedInvisibleSetting(plan, s.settings.invisible);
           if (invisible !== s.settings.invisible) {
             updates.settings = { ...s.settings, invisible };
           }
@@ -349,6 +358,8 @@ export const useAppStore = create<AppState>()(
           dealScore: data.dealScore,
           objections: data.objections,
           suggestionUses: data.suggestionUses ?? 0,
+          suggestions: data.suggestions ?? [],
+          dealOutcome: "open",
         };
         set((s) => ({ meetings: [meeting, ...s.meetings] }));
         notifyAppStoreChanged();
@@ -360,6 +371,21 @@ export const useAppStore = create<AppState>()(
           meetings: s.meetings.map((m) =>
             m.id === id ? { ...m, ...partial } : m,
           ),
+        }));
+        notifyAppStoreChanged();
+      },
+
+      updateSuggestion: (meetingId, suggestionId, partial) => {
+        set((s) => ({
+          meetings: s.meetings.map((m) => {
+            if (m.id !== meetingId || !m.suggestions) return m;
+            return {
+              ...m,
+              suggestions: m.suggestions.map((sug) =>
+                sug.id === suggestionId ? { ...sug, ...partial } : sug,
+              ),
+            };
+          }),
         }));
         notifyAppStoreChanged();
       },
@@ -376,7 +402,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "ghost-app-storage",
-      version: 8,
+      version: 9,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
         if (version < 5) {
@@ -418,6 +444,27 @@ export const useAppStore = create<AppState>()(
           if (!state.companyInfo) {
             state.companyInfo = { ...DEFAULT_COMPANY_INFO };
           }
+        }
+        if (version < 9) {
+          const normalizeMeetings = (meetings: MeetingRecord[]) =>
+            meetings.map((m) => ({
+              ...m,
+              dealOutcome: m.dealOutcome ?? "open",
+              suggestions: m.suggestions ?? [],
+            }));
+
+          if (Array.isArray(state.meetings)) {
+            state.meetings = normalizeMeetings(state.meetings as MeetingRecord[]);
+          }
+          const profiles =
+            (state.accountProfiles as AccountProfiles | undefined) ?? {};
+          for (const id of Object.keys(profiles)) {
+            profiles[id] = {
+              ...profiles[id],
+              meetings: normalizeMeetings(profiles[id].meetings),
+            };
+          }
+          state.accountProfiles = profiles;
         }
         return state as AppState;
       },

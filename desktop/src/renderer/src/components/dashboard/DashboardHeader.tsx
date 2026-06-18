@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { CalendarLinkPrompt } from "./DashboardPromptBanner";
 import { useAppStore } from "../../store/useAppStore";
 import { SALES_MODES, salesModeShortLabel, type SalesMode } from "../../store/types";
 
@@ -79,6 +80,7 @@ export function DashboardHeader({
   sessionActive = false,
   sessionsRemaining,
   isPaid = false,
+  showCalendarPrompt = false,
 }: {
   onStartSession: () => void;
   onRequestUpgrade: () => void;
@@ -86,18 +88,25 @@ export function DashboardHeader({
   sessionActive?: boolean;
   sessionsRemaining?: number;
   isPaid?: boolean;
+  showCalendarPrompt?: boolean;
 }) {
   const { activeMode, setActiveMode } = useAppStore();
 
   return (
     <div className="no-drag shrink-0 border-b border-zinc-100 bg-white px-8 py-4">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <h1 className="shrink-0 text-[20px] font-semibold tracking-tight text-zinc-900">
-            Ghost
-          </h1>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex items-center gap-2.5">
+            <h1 className="shrink-0 text-[20px] font-semibold tracking-tight text-zinc-900">
+              Ghost
+            </h1>
 
-          <ModeDropdown activeMode={activeMode} onSelect={setActiveMode} />
+            <ModeDropdown activeMode={activeMode} onSelect={setActiveMode} />
+          </div>
+
+          {!isPaid && showCalendarPrompt ? (
+            <CalendarLinkPrompt onRequestUpgrade={onRequestUpgrade} />
+          ) : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-3">

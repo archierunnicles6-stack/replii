@@ -84,9 +84,9 @@ function ResponsePanel() {
         <div>
           <p className="font-semibold text-[#0a0a0a]">What is Ghost?</p>
           <p className="mt-1">
-            Ghost is a desktop AI assistant that runs invisibly on your computer,
-            providing real-time insights, answers, and support during any
-            conversation or task.
+            Ghost is a desktop AI coach that runs alongside your calls,
+            providing real-time suggestions and logging every session for
+            manager review.
           </p>
         </div>
 

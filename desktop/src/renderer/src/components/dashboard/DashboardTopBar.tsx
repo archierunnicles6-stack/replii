@@ -20,7 +20,7 @@ export function DashboardTopBar({
   const canGoBack = location.pathname !== "/";
 
   return (
-    <header className="relative flex h-[52px] shrink-0 items-center border-b border-zinc-100 bg-white px-4 pl-[72px] pr-4">
+    <header className="no-drag relative flex h-[52px] shrink-0 items-center border-b border-zinc-100 bg-white px-4 pl-[72px] pr-4">
       {/* Draggable title-bar regions — keep interactive controls in no-drag layers */}
       <div
         className="drag-region absolute inset-y-0 left-0 w-[72px]"
@@ -65,15 +65,16 @@ export function DashboardTopBar({
             />
           </svg>
           <input
-            type="text"
+            type="search"
             role="search"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search or ask anything..."
+            placeholder="Search meetings..."
             spellCheck={false}
             autoComplete="off"
             autoCorrect="off"
-            className="no-drag h-9 w-full select-text rounded-full border border-zinc-200/80 bg-white pl-10 pr-4 text-[13px] text-zinc-900 caret-zinc-900 outline-none transition-shadow placeholder:text-zinc-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+            autoCapitalize="off"
+            className="h-9 w-full select-text rounded-full border border-zinc-200/80 bg-white pl-10 pr-4 text-[13px] text-zinc-900 caret-zinc-900 outline-none transition-shadow placeholder:text-zinc-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
           />
         </div>
 

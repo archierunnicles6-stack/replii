@@ -2,9 +2,10 @@ import { useState } from "react";
 import type { BillingInterval, PricingTierId } from "../../lib/pricing";
 import {
   BillingToggle,
+  EnterprisePlanCard,
   ProPlanCard,
-  UndetectablePlanCard,
 } from "./PaywallPlanCards";
+import { legalLinks, openLegalLink } from "../../lib/legal-urls";
 
 function StarIcon() {
   return (
@@ -17,13 +18,15 @@ function StarIcon() {
 export function PaywallPricing({
   loadingTier,
   onSelect,
+  onContactSales,
   onStartFree,
   freeLinkLabel = "Start with free →",
   showFreeLink = true,
   variant = "page",
 }: {
   loadingTier?: PricingTierId | null;
-  onSelect: (id: PricingTierId) => void;
+  onSelect: (id: PricingTierId, interval: BillingInterval) => void;
+  onContactSales: () => void;
   onStartFree: () => void;
   freeLinkLabel?: string;
   showFreeLink?: boolean;
@@ -54,14 +57,23 @@ export function PaywallPricing({
         <ProPlanCard
           interval={interval}
           loading={loadingTier === "pro"}
-          onSelect={() => onSelect("pro")}
+          onSelect={() => onSelect("pro", interval)}
         />
-        <UndetectablePlanCard
-          interval={interval}
-          loading={loadingTier === "undetectable"}
-          onSelect={() => onSelect("undetectable")}
-        />
+        <EnterprisePlanCard onContactSales={onContactSales} />
       </div>
+
+      <p className={`text-center text-[11px] leading-relaxed text-zinc-400 ${embedded ? "mt-4" : "mt-5"}`}>
+        Subscriptions renew automatically until cancelled. By upgrading you agree
+        to our{" "}
+        <button
+          type="button"
+          onClick={() => openLegalLink(legalLinks.terms)}
+          className="text-zinc-500 underline decoration-zinc-300 hover:text-zinc-600"
+        >
+          Terms of Service
+        </button>
+        . Payments are processed by Stripe.
+      </p>
 
       {!embedded ? (
         <div className="mt-6 flex items-center gap-2">

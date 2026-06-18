@@ -2,8 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabase, toAppUser, isSupabaseConfigured } from "../../lib/supabase";
 import { legalLinks, openLegalLink } from "../../lib/legal-urls";
+import {
+  recordTermsAcceptance,
+  termsAcceptanceMetadata,
+} from "../../lib/legal-acceptance";
+import { hasDashboardAccess } from "../../lib/dashboard-access";
 import { useAppStore } from "../../store/useAppStore";
 import { BackButton, PillButton } from "../../components/ui";
+import { TermsAgreement } from "../../components/auth/TermsAgreement";
 
 type Mode = "signin" | "signup";
 
@@ -11,15 +17,13 @@ export function AuthPage() {
   const navigate = useNavigate();
   const login = useAppStore((s) => s.login);
   const welcomeComplete = useAppStore((s) => s.welcomeComplete);
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
-  const shortcutTutorialComplete = useAppStore((s) => s.shortcutTutorialComplete);
-  const paywallComplete = useAppStore((s) => s.paywallComplete);
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const configured = isSupabaseConfigured();
 
@@ -41,17 +45,19 @@ export function AuthPage() {
         navigate("/onboarding");
         return;
       }
-      if (!onboardingComplete) {
+
+      const state = useAppStore.getState();
+      if (!state.onboardingComplete) {
         navigate("/onboarding");
         return;
       }
-      if (!shortcutTutorialComplete) {
+      if (!state.shortcutTutorialComplete) {
         navigate("/try");
         return;
       }
-      navigate(paywallComplete ? "/" : "/paywall");
+      navigate(hasDashboardAccess(state.plan, state.paywallComplete) ? "/" : "/paywall");
     },
-    [login, navigate, onboardingComplete, shortcutTutorialComplete, paywallComplete],
+    [login, navigate],
   );
 
   const handleOAuthCallback = useCallback(
@@ -74,6 +80,9 @@ export function AuthPage() {
           const u = toAppUser(data.user);
           const isNew =
             data.user.created_at === data.user.last_sign_in_at;
+          if (isNew) {
+            await recordTermsAcceptance(u.id);
+          }
           afterAuth(u.email, u.name, isNew, u.id, u.avatar);
           return;
         }
@@ -110,8 +119,16 @@ export function AuthPage() {
     });
   }, [handleOAuthCallback]);
 
+  const requireTermsForSignup = () => {
+    if (mode !== "signup") return true;
+    if (acceptedTerms) return true;
+    setError("Please agree to the Terms of Service and Privacy Policy to continue.");
+    return false;
+  };
+
   const handleGoogle = async () => {
     setError(null);
+    if (!requireTermsForSignup()) return;
     setLoading(true);
     try {
       if (!configured) {
@@ -144,6 +161,7 @@ export function AuthPage() {
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!requireTermsForSignup()) return;
     setLoading(true);
     try {
       if (!configured) {
@@ -164,7 +182,13 @@ export function AuthPage() {
         return;
       }
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: termsAcceptanceMetadata(),
+          },
+        });
         if (error) throw error;
         if (data.user && !data.user.identities?.length) {
           setError("An account with this email already exists. Sign in instead.");
@@ -172,6 +196,7 @@ export function AuthPage() {
         }
         if (data.session) {
           const u = toAppUser(data.user!);
+          await recordTermsAcceptance(u.id);
           afterAuth(u.email, u.name, true, u.id, u.avatar);
         } else {
           setSent(true);
@@ -228,8 +253,8 @@ export function AuthPage() {
       <button
         type="button"
         onClick={() => void handleGoogle()}
-        disabled={loading}
-        className="mt-8 flex h-[44px] w-full items-center justify-center gap-2.5 rounded-full border border-zinc-200 bg-white text-[14px] font-medium text-zinc-800 shadow-sm transition-colors hover:bg-zinc-50 disabled:opacity-50"
+        disabled={loading || (mode === "signup" && !acceptedTerms)}
+        className="mt-8 flex h-[44px] w-full items-center justify-center gap-2.5 rounded-full border border-zinc-200 bg-white text-[14px] font-medium text-zinc-800 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <GoogleIcon />
         Continue with Google
@@ -266,7 +291,15 @@ export function AuthPage() {
           </p>
         )}
 
-        <PillButton type="submit" disabled={loading} className="mt-1">
+        {mode === "signup" ? (
+          <TermsAgreement checked={acceptedTerms} onChange={setAcceptedTerms} />
+        ) : null}
+
+        <PillButton
+          type="submit"
+          disabled={loading || (mode === "signup" && !acceptedTerms)}
+          className="mt-1"
+        >
           {loading
             ? "Please wait…"
             : mode === "signup"
@@ -284,6 +317,7 @@ export function AuthPage() {
               onClick={() => {
                 setMode("signin");
                 setError(null);
+                setAcceptedTerms(false);
               }}
               className="font-medium text-zinc-900 underline decoration-zinc-300 hover:decoration-zinc-600"
             >
@@ -298,6 +332,7 @@ export function AuthPage() {
               onClick={() => {
                 setMode("signup");
                 setError(null);
+                setAcceptedTerms(false);
               }}
               className="font-medium text-zinc-900 underline decoration-zinc-300 hover:decoration-zinc-600"
             >
@@ -307,25 +342,27 @@ export function AuthPage() {
         )}
       </p>
 
-      <p className="mt-8 text-[11px] leading-relaxed text-zinc-400">
-        By continuing, you agree to our{" "}
-        <button
-          type="button"
-          onClick={() => openLegalLink(legalLinks.terms)}
-          className="text-zinc-500 underline decoration-zinc-300 hover:text-zinc-700"
-        >
-          Terms of Service
-        </button>{" "}
-        and{" "}
-        <button
-          type="button"
-          onClick={() => openLegalLink(legalLinks.privacy)}
-          className="text-zinc-500 underline decoration-zinc-300 hover:text-zinc-700"
-        >
-          Privacy Policy
-        </button>
-        .
-      </p>
+      {mode === "signin" ? (
+        <p className="mt-8 text-[11px] leading-relaxed text-zinc-400">
+          By signing in, you agree to our{" "}
+          <button
+            type="button"
+            onClick={() => openLegalLink(legalLinks.terms)}
+            className="text-zinc-500 underline decoration-zinc-300 hover:text-zinc-700"
+          >
+            Terms of Service
+          </button>{" "}
+          and{" "}
+          <button
+            type="button"
+            onClick={() => openLegalLink(legalLinks.privacy)}
+            className="text-zinc-500 underline decoration-zinc-300 hover:text-zinc-700"
+          >
+            Privacy Policy
+          </button>
+          .
+        </p>
+      ) : null}
     </AuthShell>
   );
 }

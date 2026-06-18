@@ -5,11 +5,14 @@ import { MeetingSummaryWorker } from "../../components/MeetingSummaryWorker";
 import { DashboardTopBar } from "../../components/dashboard/DashboardTopBar";
 import { DashboardHeader } from "../../components/dashboard/DashboardHeader";
 import { UpgradeModal } from "../../components/pricing/UpgradeModal";
+import { AI_DISCLAIMER_SHORT } from "../../lib/ai-disclaimer";
+import { useBillingSync } from "../../hooks/useBillingSync";
 import { useContentProtectionSync } from "../../hooks/useContentProtectionSync";
 import { useStartGhostSession } from "../../hooks/useStartGhostSession";
 import { rehydrateAppStoreFromStorage, syncPlanLimitsToMain, useAppStore } from "../../store/useAppStore";
 
 const SUB_PAGE_PATHS: string[] = ["/meetings"];
+const CALENDAR_PATHS: string[] = ["/upcoming", "/calendar"];
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -21,9 +24,12 @@ export function DashboardLayout() {
     useStartGhostSession();
 
   const isSubPage = SUB_PAGE_PATHS.some((p) => location.pathname.startsWith(p));
+  const isCalendarPage = CALENDAR_PATHS.some((p) => location.pathname.startsWith(p));
   const showMainHeader = !isSubPage;
+  const showCalendarPrompt = !isCalendarPage;
 
   useContentProtectionSync();
+  useBillingSync();
 
   useEffect(() => {
     void window.ghost?.setDashboardLayout?.("dashboard");
@@ -79,16 +85,19 @@ export function DashboardLayout() {
       />
 
       {showMainHeader && (
-        <DashboardHeader
-          onStartSession={() => void startSession()}
-          onRequestUpgrade={() => setUpgradeOpen(true)}
-          canStartSession={canStart}
-          sessionActive={sessionActive}
-          sessionsRemaining={
-            Number.isFinite(sessionsRemaining) ? sessionsRemaining : undefined
-          }
-          isPaid={isPaid}
-        />
+        <>
+          <DashboardHeader
+            onStartSession={() => void startSession()}
+            onRequestUpgrade={() => setUpgradeOpen(true)}
+            canStartSession={canStart}
+            sessionActive={sessionActive}
+            sessionsRemaining={
+              Number.isFinite(sessionsRemaining) ? sessionsRemaining : undefined
+            }
+            isPaid={isPaid}
+            showCalendarPrompt={showCalendarPrompt}
+          />
+        </>
       )}
 
       {upgradeOpen ? <UpgradeModal onClose={() => setUpgradeOpen(false)} /> : null}
@@ -99,6 +108,9 @@ export function DashboardLayout() {
         >
           <Outlet context={{ searchQuery, onRequestUpgrade: () => setUpgradeOpen(true) }} />
         </div>
+        <p className="mx-auto max-w-5xl px-8 pb-6 text-center text-[11px] leading-relaxed text-zinc-400">
+          {AI_DISCLAIMER_SHORT}
+        </p>
       </main>
     </div>
   );

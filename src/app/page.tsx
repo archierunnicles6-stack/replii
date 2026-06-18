@@ -2,9 +2,9 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { ProductStatement } from "@/components/ProductStatement";
 import { MeetingHelp } from "@/components/MeetingHelp";
-import { TeamPerformance } from "@/components/TeamPerformance";
+import { InstantMeetingNotes } from "@/components/InstantMeetingNotes";
+import { RealTimeTranscription } from "@/components/RealTimeTranscription";
 import { FAQ } from "@/components/FAQ";
-import { WelcomeDownload } from "@/components/WelcomeDownload";
 import { CTA } from "@/components/CTA";
 import { Footer } from "@/components/Footer";
 
@@ -21,9 +21,9 @@ export default function Home() {
       <main>
         <ProductStatement />
         <MeetingHelp />
-        <TeamPerformance />
+        <InstantMeetingNotes />
+        <RealTimeTranscription />
         <FAQ />
-        <WelcomeDownload />
         <CTA />
       </main>
       <Footer />

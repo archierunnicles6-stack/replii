@@ -2,7 +2,7 @@ import { PaywallPricing } from "./PaywallPricing";
 import { usePricingCheckout } from "../../hooks/usePricingCheckout";
 
 export function UpgradeModal({ onClose }: { onClose: () => void }) {
-  const { loadingTier, error, handleSelect } = usePricingCheckout({
+  const { loadingTier, error, handleSelect, handleContactSales } = usePricingCheckout({
     onComplete: onClose,
   });
 
@@ -13,8 +13,8 @@ export function UpgradeModal({ onClose }: { onClose: () => void }) {
         onClick={onClose}
       />
 
-      <div className="no-drag relative flex max-h-[calc(100vh-48px)] w-full max-w-[900px] flex-col overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-2xl">
-        <div className="sticky top-0 z-10 flex justify-end bg-white/95 px-4 pt-4 backdrop-blur-sm">
+      <div className="no-drag relative flex max-h-[calc(100vh-48px)] w-full max-w-[1080px] flex-col overflow-y-auto rounded-2xl border border-zinc-200 bg-gradient-to-b from-[#e4ebf3] via-[#eef2f7] to-[#f3f5f8] shadow-2xl">
+        <div className="sticky top-0 z-10 flex justify-end bg-transparent px-4 pt-4">
           <button
             type="button"
             onClick={onClose}
@@ -34,9 +34,9 @@ export function UpgradeModal({ onClose }: { onClose: () => void }) {
 
           <PaywallPricing
             loadingTier={loadingTier}
-            onSelect={(id) => void handleSelect(id)}
+            onSelect={(id, interval) => void handleSelect(id, interval)}
+            onContactSales={handleContactSales}
             onStartFree={onClose}
-            freeLinkLabel="Maybe later"
           />
         </div>
       </div>

@@ -45,12 +45,12 @@ export function getFreeSessionsRemaining(
   return Math.max(0, FREE_SESSION_LIMIT - used);
 }
 
-/** Detectability toggle (visible on screen share) is exclusive to the Undetectable plan. */
+/** Overlay display toggle is only available on legacy grandfathered plans. */
 export function canUseDetectabilityToggle(plan: Plan): boolean {
   return plan === "undetectable";
 }
 
-/** Free / Solo / Pro are always detectable on screen share; only Undetectable can hide. */
+/** Free / Solo / Pro show the overlay on screen share. */
 export function normalizedInvisibleSetting(plan: Plan, invisible: boolean): boolean {
   if (!canUseDetectabilityToggle(plan)) return false;
   return invisible;
@@ -84,6 +84,39 @@ export interface SummarySection {
   format?: "paragraphs" | "bullets";
 }
 
+export type SuggestionTag =
+  | "objection"
+  | "discovery"
+  | "closing"
+  | "pricing"
+  | "competitive"
+  | "question"
+  | "general";
+
+export type SuggestionSource = "auto" | "assist";
+
+export interface SuggestionRecord {
+  id: string;
+  text: string;
+  tags: SuggestionTag[];
+  triggerText?: string;
+  transcriptLineId?: string;
+  timestamp: number;
+  health?: number;
+  source: SuggestionSource;
+  /** Manager/rep feedback — did the rep use this suggestion? */
+  repUsed?: boolean;
+}
+
+export type DealOutcome = "open" | "won" | "lost" | "stalled" | "no_decision";
+
+export interface DealLink {
+  crmId?: string;
+  crmType?: "salesforce" | "hubspot" | "manual";
+  stage?: string;
+  amount?: number;
+}
+
 export interface MeetingRecord {
   id: string;
   title: string;
@@ -100,6 +133,13 @@ export interface MeetingRecord {
   objections: string[];
   /** AI suggestions shown during the live session. */
   suggestionUses?: number;
+  /** Tagged coaching suggestions from the live session. */
+  suggestions?: SuggestionRecord[];
+  dealOutcome?: DealOutcome;
+  dealOutcomeAt?: string;
+  dealOutcomeNotes?: string;
+  dealLink?: DealLink;
+  managerNotes?: string;
 }
 
 export function salesModeShortLabel(mode: SalesMode): string {
@@ -225,9 +265,9 @@ export const DEFAULT_UPCOMING: UpcomingCall[] = [
         bio: "Technical buyer. Evaluating Gong vs alternatives. Security-conscious.",
       },
     ],
-    agenda: "Product demo — live overlay, screen-share invisibility, CRM workflow.",
+    agenda: "Product demo — live coaching overlay, manager review, CRM workflow.",
     talkingPoints: [
-      "Lead with invisible overlay demo",
+      "Lead with live coaching demo",
       "Address data retention / SOC2",
       "Pilot proposal for 5 reps",
     ],
@@ -308,6 +348,28 @@ export const DEMO_MEETINGS: MeetingRecord[] = [
     ],
     dealScore: 62,
     objections: ["Gong comparison", "Rep adoption"],
+    dealOutcome: "open",
+    suggestions: [
+      {
+        id: "demo-sug-1",
+        text: "What would need to be true for reps to actually use this daily?",
+        tags: ["discovery"],
+        triggerText: "We're still comparing you to Gong.",
+        timestamp: 42,
+        health: 58,
+        source: "auto",
+      },
+      {
+        id: "demo-sug-2",
+        text: "If price weren't a factor, would live coaching solve the ramp problem?",
+        tags: ["pricing", "objection"],
+        triggerText: "Price and whether reps actually use it",
+        timestamp: 78,
+        health: 65,
+        source: "auto",
+        repUsed: true,
+      },
+    ],
   },
   {
     id: "demo-onboarding",
@@ -354,6 +416,30 @@ export const DEMO_MEETINGS: MeetingRecord[] = [
     ],
     dealScore: 71,
     objections: ["Ramp time"],
+    dealOutcome: "won",
+    dealOutcomeAt: new Date(Date.now() - 86400000).toISOString(),
+    suggestions: [
+      {
+        id: "demo-sug-3",
+        text: "How long does it typically take new reps to hit quota today?",
+        tags: ["discovery"],
+        triggerText: "Our new reps take forever to hit quota.",
+        timestamp: 55,
+        health: 72,
+        source: "auto",
+        repUsed: true,
+      },
+      {
+        id: "demo-sug-4",
+        text: "Would a 5-rep pilot starting next month work for your team?",
+        tags: ["closing"],
+        triggerText: "Pilot budget available if security review passes",
+        timestamp: 120,
+        health: 78,
+        source: "assist",
+        repUsed: true,
+      },
+    ],
   },
 ];
 

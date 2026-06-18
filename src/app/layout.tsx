@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Instrument_Serif } from "next/font/google";
+import { CookieConsent } from "@/components/CookieConsent";
 import "./globals.css";
 
 const inter = Inter({
@@ -16,7 +17,7 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   title: "Ghost — Live AI Sales Coach",
   description:
-    "Real-time response suggestions during sales calls. Invisible overlay, instant coaching, zero bots.",
+    "Real-time coaching during sales calls. Live suggestions, logged sessions, zero bots.",
   manifest: "/manifest.json",
   icons: {
     icon: "/app-icon.png",
@@ -35,7 +36,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${instrumentSerif.variable}`}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        {children}
+        <CookieConsent />
+      </body>
     </html>
   );
 }

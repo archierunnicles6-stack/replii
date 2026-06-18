@@ -6,9 +6,9 @@ const features = [
     icon: "👤",
   },
   {
-    title: "Invisible to screen share",
+    title: "Logged for managers",
     description:
-      "The overlay is hidden from Zoom, Meet, Teams, and every recording tool.",
+      "Every call is saved with transcripts, suggestions used, and deal scores — ready for manager review.",
     icon: "👁",
   },
   {
@@ -33,11 +33,11 @@ export function Features() {
       <div className="mx-auto max-w-6xl px-6 py-24 md:py-32">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-            Invisible in every way
+            Built for transparent coaching
           </h2>
           <div className="mx-auto my-5 h-px w-12 bg-zinc-300" />
           <p className="text-[15px] leading-relaxed text-zinc-500">
-            A suite of features to use Ghost without a trace.
+            Live coaching for reps. Logged sessions for managers. No bots on your calls.
           </p>
         </div>
 

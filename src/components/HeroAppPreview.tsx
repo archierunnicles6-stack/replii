@@ -27,8 +27,8 @@ const features = [
     body: "Rather than waiting for questions, it anticipates what you might need",
   },
   {
-    title: "Completely undetectable:",
-    body: "Ghost is invisible to screen-share, follows your eyes, and doesn't show up in recordings",
+    title: "Coaching history:",
+    body: "Every call is logged with transcripts, suggestions used, and deal scores",
   },
 ];
 

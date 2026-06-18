@@ -1,15 +1,25 @@
-export type StripePlanId = "pro" | "undetectable";
+export type StripePlanId = "pro";
+export type StripeBillingInterval = "monthly" | "annual";
 
-export function stripePriceIdForPlan(plan: StripePlanId): string | undefined {
-  const map: Record<StripePlanId, string | undefined> = {
-    pro: process.env.STRIPE_PRICE_PRO,
-    undetectable: process.env.STRIPE_PRICE_UNDETECTABLE,
+const PRO_PRICE_IDS = () =>
+  [process.env.STRIPE_PRICE_PRO, process.env.STRIPE_PRICE_PRO_ANNUAL].filter(
+    Boolean,
+  ) as string[];
+
+export function stripePriceIdForPlan(
+  plan: StripePlanId,
+  interval: StripeBillingInterval = "monthly",
+): string | undefined {
+  const map: Record<StripePlanId, Record<StripeBillingInterval, string | undefined>> = {
+    pro: {
+      monthly: process.env.STRIPE_PRICE_PRO,
+      annual: process.env.STRIPE_PRICE_PRO_ANNUAL,
+    },
   };
-  return map[plan]?.trim() || undefined;
+  return map[plan][interval]?.trim() || undefined;
 }
 
 export function planFromStripePriceId(priceId: string): StripePlanId | "free" {
-  if (priceId === process.env.STRIPE_PRICE_PRO) return "pro";
-  if (priceId === process.env.STRIPE_PRICE_UNDETECTABLE) return "undetectable";
+  if (PRO_PRICE_IDS().includes(priceId)) return "pro";
   return "free";
 }

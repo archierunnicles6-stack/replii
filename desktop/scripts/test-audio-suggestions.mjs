@@ -131,7 +131,7 @@ async function getGhostSuggestion(apiKey, prospectText, transcript = []) {
 }
 
 async function streamGhostSuggestion(apiKey, prospectText, transcript = []) {
-  const system = `You are a real-time meeting copilot embedded in an invisible overlay.
+  const system = `You are a real-time meeting copilot embedded in a live coaching overlay.
 The rep sells: ${DEFAULT_PRODUCT}
 Known objections: ${DEFAULT_OBJECTIONS}
 

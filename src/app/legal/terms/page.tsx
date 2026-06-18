@@ -18,6 +18,7 @@ export default function TermsPage() {
         { href: LEGAL_ROUTES.privacy, label: "Privacy Policy" },
         { href: LEGAL_ROUTES.acceptableUse, label: "Acceptable Use Policy" },
         { href: LEGAL_ROUTES.cookies, label: "Cookie Policy" },
+        { href: LEGAL_ROUTES.subprocessors, label: "Subprocessors" },
       ]}
     />
   );

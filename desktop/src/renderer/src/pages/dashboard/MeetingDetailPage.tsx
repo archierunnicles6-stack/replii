@@ -1,10 +1,108 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { sectionsToPlainText } from "../../services/ai";
+import { AI_DISCLAIMER_SHORT } from "../../lib/ai-disclaimer";
+import { SUGGESTION_TAG_LABELS } from "../../lib/suggestion-tags";
 import { useAppStore } from "../../store/useAppStore";
-import { DEMO_MEETINGS, isUserMeeting, type SummarySection } from "../../store/types";
+import {
+  DEMO_MEETINGS,
+  isUserMeeting,
+  type SummarySection,
+  type SuggestionRecord,
+} from "../../store/types";
 
-type Tab = "summary" | "transcript";
+type Tab = "summary" | "coaching" | "transcript";
+
+function formatTimestamp(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function CoachingView({
+  suggestions,
+  meetingId,
+  canEdit,
+}: {
+  suggestions: SuggestionRecord[];
+  meetingId: string;
+  canEdit: boolean;
+}) {
+  const updateSuggestion = useAppStore((s) => s.updateSuggestion);
+
+  if (suggestions.length === 0) {
+    return (
+      <p className="py-8 text-[15px] text-zinc-500">
+        No coaching suggestions were captured for this call.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3 text-[12px] leading-relaxed text-amber-900/80">
+        {AI_DISCLAIMER_SHORT}
+      </p>
+      {suggestions.map((sug) => (
+        <div
+          key={sug.id}
+          className="rounded-2xl border border-zinc-200 bg-white p-4"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] leading-relaxed text-zinc-800">
+                &ldquo;{sug.text}&rdquo;
+              </p>
+              {sug.triggerText && (
+                <p className="mt-2 text-[13px] text-zinc-500">
+                  Triggered by: &ldquo;{sug.triggerText}&rdquo;
+                </p>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {sug.timestamp > 0 && (
+                <span className="text-[12px] tabular-nums text-zinc-400">
+                  {formatTimestamp(sug.timestamp)}
+                </span>
+              )}
+              {sug.health != null && (
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+                  {sug.health}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {sug.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700"
+              >
+                {SUGGESTION_TAG_LABELS[tag]}
+              </span>
+            ))}
+            <span className="text-[11px] text-zinc-400">· {sug.source}</span>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() =>
+                  updateSuggestion(meetingId, sug.id, { repUsed: !sug.repUsed })
+                }
+                className={`ml-auto rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+                  sug.repUsed
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-zinc-100 text-zinc-500 hover:text-zinc-700"
+                }`}
+              >
+                {sug.repUsed ? "Rep used ✓" : "Mark used"}
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -12,12 +110,6 @@ function formatDate(iso: string) {
     month: "short",
     day: "numeric",
   });
-}
-
-function formatTimestamp(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function renderItemText(text: string) {
@@ -66,6 +158,7 @@ function SummaryView({
 
   return (
     <div className="space-y-10">
+      <p className="text-[12px] leading-relaxed text-zinc-400">{AI_DISCLAIMER_SHORT}</p>
       {sections.map((section) => (
         <section key={section.heading}>
           <div className="mb-4 flex items-center justify-between">
@@ -220,6 +313,7 @@ export function MeetingDetailPage() {
   const meeting = savedMeeting ?? DEMO_MEETINGS.find((m) => m.id === id);
   const [tab, setTab] = useState<Tab>("summary");
   const canDelete = meeting ? isUserMeeting(meeting) : false;
+  const canEdit = meeting ? isUserMeeting(meeting) : false;
 
   if (!meeting) {
     return (
@@ -289,7 +383,7 @@ export function MeetingDetailPage() {
       )}
 
       <div className="mt-8 flex items-center gap-1 rounded-full bg-zinc-100 p-1 w-fit">
-        {(["summary", "transcript"] as const).map((t) => (
+        {(["summary", "coaching", "transcript"] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -301,6 +395,12 @@ export function MeetingDetailPage() {
             }`}
           >
             {t}
+            {t === "coaching" &&
+              (meeting.suggestions?.length ?? meeting.suggestionUses ?? 0) > 0 && (
+                <span className="ml-1.5 text-[11px] text-zinc-400">
+                  ({meeting.suggestions?.length ?? meeting.suggestionUses})
+                </span>
+              )}
           </button>
         ))}
       </div>
@@ -308,6 +408,12 @@ export function MeetingDetailPage() {
       <div className="mt-8">
         {tab === "summary" ? (
           <SummaryView sections={sections} processing={processing} />
+        ) : tab === "coaching" ? (
+          <CoachingView
+            suggestions={meeting.suggestions ?? []}
+            meetingId={meeting.id}
+            canEdit={canEdit}
+          />
         ) : (
           <TranscriptView
             transcript={meeting.transcript}

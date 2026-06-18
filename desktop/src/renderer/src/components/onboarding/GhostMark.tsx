@@ -1,9 +1,9 @@
-import ghostIcon from "../../assets/ghost-icon.png";
+import ghostMark from "../../assets/ghost-mark.png";
 
 export function GhostMark() {
   return (
     <img
-      src={ghostIcon}
+      src={ghostMark}
       alt=""
       aria-hidden
       draggable={false}

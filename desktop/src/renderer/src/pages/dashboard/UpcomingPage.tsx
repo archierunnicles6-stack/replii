@@ -1,11 +1,14 @@
 import { useOutletContext } from "react-router-dom";
 import { useStartGhostSession } from "../../hooks/useStartGhostSession";
+import { isPaidPlan } from "../../store/types";
 import { useAppStore } from "../../store/useAppStore";
 import type { DashboardOutletContext } from "./DashboardLayout";
 
 export function UpcomingPage() {
-  const { searchQuery } = useOutletContext<DashboardOutletContext>();
+  const { searchQuery, onRequestUpgrade } = useOutletContext<DashboardOutletContext>();
   const upcoming = useAppStore((s) => s.upcoming);
+  const plan = useAppStore((s) => s.plan);
+  const paid = isPaidPlan(plan);
   const { startSession, canStart } = useStartGhostSession();
 
   const filtered = upcoming.filter((call) => {
@@ -23,17 +26,22 @@ export function UpcomingPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-[13px] font-semibold text-zinc-900">
-              Connect Google Calendar
+              {paid ? "Connect Google Calendar" : "Calendar notifications"}
             </p>
             <p className="mt-1 text-[12px] text-zinc-500">
-              Auto-generate briefs for every upcoming sales call.
+              {paid
+                ? "Auto-generate briefs for every upcoming sales call."
+                : "Upgrade to Pro to link your calendar and get pre-call briefs."}
             </p>
           </div>
           <button
             type="button"
+            onClick={() => {
+              if (!paid) onRequestUpgrade();
+            }}
             className="shrink-0 rounded-full border border-zinc-200 px-4 py-2 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
           >
-            Connect
+            {paid ? "Connect" : "Upgrade"}
           </button>
         </div>
       </div>
@@ -47,7 +55,9 @@ export function UpcomingPage() {
                 : "No upcoming calls scheduled"}
             </p>
             <p className="mt-2 text-[13px] text-zinc-500">
-              Link your calendar to see pre-call briefs here.
+              {paid
+                ? "Link your calendar to see pre-call briefs here."
+                : "Upgrade to Pro to see pre-call briefs here."}
             </p>
           </div>
         ) : (

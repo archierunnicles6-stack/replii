@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { getDownloadInfo } from "@/lib/download";
-import { RELEASE_PAGE_URL } from "@/lib/download";
+import { Suspense, useState } from "react";
+import { getDownloadInfo, RELEASE_PAGE_URL } from "@/lib/download";
 import type { DownloadPlatform } from "@/lib/platform";
 import { useDownloadPlatform } from "@/hooks/useDownloadPlatform";
 
@@ -30,19 +29,21 @@ function WindowsIcon() {
   );
 }
 
-export function DownloadLink({
-  className,
-  size = "default",
-  hideIcon = false,
-  platform: platformProp,
-  children,
-}: {
+type DownloadLinkProps = {
   className?: string;
   size?: "default" | "sm";
   hideIcon?: boolean;
   platform?: DownloadPlatform;
   children?: React.ReactNode;
-}) {
+};
+
+function DownloadLinkContent({
+  className,
+  size = "default",
+  hideIcon = false,
+  platform: platformProp,
+  children,
+}: DownloadLinkProps) {
   const detectedPlatform = useDownloadPlatform();
   const platform = platformProp ?? detectedPlatform;
   const { url, filename, label } = getDownloadInfo(platform);
@@ -104,6 +105,37 @@ export function DownloadLink({
         </p>
       )}
     </>
+  );
+}
+
+function DownloadLinkFallback({
+  className,
+  size = "default",
+  hideIcon = false,
+  platform: platformProp,
+  children,
+}: DownloadLinkProps) {
+  const platform = platformProp ?? "mac";
+  const { url, filename, label } = getDownloadInfo(platform);
+  const isLocal = url.startsWith("/") && !url.startsWith("/api/");
+
+  return (
+    <a
+      href={url}
+      {...(isLocal ? { download: filename } : {})}
+      className={className ?? `${baseClassName} ${sizeClassName[size]}`}
+    >
+      {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}
+      {children ?? label}
+    </a>
+  );
+}
+
+export function DownloadLink(props: DownloadLinkProps) {
+  return (
+    <Suspense fallback={<DownloadLinkFallback {...props} />}>
+      <DownloadLinkContent {...props} />
+    </Suspense>
   );
 }
 

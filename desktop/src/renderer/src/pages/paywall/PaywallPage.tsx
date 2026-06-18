@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { PaywallPricing } from "../../components/pricing/PaywallPricing";
 import { BackButton } from "../../components/ui";
 import { usePricingCheckout } from "../../hooks/usePricingCheckout";
+import { useBillingSync } from "../../hooks/useBillingSync";
+import { hasDashboardAccess } from "../../lib/dashboard-access";
 import { useAppStore } from "../../store/useAppStore";
 
 export function PaywallPage() {
@@ -12,16 +14,18 @@ export function PaywallPage() {
     onboardingComplete,
     shortcutTutorialComplete,
     paywallComplete,
+    plan,
   } = useAppStore();
 
   const finishFree = () => {
     navigate("/");
   };
 
-  const { loadingTier, error, handleSelect } = usePricingCheckout({
+  const { loadingTier, error, handleSelect, handleContactSales } = usePricingCheckout({
     onComplete: finishFree,
     completePaywallOnSuccess: true,
   });
+  useBillingSync();
 
   useEffect(() => {
     void window.ghost?.setDashboardLayout?.("paywall");
@@ -40,7 +44,7 @@ export function PaywallPage() {
       navigate("/try", { replace: true });
       return;
     }
-    if (paywallComplete) {
+    if (hasDashboardAccess(plan, paywallComplete)) {
       navigate("/", { replace: true });
     }
   }, [
@@ -48,6 +52,7 @@ export function PaywallPage() {
     onboardingComplete,
     shortcutTutorialComplete,
     paywallComplete,
+    plan,
     navigate,
   ]);
 
@@ -56,26 +61,30 @@ export function PaywallPage() {
     finishFree();
   };
 
-  const handleTierSelect = async (tierId: Parameters<typeof handleSelect>[0]) => {
+  const handleTierSelect = async (
+    tierId: Parameters<typeof handleSelect>[0],
+    interval: Parameters<typeof handleSelect>[1],
+  ) => {
     if (tierId === "free") {
       finishFreeWithPaywall();
       return;
     }
-    await handleSelect(tierId);
+    await handleSelect(tierId, interval);
   };
 
   return (
-    <div className="no-drag relative flex h-screen max-h-screen w-full flex-col overflow-y-auto overscroll-contain bg-[#f5f5f7]">
+    <div className="no-drag relative flex h-screen max-h-screen w-full flex-col overflow-y-auto overscroll-contain bg-gradient-to-b from-[#e4ebf3] via-[#eef2f7] to-[#f3f5f8]">
       <BackButton to="/try" />
 
-      <div className="mx-auto flex min-h-full w-full max-w-[820px] flex-1 flex-col items-center justify-start px-8 pb-8 pt-14">
+      <div className="mx-auto flex min-h-full w-full max-w-[1120px] flex-1 flex-col items-center justify-start px-8 pb-10 pt-16">
         {error ? (
           <p className="mb-6 text-center text-[13px] text-red-600">{error}</p>
         ) : null}
 
         <PaywallPricing
           loadingTier={loadingTier}
-          onSelect={(id) => void handleTierSelect(id)}
+          onSelect={(id, interval) => void handleTierSelect(id, interval)}
+          onContactSales={handleContactSales}
           onStartFree={finishFreeWithPaywall}
         />
       </div>

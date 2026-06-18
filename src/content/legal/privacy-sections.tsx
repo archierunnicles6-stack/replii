@@ -1,7 +1,11 @@
 import {
+  LegalH3,
   LegalLi,
+  LegalLink,
+  LegalOl,
   LegalP,
   LegalStrong,
+  LegalTable,
   LegalUl,
   type LegalSection,
 } from "@/components/legal/LegalDocument";
@@ -9,456 +13,522 @@ import { LEGAL, LEGAL_ROUTES } from "@/content/legal/config";
 
 export const privacySections: LegalSection[] = [
   {
-    id: "introduction",
-    title: "Introduction",
+    id: "scope-and-applicability",
+    title: "Scope and Applicability",
     content: (
       <>
         <LegalP>
-          This Privacy Policy explains how {LEGAL.legalEntity} (&ldquo;
-          <LegalStrong>Ghost</LegalStrong>,&rdquo; &ldquo;
-          <LegalStrong>we</LegalStrong>,&rdquo; &ldquo;
-          <LegalStrong>us</LegalStrong>,&rdquo; or &ldquo;
-          <LegalStrong>our</LegalStrong>&rdquo;) collects, uses, discloses, and
-          protects personal information when you use the {LEGAL.productName}{" "}
-          website, desktop application, and related services (the &ldquo;
-          <LegalStrong>Service</LegalStrong>&rdquo;).
+          The Policy applies to your information when you visit our website or
+          otherwise use the Services. This Policy does not apply to the extent
+          that we process Personal Information in the role of a processor (or a
+          comparable role such as a &ldquo;service provider&rdquo; in certain
+          jurisdictions) on behalf of our Customers, including where we collect
+          Customer Data on behalf of our Customers, or where our Customers
+          otherwise collect, use, share or process Personal Information via our
+          Services.
         </LegalP>
         <LegalP>
-          By using the Service, you acknowledge this Privacy Policy. If you do
-          not agree, do not use the Service. This Policy should be read together
-          with our{" "}
-          <a href={LEGAL_ROUTES.terms} className="text-ghost-600 underline">
-            Terms of Service
-          </a>
-          .
+          Each of our Customers, not Ghost, controls what information about you
+          is collected by the Services on behalf of such Customer. For detailed
+          privacy information applicable to situations where a Customer who uses
+          the Services is the controller, please reach out to the respective
+          customer directly. We are not responsible for the privacy or data
+          security practices of our Customers, which may differ from those set
+          forth in this Privacy Policy.
+        </LegalP>
+        <LegalP>
+          This Privacy Policy also does not apply to any third-party
+          applications or services that are used in connection with our Services,
+          or any other products, services or accounts provided by other entities
+          under their own terms of service and privacy policy (collectively,
+          &ldquo;Third-Party Services&rdquo;). The Site or Services may contain
+          links to other websites. We have no control over these websites and
+          they are subject to their own terms of use and privacy policies.
         </LegalP>
       </>
     ),
   },
   {
-    id: "scope",
-    title: "Scope and Roles",
+    id: "what-information-do-we-collect",
+    title: "What Information Do We Collect?",
     content: (
       <>
-        <LegalP>
-          This Policy applies to personal information we process as a controller
-          when you use the Service directly. If you use {LEGAL.productName}{" "}
-          through an employer or enterprise customer that provisions accounts,
-          your organization may act as controller for certain employee data, and
-          we may process data as a processor under a separate agreement.
-        </LegalP>
-        <LegalP>
-          This Policy does not apply to third-party websites, services, or
-          platforms you connect to or use during calls (e.g., video conferencing
-          providers, CRMs, OAuth providers).
-        </LegalP>
-      </>
-    ),
-  },
-  {
-    id: "information-collected",
-    title: "Information We Collect",
-    content: (
-      <>
-        <LegalP>
-          <LegalStrong>Account and identity information.</LegalStrong> Name,
-          email address, password (stored hashed by our authentication provider),
-          profile photo, authentication tokens, subscription status, and
-          communications with support.
-        </LegalP>
-        <LegalP>
-          <LegalStrong>Audio and conversation data.</LegalStrong> When you enable
-          listening features, the Service may capture microphone audio and, if
-          you grant permission, system audio from your device. Audio may be
-          transcribed locally and/or sent to third-party speech and AI services
-          to generate coaching outputs.
-        </LegalP>
-        <LegalP>
-          <LegalStrong>Transcripts and session data.</LegalStrong> Conversation
-          transcripts, speaker labels, timestamps, meeting summaries, deal
-          scores, objections, next steps, coaching suggestions, and related
-          metadata generated during your use of the Service.
-        </LegalP>
-        <LegalP>
-          <LegalStrong>Configuration and content.</LegalStrong> Sales modes,
-          custom prompts, playbook settings, knowledge base file names and
-          uploaded content you choose to provide, and in-app preferences.
-        </LegalP>
-        <LegalP>
-          <LegalStrong>Device and technical data.</LegalStrong> Device type,
-          operating system, app version, IP address, crash logs, diagnostic
-          events, permission states, and usage information necessary to operate
-          and secure the Service.
-        </LegalP>
-        <LegalP>
-          <LegalStrong>Payment information.</LegalStrong> Billing name, billing
-          address, and transaction metadata. Payment card details are processed
-          by our payment processor and are not stored by Ghost in full.
-        </LegalP>
-        <LegalP>
-          <LegalStrong>Website data.</LegalStrong> If you visit our website, we
-          may collect cookies and similar technologies as described in our{" "}
-          <a href={LEGAL_ROUTES.cookies} className="text-ghost-600 underline">
-            Cookie Policy
-          </a>
-          .
-        </LegalP>
-      </>
-    ),
-  },
-  {
-    id: "sources",
-    title: "How We Collect Information",
-    content: (
-      <>
+        <LegalH3>Information You Provide to Us</LegalH3>
         <LegalUl>
           <LegalLi>
-            <LegalStrong>Directly from you</LegalStrong> when you register,
-            configure settings, upload content, contact support, or subscribe.
+            <LegalStrong>Account Information.</LegalStrong> To create an account
+            for the Services or to enable certain features, we may require that
+            you provide us with information for your account such as name, email,
+            profile picture, password, and authentication credentials.
           </LegalLi>
           <LegalLi>
-            <LegalStrong>Automatically</LegalStrong> when you use the
-            application, including through local storage, logs, and device
-            permissions.
+            <LegalStrong>Payment Information.</LegalStrong> If you sign up for a
+            paid subscription, we (or our payment processors) may need your
+            billing details such as credit card information, banking information,
+            and billing address. Your payment information is collected and stored
+            by our third party payment processing company (the &ldquo;Payment
+            Processor&rdquo;). As of the Effective Date of this Privacy Policy,
+            Stripe is the Payment Processor used within the Services and its
+            privacy policy is available at{" "}
+            <LegalLink href="https://stripe.com/privacy">
+              https://stripe.com/privacy
+            </LegalLink>
+            . We collect and store your credit card type, the last four digits of
+            your credit card number, and expiration date, but no other financial
+            information.
           </LegalLi>
           <LegalLi>
-            <LegalStrong>From third parties</LegalStrong> such as authentication
-            providers (e.g., Google OAuth via Supabase), payment processors, and
-            AI/speech service providers when you connect those features.
+            <LegalStrong>Recordings and Other Customer Data.</LegalStrong> In
+            using our Services, our customers may submit or upload, or instruct
+            Ghost to collect, audio recordings, transcriptions, screen captures,
+            seek customer support, or provide other Customer Data (defined in
+            our Terms of Service) to us. Our use of and processing of Customer
+            Data is governed by our Terms of Service or other services agreement
+            with the Customer.
+          </LegalLi>
+          <LegalLi>
+            <LegalStrong>Business Contact Information.</LegalStrong> If you are a
+            business representative, we collect your information in connection
+            with the performance of the agreement or potential agreement with
+            us. This information may include your first name, last name, contact
+            information (e.g., email, phone, address), job title, and any other
+            information related to the performance of the agreement with us.
+          </LegalLi>
+          <LegalLi>
+            <LegalStrong>Other Information You Provide.</LegalStrong> We receive
+            other information from you when you choose to interact with us in
+            other ways, such as if you sign up for one of our webinars or
+            newsletters, participate in a research study or event, or otherwise
+            communicate with us.
+          </LegalLi>
+        </LegalUl>
+
+        <LegalH3>Information We Collect Automatically</LegalH3>
+        <LegalP>
+          When you visit, use, and interact with the Services, we may receive the
+          following information about your visit, use, or interactions
+          (&ldquo;Technical Information&rdquo;):
+        </LegalP>
+        <LegalUl>
+          <LegalLi>
+            <LegalStrong>Log Data.</LegalStrong> Information that your browser
+            automatically sends whenever you use our website (&ldquo;log
+            data&rdquo;). Log data includes your internet protocol address,
+            browser type and settings, the date and time of your request, and
+            how you interacted with our website.
+          </LegalLi>
+          <LegalLi>
+            <LegalStrong>Usage Data.</LegalStrong> We may automatically collect
+            information about your use of the Services, such as the types of
+            content that you view or engage with, the features you use and the
+            actions you take, as well as your time zone, country, the dates and
+            times of access, user agent and version, type of computer or mobile
+            device, computer connection, IP address, and the like.
+          </LegalLi>
+          <LegalLi>
+            <LegalStrong>Device Information.</LegalStrong> Includes name of the
+            device, operating system, and browser you are using. Information
+            collected may depend on the type of device you use and its settings.
+          </LegalLi>
+          <LegalLi>
+            <LegalStrong>Analytics.</LegalStrong> We may use a variety of online
+            analytics products that use cookies to help us analyze how users use
+            our Services and enhance your experience when you use the Services.
+          </LegalLi>
+        </LegalUl>
+        <LegalP>
+          We use cookies and other tracking technologies to help us collect and
+          process Technical Information. Please see the &ldquo;How Do We Use
+          Tracking Technologies&rdquo; section below for more information.
+        </LegalP>
+
+        <LegalH3>Information We Receive from Third Parties</LegalH3>
+        <LegalUl>
+          <LegalLi>
+            <LegalStrong>Third-Party Authentication.</LegalStrong> If you sign up
+            or login to our Services using one of our sign-on providers (e.g.,
+            Google), we collect authentication information provided to us by the
+            provider to allow you to log in.
+          </LegalLi>
+          <LegalLi>
+            <LegalStrong>Marketing Information.</LegalStrong> We may receive
+            marketing or demographic information about you from third parties or
+            partners, for example, data about your organization or industry or
+            other public information from sources like social media or online
+            professional profiles.
+          </LegalLi>
+          <LegalLi>
+            <LegalStrong>Service Providers.</LegalStrong> We may receive
+            information from our service providers, who help us operate our
+            business.
+          </LegalLi>
+          <LegalLi>
+            <LegalStrong>Information from Other Sources.</LegalStrong> We may
+            obtain information from other sources, including publicly available
+            sources, third-party data providers, brand partnerships, and
+            third-party integrations you consent to, or through transactions
+            such as mergers and acquisitions.
           </LegalLi>
         </LegalUl>
       </>
     ),
   },
   {
-    id: "uses",
-    title: "How We Use Information",
+    id: "how-do-we-use-the-information-we-collect",
+    title: "How Do We Use The Information We Collect?",
     content: (
       <>
-        <LegalP>We use personal information to:</LegalP>
+        <LegalP>We use the information we collect:</LegalP>
         <LegalUl>
-          <LegalLi>Provide, operate, maintain, and improve the Service;</LegalLi>
+          <LegalLi>To deliver and improve the Services and your overall user experience</LegalLi>
           <LegalLi>
-            Generate real-time coaching, summaries, and related AI outputs;
+            To protect, investigate, and deter against fraudulent, unauthorized,
+            or illegal activity
+          </LegalLi>
+          <LegalLi>To link or combine user information with other Personal Information</LegalLi>
+          <LegalLi>To develop, improve or expand our business, products and services</LegalLi>
+          <LegalLi>
+            To conduct internal reporting, auditing, and research, including focus
+            groups and surveys
           </LegalLi>
           <LegalLi>
-            Authenticate users, prevent fraud, and enforce our terms;
+            To compare and verify information for accuracy and update our records
           </LegalLi>
           <LegalLi>
-            Process subscriptions, payments, and account communications;
+            To email, message, or otherwise contact you with information and
+            updates about us and the Services
+          </LegalLi>
+          <LegalLi>To respond to your comments and questions and provide customer service</LegalLi>
+          <LegalLi>
+            To send you information including confirmations, invoices, technical
+            notices, updates, security alerts, and support and administrative
+            messages
           </LegalLi>
           <LegalLi>
-            Respond to support requests and send service-related notices;
+            To analyze how you use the Services with analytics tools to help us
+            understand traffic patterns and know if there are problems with the
+            Services
           </LegalLi>
           <LegalLi>
-            Analyze usage trends and develop new features (using aggregated or
-            de-identified data where feasible);
+            To combine information with other data we already have to improve
+            your experience with our Services or inform you of products and
+            services we think may be of interest to you
           </LegalLi>
-          <LegalLi>Comply with legal obligations and protect our rights.</LegalLi>
-        </LegalUl>
-        <LegalP>
-          We do not sell your personal information. We do not use conversation
-          content to train public third-party AI models unless we clearly
-          disclose that practice and obtain your consent.
-        </LegalP>
-      </>
-    ),
-  },
-  {
-    id: "legal-bases",
-    title: "Legal Bases for Processing (EEA/UK)",
-    content: (
-      <>
-        <LegalP>
-          If you are in the European Economic Area or United Kingdom, we
-          process personal data under one or more of the following legal bases:
-        </LegalP>
-        <LegalUl>
+          <LegalLi>In connection with a merger, acquisition, reorganization or similar transaction</LegalLi>
+          <LegalLi>When required by law or to respond to legal process</LegalLi>
           <LegalLi>
-            <LegalStrong>Contract:</LegalStrong> To provide the Service you
-            request.
+            To protect our users, other individuals&apos; lives, and/or the rights
+            or property of Ghost
+          </LegalLi>
+          <LegalLi>To maintain the security of the Services</LegalLi>
+          <LegalLi>
+            At your direction or instruction, or for any other purpose with your
+            consent
           </LegalLi>
           <LegalLi>
-            <LegalStrong>Legitimate interests:</LegalStrong> To secure, improve,
-            and operate the Service, prevent abuse, and communicate with you,
-            balanced against your rights.
-          </LegalLi>
-          <LegalLi>
-            <LegalStrong>Consent:</LegalStrong> Where required for optional
-            features, marketing, or certain cookies.
-          </LegalLi>
-          <LegalLi>
-            <LegalStrong>Legal obligation:</LegalStrong> Where processing is
-            required by law.
+            To create aggregate and de-identified data. We will maintain such data
+            in a de-identified form and will not attempt to re-identify any
+            de-identified data, except that we may attempt to re-identify the
+            data solely for the purpose of determining whether our deidentification
+            processes are compliant with applicable laws
           </LegalLi>
         </LegalUl>
       </>
     ),
   },
   {
-    id: "sharing",
-    title: "How We Share Information",
-    content: (
-      <>
-        <LegalP>We may share personal information with:</LegalP>
-        <LegalUl>
-          <LegalLi>
-            <LegalStrong>Service providers</LegalStrong> who assist with hosting,
-            authentication, AI inference, speech recognition, analytics,
-            customer support, email delivery, and payment processing.
-          </LegalLi>
-          <LegalLi>
-            <LegalStrong>Enterprise administrators</LegalStrong> if your account
-            is managed by an organization.
-          </LegalLi>
-          <LegalLi>
-            <LegalStrong>Professional advisers</LegalStrong> such as lawyers,
-            auditors, and insurers.
-          </LegalLi>
-          <LegalLi>
-            <LegalStrong>Authorities</LegalStrong> when required by law,
-            subpoena, or to protect rights, safety, and security.
-          </LegalLi>
-          <LegalLi>
-            <LegalStrong>Business transferees</LegalStrong> in connection with a
-            merger, acquisition, financing, or sale of assets, subject to
-            appropriate safeguards.
-          </LegalLi>
-        </LegalUl>
-        <LegalP>
-          We require service providers to process data only on our instructions
-          and under appropriate confidentiality and security obligations, where
-          applicable.
-        </LegalP>
-      </>
-    ),
-  },
-  {
-    id: "subprocessors",
-    title: "Subprocessors and Third-Party AI Processing",
+    id: "do-we-share-your-personal-information",
+    title: "Do We Share Your Personal Information?",
     content: (
       <>
         <LegalP>
-          The Service relies on third-party subprocessors that may process
-          personal information, including:
+          In addition to the specific situations discussed elsewhere in this
+          privacy policy, we disclose personal information in the following
+          circumstances:
         </LegalP>
         <LegalUl>
+          <LegalLi>With our corporate affiliates and subsidiaries</LegalLi>
           <LegalLi>
-            <LegalStrong>Supabase</LegalStrong> — authentication and account
-            management;
+            With the applicable Customer to provide Services on their behalf. Our
+            Customers are independent entities and their processing of information
+            is subject to their own policies and terms
           </LegalLi>
           <LegalLi>
-            <LegalStrong>OpenAI</LegalStrong> — AI inference when configured;
+            With third parties that perform services to support our core business
+            functions and internal operations, which may include database
+            administrators, cloud computing services, hosting providers, payment
+            processors, advertising service providers, support and customer
+            service providers, security and fraud prevention service providers,
+            analytics providers, and audio transcription providers
+          </LegalLi>
+          <LegalLi>To support our audit, compliance, and corporate governance functions</LegalLi>
+          <LegalLi>
+            In connection with a change of ownership or control of all or part of
+            our business (such as a merger, acquisition, reorganization, or
+            bankruptcy)
           </LegalLi>
           <LegalLi>
-            <LegalStrong>Google</LegalStrong> — OAuth sign-in and, depending on
-            browser/platform, speech recognition services;
+            If we have a good-faith belief that access, use, preservation, or
+            disclosure of such information is reasonably necessary to detect,
+            protect against or investigate fraud or security issues
           </LegalLi>
           <LegalLi>
-            <LegalStrong>Payment processors</LegalStrong> such as Stripe — billing;
+            If required or permitted by applicable law or regulation, including to
+            comply with a legal obligation or in response to a request from law
+            enforcement or other public authorities
           </LegalLi>
-          <LegalLi>
-            <LegalStrong>Cloud infrastructure providers</LegalStrong> — hosting
-            and storage.
-          </LegalLi>
+          <LegalLi>With your consent or at your direction</LegalLi>
         </LegalUl>
         <LegalP>
-          When AI features are enabled, portions of transcripts and prompts may
-          be transmitted to AI providers for processing. You should review
-          third-party privacy policies before enabling integrations.
+          A current list of subprocessors is available on our{" "}
+          <LegalLink href={LEGAL_ROUTES.subprocessors}>Subprocessors</LegalLink>{" "}
+          page.
         </LegalP>
       </>
     ),
   },
   {
-    id: "local-storage",
-    title: "Local Storage and Data Location",
+    id: "how-do-we-use-tracking-technologies",
+    title: "How Do We Use Tracking Technologies?",
     content: (
       <>
         <LegalP>
-          Much of your session data (transcripts, summaries, settings) may be
-          stored locally on your device using application storage mechanisms. We
-          may also store data in cloud systems located in the United States and
-          other countries where we or our providers operate.
+          Some of the features on the Services may require the use of
+          &ldquo;cookies&rdquo; — small text files that are stored on your
+          device&apos;s hard drive. We use Cookies to enable our servers to
+          recognize your web browser and tell us how and when you visit and use
+          our Services, to remember your preferences, analyze trends, learn about
+          our user base, provide relevant advertising, and operate and improve our
+          Services.
         </LegalP>
         <LegalP>
-          You are responsible for securing devices on which the Service is
-          installed and for deleting local data by uninstalling the application
-          or clearing app data, as applicable.
+          You may delete and block all cookies from our Services, but parts of the
+          Services may not work or your overall user experience may be diminished,
+          since it will no longer be personalized to you.
+        </LegalP>
+        <LegalTable
+          headers={["Type of Cookies", "Description", "Managing Settings"]}
+          rows={[
+            [
+              "Required cookies",
+              "Required cookies enable you to navigate the Services and use their features, such as accessing secure areas of the Services and processing your online transactions and requests.",
+              "Because required cookies are essential to operate the Services, there is no option to opt out of these cookies.",
+            ],
+            [
+              "Performance cookies",
+              "These cookies collect information about how you use our Services, including which pages you go to most often and if they receive error messages from certain pages. These cookies do not collect information that individually identify you.",
+              "To learn how to opt out of performance cookies using your browser settings, visit aboutcookies.org.",
+            ],
+            [
+              "Functionality cookies",
+              "Functionality cookies allow our Services to remember information you have entered or choices you make and provide enhanced, more personal features.",
+              "To learn how to opt out of functionality cookies using your browser settings, visit aboutcookies.org.",
+            ],
+            [
+              "Marketing and advertising cookies",
+              "Used to deliver targeted advertising, measure ad campaign effectiveness, and build audience profiles across platforms. These cookies may collect information about your browsing activity across different websites and services.",
+              "You can manage your marketing cookie preferences through our cookie consent banner or browser settings.",
+            ],
+          ]}
+        />
+        <LegalP>
+          For more detail, see our{" "}
+          <LegalLink href={LEGAL_ROUTES.cookies}>Cookie Policy</LegalLink>.
         </LegalP>
       </>
     ),
   },
   {
-    id: "retention",
+    id: "how-do-we-secure-your-personal-information",
+    title: "How Do We Secure Your Personal Information?",
+    content: (
+      <>
+        <LegalP>
+          We take reasonable steps to protect your Personal Information against
+          unauthorized access, alteration, disclosure, misuse, or destruction.
+        </LegalP>
+        <LegalP>
+          If you have an account with us, you are responsible for keeping your
+          membership details confidential. Your account is protected by your
+          account password and we urge you to take steps to keep your Personal
+          Information safe by not disclosing your password and by logging out of
+          your account after each use. We further protect your Personal
+          Information from potential security breaches by implementing certain
+          technological security measures including encryption, firewalls and
+          secure socket layer technology. However, these measures do not
+          guarantee that your Personal Information will not be accessed,
+          disclosed, altered or destroyed by breach of such firewalls and secure
+          server software. By using the Services, you acknowledge that you
+          understand and agree to assume these risks.
+        </LegalP>
+      </>
+    ),
+  },
+  {
+    id: "data-retention",
     title: "Data Retention",
     content: (
       <>
         <LegalP>
-          We retain personal information for as long as necessary to provide the
-          Service, fulfill the purposes described in this Policy, comply with
-          legal obligations, resolve disputes, and enforce agreements.
+          We retain your Personal Information while your account is in existence
+          or as needed to provide the Services to you. This includes data you or
+          others provided to us and data generated or inferred from your use of
+          the Services.
         </LegalP>
         <LegalP>
-          Retention periods vary by data type. Account data is generally retained
-          while your account is active and for a reasonable period thereafter.
-          Local session data remains on your device until you delete it or
-          uninstall the app. Backup copies may persist for a limited period.
-        </LegalP>
-        <LegalP>
-          We may retain aggregated or de-identified information without
-          limitation.
+          We may retain information that is otherwise deleted in de-identified and
+          aggregated form, in archived or backup copies as required pursuant to
+          records retention obligations, or otherwise as required by law. We may
+          retain an archived copy of your records as required by law or for
+          legitimate business purposes. We will also retain certain Technical
+          Information for internal analysis purposes or to improve the
+          functionality of our Services.
         </LegalP>
       </>
     ),
   },
   {
-    id: "security",
-    title: "Security",
+    id: "managing-your-privacy",
+    title: "Managing Your Privacy",
     content: (
       <>
         <LegalP>
-          We implement reasonable technical and organizational measures designed
-          to protect personal information, including encryption in transit where
-          supported, access controls, and secure development practices.
+          All users may request to review, update, correct or delete the Personal
+          Information furnished by a user in their user account by contacting us at{" "}
+          {LEGAL.contact.privacy} or by accessing your user account.
         </LegalP>
         <LegalP>
-          No method of transmission or storage is completely secure. You use the
-          Service at your own risk and should implement appropriate endpoint
-          security controls.
+          For your protection, we may only share and update the Personal
+          Information associated with the specific email address that you use to
+          send us your request, and we may need to verify your identity before
+          doing so. We will try to comply with such requests in a reasonably
+          timely manner.
+        </LegalP>
+        <LegalP>
+          We may use some of the information we collect for marketing purposes,
+          including to send you promotional communications about new Ghost
+          features, products, events, or other opportunities. If you wish to stop
+          receiving these communications or to opt out of use of your information
+          for these purposes, please follow the opt-out instructions, such as
+          clicking &ldquo;Unsubscribe&rdquo; in those communications. You may
+          also change your marketing email preferences via your account settings.
         </LegalP>
       </>
     ),
   },
   {
-    id: "your-rights",
-    title: "Your Privacy Rights",
+    id: "how-we-respond-to-do-not-track-signals",
+    title: "How We Respond to Do Not Track Signals",
     content: (
       <>
         <LegalP>
-          Depending on your location, you may have rights to access, correct,
-          delete, restrict, or object to certain processing, receive a portable
-          copy of your data, withdraw consent, and lodge a complaint with a
-          supervisory authority.
+          Your browser settings may allow you to automatically transmit a Do Not
+          Track signal to websites and other online services you visit. We do not
+          alter our practices when we receive a Do Not Track signal from a
+          visitor&apos;s browser because we do not track our visitors to provide
+          targeted advertising.
         </LegalP>
         <LegalP>
-          <LegalStrong>California residents (CCPA/CPRA):</LegalStrong> You may
-          have rights to know, delete, correct, and opt out of certain sharing.
-          We do not sell personal information. To exercise rights, contact{" "}
-          {LEGAL.contact.privacy}.
-        </LegalP>
-        <LegalP>
-          <LegalStrong>EEA/UK residents:</LegalStrong> You may contact our data
-          protection contact at {LEGAL.contact.dpo}. You also have the right to
-          complain to your local data protection authority.
-        </LegalP>
-        <LegalP>
-          We may verify your identity before responding and may decline requests
-          permitted by law. Authorized agents may submit requests where
-          applicable law allows.
+          To find out more about Do Not Track, please visit{" "}
+          <LegalLink href="http://www.allaboutdnt.com">
+            http://www.allaboutdnt.com
+          </LegalLink>
+          .
         </LegalP>
       </>
     ),
   },
   {
-    id: "international-transfers",
-    title: "International Data Transfers",
+    id: "children-under-16",
+    title: "Children Under 16",
     content: (
       <>
         <LegalP>
-          If you access the Service from outside the United States, your
-          information may be transferred to, stored in, and processed in the
-          United States and other countries that may not provide the same level
-          of data protection as your jurisdiction.
+          The Services are not directed to individuals who are under age of
+          sixteen (16) and we do not solicit nor knowingly collect Personal
+          Information from children under the age of sixteen (16).
         </LegalP>
         <LegalP>
-          Where required, we implement appropriate safeguards such as Standard
-          Contractual Clauses or equivalent mechanisms for cross-border
-          transfers.
+          If you believe that we have unknowingly collected any Personal
+          Information from someone under the age of sixteen (16), please contact us
+          immediately at {LEGAL.contact.privacy} and the information will be
+          deleted.
         </LegalP>
       </>
     ),
   },
   {
-    id: "children",
-    title: "Children's Privacy",
+    id: "region-specific-disclosures",
+    title: "Region-Specific Disclosures",
     content: (
       <>
+        <LegalH3>A Note to California Residents</LegalH3>
         <LegalP>
-          The Service is not directed to individuals under 18. We do not
-          knowingly collect personal information from children. If you believe a
-          child has provided us information, contact {LEGAL.contact.privacy} and
-          we will take appropriate steps to delete it.
+          We currently do not share Personal Information with third parties for
+          their direct marketing purposes, as contemplated by California Civil Code
+          Section 1798.83, without your consent.
+        </LegalP>
+
+        <LegalH3>A Note to Nevada Residents</LegalH3>
+        <LegalP>
+          If you are a resident of Nevada, you have the right to opt-out of the
+          sale of certain Personal Information to third parties who intend to
+          license or sell that Personal Information. You can exercise this right
+          by contacting us at {LEGAL.contact.privacy} with the subject line
+          &ldquo;Nevada Do Not Sell Request&rdquo; and providing us with your name
+          and the email address associated with your account. Please note that we
+          do not currently sell your Personal Information as sales are defined in
+          Nevada Revised Statutes Chapter 603A.
+        </LegalP>
+
+        <LegalH3>A Note to Users Outside the United States</LegalH3>
+        <LegalP>
+          Ghost is based in the United States. The Services are controlled and
+          operated by us from the United States and are not intended to subject us
+          to the laws or jurisdiction of any state, country or territory other
+          than that of the laws of the country(ies) where the Services are
+          controlled. Your Personal Information may be stored and processed in any
+          country where we have facilities or in which we engage service
+          providers, and by using the Services you consent to the transfer of
+          information to countries outside of your country of residence, including
+          the United States.
+        </LegalP>
+
+        <LegalH3>A Note to European Residents</LegalH3>
+        <LegalP>We typically will process your information pursuant to the following legal bases:</LegalP>
+        <LegalOl>
+          <LegalLi>With your consent</LegalLi>
+          <LegalLi>As necessary to perform our agreement to provide Services to you</LegalLi>
+          <LegalLi>As necessary for our legitimate interests</LegalLi>
+        </LegalOl>
+        <LegalP>
+          We also may process your information where it is necessary to comply with
+          a legal obligation to which we are subject.
+        </LegalP>
+        <LegalP>
+          <LegalStrong>Your Rights.</LegalStrong> The laws of certain
+          jurisdictions may provide data subjects with various rights in connection
+          with the processing of Personal Information, including the right to
+          withdraw consent, access, correct, erase, restrict processing, export
+          data, object to processing, and lodge a complaint with a data protection
+          authority. To exercise these rights, contact us at {LEGAL.contact.privacy}.
         </LegalP>
       </>
     ),
   },
   {
-    id: "automated-decisions",
-    title: "Automated Processing",
-    content: (
-      <>
-        <LegalP>
-          The Service uses automated processing, including AI models, to generate
-          coaching suggestions and summaries. These outputs are assistive only
-          and do not produce legal or similarly significant effects without your
-          review. You may contact us if you have questions about automated
-          processing in your jurisdiction.
-        </LegalP>
-      </>
-    ),
-  },
-  {
-    id: "marketing",
-    title: "Marketing Communications",
-    content: (
-      <>
-        <LegalP>
-          We may send product updates, onboarding messages, and promotional
-          communications where permitted. You can opt out of marketing emails
-          using the unsubscribe link or by contacting {LEGAL.contact.support}.
-          Service-related messages may still be sent.
-        </LegalP>
-      </>
-    ),
-  },
-  {
-    id: "changes",
-    title: "Changes to This Policy",
-    content: (
-      <>
-        <LegalP>
-          We may update this Privacy Policy from time to time. Material changes
-          will be notified via the Service, email, or website. The &ldquo;Last
-          updated&rdquo; date at the top indicates when this Policy was last
-          revised. Continued use after changes constitutes acceptance where
-          permitted by law.
-        </LegalP>
-      </>
-    ),
-  },
-  {
-    id: "contact",
+    id: "contact-us",
     title: "Contact Us",
     content: (
       <>
         <LegalP>
-          For privacy questions or requests, contact:
+          If you have any questions about this Policy, your Personal Information,
+          or the Services, you can contact us at {LEGAL.contact.privacy}.
         </LegalP>
-        <LegalUl>
-          <LegalLi>
-            Email: {LEGAL.contact.privacy}
-          </LegalLi>
-          <LegalLi>
-            Legal notices: {LEGAL.contact.legal}
-          </LegalLi>
-          <LegalLi>
-            Entity: {LEGAL.legalEntity}
-          </LegalLi>
-          <LegalLi>
-            Website: {LEGAL.website}
-          </LegalLi>
-        </LegalUl>
+        <LegalP>
+          For general support, email {LEGAL.contact.support}. For legal notices,
+          email {LEGAL.contact.legal}.
+        </LegalP>
       </>
     ),
   },

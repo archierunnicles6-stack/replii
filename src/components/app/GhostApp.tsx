@@ -2,6 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
+import { getDownloadInfo } from "@/lib/download";
+import { useDownloadPlatform } from "@/hooks/useDownloadPlatform";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GhostLogo } from "@/components/GhostLogo";
 import { RecapScreen } from "@/components/app/RecapScreen";
@@ -35,6 +37,8 @@ function lastProspectLine(lines: TranscriptLine[]): TranscriptLine | null {
 }
 
 export function GhostApp() {
+  const platform = useDownloadPlatform();
+  const { filename } = getDownloadInfo(platform);
   const [phase, setPhase] = useState<AppPhase>("welcome");
   const [sessionMode, setSessionMode] = useState<SessionMode>("live");
   const [listening, setListening] = useState(true);
@@ -169,9 +173,8 @@ export function GhostApp() {
         <MeetingBackground mode="live" />
         <div className="relative z-10 flex min-h-screen flex-col">
           <header className="flex items-center justify-between px-6 py-4">
-            <Link href="/" className="flex items-center gap-2 text-sm text-white/60 hover:text-white">
-              <GhostLogo variant="mark" className="h-7 w-7" />
-              Ghost
+            <Link href="/" className="flex items-center">
+              <GhostLogo variant="wordmark" tone="light" className="h-7 w-auto" />
             </Link>
             <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white/50 backdrop-blur-sm">
               Real mic · tab audio · GPT
@@ -209,9 +212,9 @@ export function GhostApp() {
               </button>
 
               <p className="mt-6 text-center text-[12px] text-white/40">
-                Native Mac app →{" "}
+                Native desktop app →{" "}
                 <Link href="/download" className="text-ghost-300 hover:text-ghost-200">
-                  Download Ghost.dmg
+                  Download {filename}
                 </Link>
               </p>
             </motion.div>

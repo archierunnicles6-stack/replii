@@ -1,21 +1,19 @@
 import { useState } from "react";
 import type { BillingInterval, PricingTierId } from "../../lib/pricing";
-import { normalizeDisplayPlan } from "../../lib/pricing";
+import {
+  PRICING_TIERS,
+  STARTER_FEATURES,
+  normalizeDisplayPlan,
+} from "../../lib/pricing";
 import type { Plan } from "../../store/types";
 import { isPaidPlan } from "../../store/types";
 import { useAppStore } from "../../store/useAppStore";
 import {
   BillingToggle,
+  EnterprisePlanCard,
   ProPlanCard,
-  UndetectablePlanCard,
 } from "./PaywallPlanCards";
-
-const FREE_FEATURES = [
-  "Limited AI responses a day",
-  "Ask AI about past meetings",
-  "Unlimited meeting notetaking",
-  "Customize AI instructions",
-];
+import { legalLinks, openLegalLink } from "../../lib/legal-urls";
 
 function CheckIcon({ className }: { className?: string }) {
   return (
@@ -26,6 +24,7 @@ function CheckIcon({ className }: { className?: string }) {
 }
 
 function FreePlanStrip({ currentPlan }: { currentPlan: Plan }) {
+  const starter = PRICING_TIERS[0];
   const isCurrent = normalizeDisplayPlan(currentPlan) === "free";
 
   return (
@@ -33,16 +32,18 @@ function FreePlanStrip({ currentPlan }: { currentPlan: Plan }) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="shrink-0">
           <p className="text-[14px] font-semibold text-zinc-900">
-            Free plan
+            {starter.name} plan
             {isCurrent ? (
               <span className="ml-2 text-[11px] font-medium text-zinc-400">(current)</span>
             ) : null}
           </p>
-          <p className="mt-0.5 text-[22px] font-bold tracking-[-0.02em] text-zinc-900">$0</p>
+          <p className="mt-0.5 text-[22px] font-bold tracking-[-0.02em] text-zinc-900">
+            {starter.priceLabel}
+          </p>
         </div>
 
         <div className="grid flex-1 gap-x-8 gap-y-2 sm:grid-cols-2">
-          {FREE_FEATURES.map((feature) => (
+          {STARTER_FEATURES.map((feature) => (
             <div key={feature} className="flex items-center gap-2">
               <CheckIcon className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
               <span className="text-[12px] text-zinc-600">{feature}</span>
@@ -58,12 +59,14 @@ export function ChoosePlanPricing({
   loadingTier,
   error,
   onSelect,
+  onContactSales,
   onManageBilling,
   portalLoading,
 }: {
   loadingTier?: PricingTierId | null;
   error?: string | null;
-  onSelect: (id: PricingTierId) => void;
+  onSelect: (id: PricingTierId, interval: BillingInterval) => void;
+  onContactSales: () => void;
   onManageBilling?: () => void;
   portalLoading?: boolean;
 }) {
@@ -72,10 +75,6 @@ export function ChoosePlanPricing({
   const displayPlan = normalizeDisplayPlan(plan);
   const showManageBilling = isPaidPlan(plan) && onManageBilling;
 
-  const handleTalkToSales = () => {
-    void window.ghost?.openExternal?.("mailto:sales@ghost.app?subject=Ghost%20Enterprise");
-  };
-
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
@@ -83,16 +82,6 @@ export function ChoosePlanPricing({
           <h2 className="text-[22px] font-bold tracking-[-0.02em] text-zinc-900">
             Choose your Plan
           </h2>
-          <p className="mt-1 text-[13px] text-zinc-500">
-            Interested in Enterprise offering?{" "}
-            <button
-              type="button"
-              onClick={handleTalkToSales}
-              className="font-medium text-[#3b82f6] hover:underline"
-            >
-              Talk to sales
-            </button>
-          </p>
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
@@ -124,17 +113,26 @@ export function ChoosePlanPricing({
           interval={interval}
           loading={loadingTier === "pro"}
           isCurrent={displayPlan === "pro"}
-          onSelect={() => onSelect("pro")}
+          onSelect={() => onSelect("pro", interval)}
         />
-        <UndetectablePlanCard
-          interval={interval}
-          loading={loadingTier === "undetectable"}
-          isCurrent={displayPlan === "undetectable"}
-          onSelect={() => onSelect("undetectable")}
-        />
+        <EnterprisePlanCard onContactSales={onContactSales} />
       </div>
 
       <FreePlanStrip currentPlan={plan} />
+
+      <p className="mt-4 text-[11px] leading-relaxed text-zinc-400">
+        Paid plans renew automatically until cancelled. Manage or cancel anytime
+        via <span className="font-medium text-zinc-500">Manage billing</span>.
+        Payments are processed by Stripe. By subscribing you agree to our{" "}
+        <button
+          type="button"
+          onClick={() => openLegalLink(legalLinks.terms)}
+          className="text-zinc-500 underline decoration-zinc-300 hover:text-zinc-600"
+        >
+          Terms of Service
+        </button>
+        .
+      </p>
     </div>
   );
 }

@@ -18,20 +18,35 @@ export function PillButton({
 
 import ghostIcon from "../../assets/ghost-icon.png";
 import ghostLogo from "../../assets/ghost-logo.png";
+import ghostMark from "../../assets/ghost-mark.png";
+import ghostWordmark from "../../assets/ghost-wordmark.png";
+import ghostWordmarkLight from "../../assets/ghost-wordmark-light.png";
 
 export function GhostLogo({
   className = "",
   variant = "icon",
+  tone = "dark",
 }: {
   className?: string;
-  variant?: "icon" | "mark";
+  variant?: "icon" | "mark" | "wordmark";
+  tone?: "dark" | "light";
 }) {
-  const src = variant === "mark" ? ghostLogo : ghostIcon;
+  const src =
+    variant === "wordmark"
+      ? tone === "light"
+        ? ghostWordmarkLight
+        : ghostWordmark
+      : variant === "mark"
+        ? tone === "light"
+          ? ghostMark
+          : ghostLogo
+        : ghostIcon;
+
   return (
     <img
       src={src}
-      alt=""
-      aria-hidden
+      alt={variant === "wordmark" ? "Ghost" : ""}
+      aria-hidden={variant !== "wordmark"}
       draggable={false}
       className={`inline-block shrink-0 object-contain ${className || "h-8 w-8"}`}
     />
@@ -107,6 +122,52 @@ export function PageHeader({
   );
 }
 
+export function Switch({
+  checked,
+  disabled = false,
+  size = "md",
+  checkedClassName = "bg-ghost-500",
+  uncheckedClassName = "bg-zinc-200",
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  checked: boolean;
+  size?: "sm" | "md";
+  checkedClassName?: string;
+  uncheckedClassName?: string;
+}) {
+  const isSm = size === "sm";
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      className={`relative shrink-0 rounded-full transition-colors ${
+        isSm ? "h-[22px] w-[38px]" : "h-6 w-11"
+      } ${checked ? checkedClassName : uncheckedClassName} ${
+        disabled ? "cursor-not-allowed opacity-50" : ""
+      } ${className}`}
+      {...props}
+    >
+      <span
+        className={`pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-full bg-white transition-all ${
+          isSm ? "h-4 w-4 shadow-sm" : "h-5 w-5 shadow"
+        } ${
+          checked
+            ? isSm
+              ? "right-[3px] left-auto"
+              : "right-0.5 left-auto"
+            : isSm
+              ? "left-[3px]"
+              : "left-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
 export function Toggle({
   checked,
   onChange,
@@ -119,23 +180,16 @@ export function Toggle({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => !disabled && onChange(!checked)}
-      className={`flex w-full items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors hover:bg-zinc-50 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+    <div
+      className={`flex w-full items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 transition-colors hover:bg-zinc-50 ${disabled ? "opacity-60" : ""}`}
     >
       <span className="text-[14px] text-zinc-800">{label}</span>
-      <span
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? "bg-ghost-500" : "bg-zinc-200"}`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`}
-        />
-      </span>
-    </button>
+      <Switch
+        checked={checked}
+        disabled={disabled}
+        onClick={() => !disabled && onChange(!checked)}
+      />
+    </div>
   );
 }
 

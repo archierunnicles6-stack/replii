@@ -1,19 +1,26 @@
 import { useState } from "react";
 import { ChoosePlanPricing } from "../pricing/ChoosePlanPricing";
+import { useBillingSync } from "../../hooks/useBillingSync";
 import { usePricingCheckout } from "../../hooks/usePricingCheckout";
 import { openStripeBillingPortal } from "../../services/billing";
 import { useAppStore } from "../../store/useAppStore";
 
 export function BillingPanel() {
   const user = useAppStore((s) => s.user);
-  const { loadingTier, error, handleSelect } = usePricingCheckout();
+  const { loadingTier, error, handleSelect, handleContactSales } = usePricingCheckout();
   const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
+  useBillingSync();
 
   const handleManageBilling = async () => {
     if (!user?.id) return;
+    setPortalError(null);
     setPortalLoading(true);
     try {
-      await openStripeBillingPortal(user.id);
+      const result = await openStripeBillingPortal(user.id);
+      if (!result.ok) {
+        setPortalError(result.error);
+      }
     } finally {
       setPortalLoading(false);
     }
@@ -22,8 +29,9 @@ export function BillingPanel() {
   return (
     <ChoosePlanPricing
       loadingTier={loadingTier}
-      error={error}
-      onSelect={(id) => void handleSelect(id)}
+      error={error ?? portalError}
+      onSelect={(id, interval) => void handleSelect(id, interval)}
+      onContactSales={handleContactSales}
       onManageBilling={() => void handleManageBilling()}
       portalLoading={portalLoading}
     />

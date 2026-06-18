@@ -148,16 +148,18 @@ export function ActivityPage() {
 
   const filtered = displaySessions.filter((m) => {
     if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    const transcriptText = m.transcript.map((line) => line.text).join(" ");
+    const q = searchQuery.trim().toLowerCase();
+    const transcriptText = (m.transcript ?? []).map((line) => line.text).join(" ");
     const sectionText =
       m.summarySections?.flatMap((s) => s.items).join(" ") ?? "";
+    const modeLabel = m.mode?.toLowerCase() ?? "";
     return (
       m.title.toLowerCase().includes(q) ||
       m.company.toLowerCase().includes(q) ||
-      m.summary.toLowerCase().includes(q) ||
+      (m.summary ?? "").toLowerCase().includes(q) ||
       sectionText.toLowerCase().includes(q) ||
-      transcriptText.toLowerCase().includes(q)
+      transcriptText.toLowerCase().includes(q) ||
+      modeLabel.includes(q)
     );
   });
 

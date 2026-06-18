@@ -6,8 +6,8 @@ const FAQ = [
     a: "Click Start Ghost from the dashboard or Upcoming tab. The overlay appears on your screen and begins listening automatically.",
   },
   {
-    q: "Is Ghost visible on screen share?",
-    a: "On Free and Pro, Ghost appears in Zoom, Meet, Teams, and recordings. Undetectable hides the overlay from screen share.",
+    q: "Is my call history saved?",
+    a: "Every call is saved with transcripts, coaching suggestions, and deal scores. Review past sessions in your dashboard to see what worked.",
   },
   {
     q: "Does Ghost join my calls?",

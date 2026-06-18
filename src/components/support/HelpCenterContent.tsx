@@ -69,7 +69,7 @@ const categories = [
     articles: [
       {
         q: "How do I upgrade my plan?",
-        a: "Open Settings → Billing in the desktop app to compare Free and Pro plans and manage your subscription.",
+        a: "Open Settings → Billing in the desktop app to compare Free and Pro plans. Subscriptions can only be purchased in the app, not on the website.",
       },
       {
         q: "How do I cancel my subscription?",

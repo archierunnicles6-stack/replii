@@ -245,7 +245,7 @@ export const EMPTY_SESSION_PLACEHOLDER: MeetingSummaryResult = {
         "The discussion opened with context on their current stack — they use Gong for call recording and Salesforce for CRM, but reps rarely review recordings and managers lack bandwidth for live coaching. The prospect expressed strong interest in **real-time assistance during calls** rather than retrospective analysis, particularly for handling pricing objections and competitive comparisons against incumbents in their space.",
         "Key pain points surfaced around quota attainment: three of their eight new hires from the last quarter are still below 60% of target after 90 days. They estimated the cost of slow ramp at roughly **$180K per underperforming rep annually** when factoring in salary, lost pipeline, and manager time spent on remediation. Leadership has flagged rep productivity as a Q3 priority.",
         "On objections, the prospect raised concerns about **rep adoption** (whether sellers would actually use an in-call tool), **data security** (SOC 2 and GDPR requirements), and **overlap with Gong** (whether Ghost replaces or complements their existing investment). These were acknowledged and partially addressed during the call, though a technical deep-dive with RevOps was deferred.",
-        "The conversation ended on a positive note — the prospect agreed that live coaching during calls addresses a gap their current tools do not fill. They requested a follow-up demo focused on the invisible overlay workflow and asked for customer references from similar-sized B2B SaaS teams.",
+        "The conversation ended on a positive note — the prospect agreed that live coaching during calls addresses a gap their current tools do not fill. They requested a follow-up demo focused on the manager review workflow and asked for customer references from similar-sized B2B SaaS teams.",
       ],
     },
     {
@@ -262,7 +262,7 @@ export const EMPTY_SESSION_PLACEHOLDER: MeetingSummaryResult = {
       items: [
         "18-rep team using Gong + Salesforce; low adoption of post-call review workflows",
         "New rep ramp averaging 3+ months to quota; 3 of 8 recent hires under 60% attainment",
-        "Strong interest in invisible overlay and real-time objection handling during live calls",
+        "Strong interest in live coaching and real-time objection handling during calls",
         "Budget cycle aligns with Q3 planning — decision timeline estimated at 4–6 weeks",
         "Competitive evaluation includes Gong (incumbent) and one unnamed startup alternative",
       ],

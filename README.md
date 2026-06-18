@@ -6,11 +6,11 @@ Live AI sales coach — Cluely-style desktop app + marketing site.
 
 Ghost is a **full desktop application** for sales calls:
 
-- **Live overlay** — invisible on screen share, coaches you during the call
+- **Live overlay** — real-time coaching during calls, logged for manager review
 - **Dashboard** — Activity, upcoming pre-call briefs, meeting notes
 - **Sales modes** — Discovery, Demo, Negotiation, Enterprise
 - **Customize** — system prompts, playbooks, knowledge base
-- **Settings & billing** — invisibility, languages, plans
+- **Settings & billing** — overlay display, languages, plans
 
 Same product shape as [Cluely](https://cluely.com), built specifically for **sales calls**.
 
@@ -43,8 +43,8 @@ Or: `npm run desktop:dev` from the repo root.
 | Upcoming | Pre-call briefs, participants, talking points |
 | Meeting detail | Summary, transcript, next steps, follow-up |
 | Customize Ghost | Sales modes, system prompt, file uploads |
-| Settings | Invisibility, languages, display, shortcuts |
-| Billing | Free, Pro ($25), Undetectable ($75) |
+| Settings | Overlay display, languages, display, shortcuts |
+| Billing | Free, Pro ($20) |
 | Live overlay | Listen, Assist, Smart mode, quick actions |
 
 ### Overlay shortcuts

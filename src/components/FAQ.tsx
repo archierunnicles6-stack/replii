@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 
-const faqs = [
+export type FaqItem = {
+  q: string;
+  a: string;
+};
+
+const defaultFaqs: FaqItem[] = [
   {
     q: "Why real-time vs. a regular AI notetaker?",
     a: "Most AI tools summarize calls after they end. Ghost coaches you during the call — when you actually need the words. It's the difference between a post-game recap and a coach in your ear.",
@@ -13,11 +18,11 @@ const faqs = [
   },
   {
     q: "Is Ghost free?",
-    a: "Ghost offers a free starter tier with limited AI responses. Pro plans unlock unlimited coaching, custom playbooks, and screen-share invisibility.",
+    a: "Ghost offers a free starter tier with limited AI responses. Pro unlocks unlimited coaching, custom playbooks, and priority support.",
   },
   {
-    q: "How is it undetectable in meetings?",
-    a: "Ghost uses native OS-level window protection so the overlay never appears in screen shares or recordings. Only you see the coaching panel.",
+    q: "Is my call history saved?",
+    a: "Every call is saved with transcripts, coaching suggestions, and deal scores. Review past sessions in your dashboard to see what worked.",
   },
   {
     q: "What languages and apps are supported?",
@@ -29,11 +34,19 @@ const faqs = [
   },
 ];
 
-export function FAQ() {
+export function FAQ({
+  faqs = defaultFaqs,
+  id = "faq",
+  className = "bg-white",
+}: {
+  faqs?: readonly FaqItem[];
+  id?: string;
+  className?: string;
+}) {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="bg-white">
+    <section id={id} className={className}>
       <div className="mx-auto max-w-[1200px] px-6 py-24 md:py-32">
         <h2 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#0a0a0a] md:text-[2.5rem]">
           Frequently asked questions

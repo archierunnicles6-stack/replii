@@ -17,10 +17,10 @@ const steps = [
   },
   {
     number: "03",
-    title: "Completely invisible on screen share",
+    title: "Every call logged for review",
     description:
-      "The overlay never appears in Zoom, Meet, or Teams recordings. Only you see the coaching. Your prospect sees nothing.",
-    visual: "invisible",
+      "Transcripts, suggestions used, and deal scores are saved after each call — so managers can coach reps on what actually worked.",
+    visual: "review",
   },
 ];
 
@@ -58,7 +58,7 @@ export function HowItWorks() {
               <div className="flex justify-center">
                 {step.visual === "listening" && <ListeningVisual />}
                 {step.visual === "suggestion" && <SuggestionVisual />}
-                {step.visual === "invisible" && <InvisibleVisual />}
+                {step.visual === "review" && <ReviewVisual />}
               </div>
             </div>
           ))}
@@ -122,24 +122,32 @@ function SuggestionVisual() {
   );
 }
 
-function InvisibleVisual() {
+function ReviewVisual() {
   return (
     <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
       <div className="border-b border-zinc-100 bg-zinc-50 px-4 py-2.5">
         <p className="text-[11px] font-medium text-zinc-500">
-          What your prospect sees
+          Manager coaching dashboard
         </p>
       </div>
-      <div className="aspect-video bg-gradient-to-br from-zinc-100 to-zinc-200 p-4">
-        <div className="grid h-full grid-cols-2 gap-2">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-lg bg-zinc-300/60" />
-          ))}
-        </div>
+      <div className="space-y-3 p-4">
+        {[
+          { rep: "Alex M.", score: 82, note: "Strong objection handling" },
+          { rep: "Jordan K.", score: 67, note: "Missed budget qualification" },
+          { rep: "Sam R.", score: 91, note: "Closed next step booked" },
+        ].map((row) => (
+          <div key={row.rep} className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2">
+            <div>
+              <p className="text-[13px] font-medium text-zinc-800">{row.rep}</p>
+              <p className="text-[11px] text-zinc-500">{row.note}</p>
+            </div>
+            <span className="text-[13px] font-semibold text-emerald-600">{row.score}</span>
+          </div>
+        ))}
       </div>
       <div className="border-t border-zinc-100 px-4 py-2.5">
         <p className="text-[11px] font-medium text-emerald-600">
-          ✓ No overlay visible in screen share
+          ✓ Every call logged for team review
         </p>
       </div>
     </div>

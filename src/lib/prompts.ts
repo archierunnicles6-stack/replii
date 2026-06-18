@@ -1,5 +1,5 @@
 export const DEFAULT_PRODUCT =
-  "AI sales co-pilot that gives live suggestions invisibly during sales calls";
+  "AI sales co-pilot that gives live coaching suggestions during sales calls";
 
 export const DEFAULT_OBJECTIONS =
   "price, already using Salesforce, need to think about it, no budget, need team approval";

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PermissionPreview } from "../../components/onboarding/PermissionPreview";
 import { SplitScreenShell } from "../../components/onboarding/SplitScreenShell";
-import { BackButton } from "../../components/ui";
+import { BackButton, Switch } from "../../components/ui";
 import { notifyAppStoreChanged, useAppStore } from "../../store/useAppStore";
 
 type PermissionKey = "accessibility" | "microphone" | "screen";
@@ -57,7 +57,9 @@ export function OnboardingPage() {
     screen: false,
   });
   const [activeKey, setActiveKey] = useState<PermissionKey>("accessibility");
+  const [pending, setPending] = useState<Partial<Record<PermissionKey, boolean>>>({});
   const finishingRef = useRef(false);
+  const prevGrantedRef = useRef(granted);
 
   const refreshStatus = useCallback(async () => {
     const status = await window.ghost?.getPermissionStatus?.();
@@ -107,10 +109,45 @@ export function OnboardingPage() {
     setActiveKey(key);
     await window.ghost?.openPermissionSettings?.(key);
     void refreshStatus();
-    for (const delay of [400, 1000, 2000]) {
+    for (const delay of [400, 1000, 2000, 4000]) {
       setTimeout(() => void refreshStatus(), delay);
     }
   };
+
+  const handleToggle = async (key: PermissionKey) => {
+    if (granted[key]) return;
+    setPending((prev) => ({ ...prev, [key]: true }));
+    setActiveKey(key);
+    await openSettings(key);
+    if (key === "screen" && !granted.microphone) {
+      await window.ghost?.ensureMicrophone?.();
+    }
+  };
+
+  useEffect(() => {
+    const prev = prevGrantedRef.current;
+    prevGrantedRef.current = granted;
+
+    setPending((pendingPrev) => {
+      let changed = false;
+      const next = { ...pendingPrev };
+      for (const perm of PERMISSIONS) {
+        if (granted[perm.key]) {
+          if (pendingPrev[perm.key]) {
+            next[perm.key] = false;
+            changed = true;
+          }
+        }
+      }
+      return changed ? next : pendingPrev;
+    });
+
+    const newlyGranted = REQUIRED_KEYS.some((key) => granted[key] && !prev[key]);
+    if (!newlyGranted) return;
+
+    const next = nextRequiredKey(granted);
+    if (next) setActiveKey(next);
+  }, [granted]);
 
   const requiredGranted = granted.accessibility && granted.microphone;
   const pendingRequiredKey = nextRequiredKey(granted);
@@ -148,10 +185,10 @@ export function OnboardingPage() {
                     icon={perm.icon}
                     title={perm.title}
                     description={perm.description}
-                    enabled={granted[perm.key]}
+                    enabled={granted[perm.key] || !!pending[perm.key]}
                     active={activeKey === perm.key}
                     onSelect={() => setActiveKey(perm.key)}
-                    onToggle={() => void openSettings(perm.key)}
+                    onToggle={() => void handleToggle(perm.key)}
                   />
                 ))}
               </div>
@@ -248,25 +285,17 @@ function PermissionCard({
           {description}
         </p>
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={enabled}
+      <Switch
+        checked={enabled}
+        size="sm"
+        checkedClassName="bg-[#3b82f6]"
+        uncheckedClassName={active ? "bg-zinc-300" : "bg-zinc-200"}
         aria-label={`${enabled ? "Disable" : "Enable"} ${title}`}
         onClick={(e) => {
           e.stopPropagation();
           onToggle();
         }}
-        className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-          enabled ? "bg-[#3b82f6]" : active ? "bg-zinc-300" : "bg-zinc-200"
-        }`}
-      >
-        <span
-          className={`pointer-events-none absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
-          }`}
-        />
-      </button>
+      />
     </div>
   );
 }

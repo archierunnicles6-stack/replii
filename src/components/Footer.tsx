@@ -1,42 +1,51 @@
 import Link from "next/link";
+import { CookieSettingsLink } from "./CookieSettingsLink";
 import { GhostLogo } from "./GhostLogo";
+import { LEGAL_ROUTES, SUPPORT_ROUTES, LEGAL } from "@/content/legal/config";
 
-const columns = [
+type FooterLink = {
+  label: string;
+  href: string;
+  badge?: string;
+};
+
+type FooterColumn = {
+  title: string;
+  links: FooterLink[];
+};
+
+const columns: FooterColumn[] = [
   {
     title: "Resources",
     links: [
-      { label: "Desktop", href: "/download", badge: "New" },
-      { label: "Manifesto", href: "/#about" },
-      { label: "Press", href: "mailto:press@ghost.ai" },
-      { label: "Bug Bounty", href: "mailto:security@ghost.ai" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "Download", href: "/download" },
     ],
   },
   {
     title: "Support",
     links: [
-      { label: "Help Center", href: "/#faq" },
-      { label: "Contact Us", href: "mailto:support@ghost.ai" },
+      { label: "Help Center", href: SUPPORT_ROUTES.helpCenter },
+      { label: "Contact Us", href: SUPPORT_ROUTES.contact },
     ],
   },
   {
     title: "Legal",
     links: [
-      { label: "Privacy Policy", href: "/legal/privacy" },
-      { label: "Terms of Service", href: "/legal/terms" },
-      { label: "Subprocessors", href: "/legal/privacy" },
+      { label: "Privacy Policy", href: LEGAL_ROUTES.privacy },
+      { label: "Cookie Policy", href: LEGAL_ROUTES.cookies },
+      { label: "Terms of Service", href: LEGAL_ROUTES.terms },
+      { label: "Subprocessors", href: LEGAL_ROUTES.subprocessors },
     ],
   },
 ];
 
-export function Footer() {
+export function Footer({ className = "bg-[#f7f8fa]" }: { className?: string }) {
   return (
-    <footer className="bg-[#f7f8fa]">
+    <footer className={className}>
       <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-6 py-14 md:flex-row md:items-start md:justify-between md:py-16">
-        <Link href="/" className="flex items-center gap-2.5">
-          <GhostLogo className="h-6 w-6" />
-          <span className="text-[16px] font-semibold tracking-[-0.01em] text-[#0a0a0a]">
-            Ghost
-          </span>
+        <Link href="/" className="flex items-center">
+          <GhostLogo variant="wordmark" className="h-6 w-auto" />
         </Link>
 
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 sm:gap-16">
@@ -78,6 +87,20 @@ export function Footer() {
               </ul>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="border-t border-[#e8ebf0]">
+        <div className="mx-auto max-w-[1200px] px-6 py-4">
+          <p className="text-center text-[12px] leading-relaxed text-[#8b95a5] sm:text-left">
+            {LEGAL.aiDisclaimerShort}
+          </p>
+        </div>
+        <div className="mx-auto flex max-w-[1200px] flex-col gap-2 border-t border-[#e8ebf0] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[13px] text-[#8b95a5]">
+            © {new Date().getFullYear()} Ghost. All rights reserved.
+          </p>
+          <CookieSettingsLink className="text-left text-[13px] text-[#5f6b7a] transition-colors hover:text-[#0a0a0a] sm:text-right" />
         </div>
       </div>
     </footer>

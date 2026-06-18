@@ -1,15 +1,11 @@
 import type { BillingInterval } from "../../lib/pricing";
 import {
   ANNUAL_DISCOUNT_PERCENT,
+  ENTERPRISE_FEATURES,
+  ENTERPRISE_TAGLINE,
+  PRO_CARD_FEATURES,
   priceForInterval,
 } from "../../lib/pricing";
-
-const PRO_FEATURES = [
-  { icon: "infinity" as const, label: "Unlimited AI Responses" },
-  { icon: "infinity" as const, label: "Unlimited audio sessions" },
-  { icon: "check" as const, label: "Access to newest AI models" },
-  { icon: "check" as const, label: "Priority chat support" },
-];
 
 function InfinityIcon({ className }: { className?: string }) {
   return <span className={`inline-block text-[13px] leading-none ${className ?? ""}`}>∞</span>;
@@ -156,7 +152,7 @@ export function ProPlanCard({
       </div>
 
       <ul className="mt-8 flex-1 space-y-4">
-        {PRO_FEATURES.map((feature) => (
+        {PRO_CARD_FEATURES.map((feature) => (
           <li key={feature.label} className="flex items-center gap-3">
             <FeatureIcon icon={feature.icon} />
             <span className="text-[14px] leading-snug text-white/95">{feature.label}</span>
@@ -177,61 +173,47 @@ export function ProPlanCard({
   );
 }
 
-export function UndetectablePlanCard({
-  interval,
-  loading,
-  isCurrent = false,
-  onSelect,
+export function EnterprisePlanCard({
+  onContactSales,
 }: {
-  interval: BillingInterval;
-  loading: boolean;
-  isCurrent?: boolean;
-  onSelect: () => void;
+  onContactSales: () => void;
 }) {
-  const { current, original } = priceForInterval("undetectable", interval);
-  const showDiscount = interval === "annual";
-
   return (
     <div className="flex min-h-[440px] flex-col rounded-[24px] border border-zinc-200 bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[14px] font-medium text-zinc-600">Pro + Undetectability</p>
+        <p className="text-[14px] font-medium text-zinc-600">Enterprise</p>
         <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
           Popular
         </span>
       </div>
 
       <div className="mt-4 flex items-baseline gap-2">
-        {original ? (
-          <span className="text-[15px] text-zinc-400 line-through">{original}</span>
-        ) : null}
         <span className="text-[40px] font-bold leading-none tracking-[-0.03em] text-zinc-900">
-          {current}
+          Custom
         </span>
-        <span className="text-[15px] text-zinc-500">/month</span>
       </div>
 
-      <div className="mt-8 flex flex-1 flex-col">
-        <div className="flex items-start gap-3">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b82f6]">
-            <CheckIcon className="h-3.5 w-3.5 text-white" />
-          </div>
-          <div>
-            <p className="text-[14px] font-semibold text-zinc-900">Ghost Undetectability</p>
-            <p className="mt-1 text-[13px] leading-snug text-zinc-500">
-              Ghost stays hidden from screen share and recordings
-            </p>
-          </div>
-        </div>
-      </div>
+      <p className="mt-2 text-[13px] text-zinc-500">{ENTERPRISE_TAGLINE}</p>
+
+      <ul className="mt-8 flex flex-1 flex-col gap-3">
+        {ENTERPRISE_FEATURES.map((feature) => (
+          <li key={feature} className="flex items-start gap-3">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b82f6]">
+              <CheckIcon className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="text-[13px] leading-snug text-zinc-600">{feature}</span>
+          </li>
+        ))}
+      </ul>
 
       <div className="mt-8">
-        <UpgradeButton
-          variant="blue"
-          loading={loading}
-          isCurrent={isCurrent}
-          showDiscount={showDiscount}
-          onClick={onSelect}
-        />
+        <button
+          type="button"
+          onClick={onContactSales}
+          className="flex h-[52px] w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] text-[15px] font-semibold text-white transition-opacity hover:opacity-95"
+        >
+          Contact Sales
+        </button>
       </div>
     </div>
   );

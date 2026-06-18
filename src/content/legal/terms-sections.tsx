@@ -16,20 +16,21 @@ export const termsSections: LegalSection[] = [
       <>
         <LegalP>
           These Terms of Service (&ldquo;<LegalStrong>Terms</LegalStrong>&rdquo;)
-          constitute a legally binding agreement between you and{" "}
-          {LEGAL.legalEntity} (&ldquo;<LegalStrong>Ghost</LegalStrong>,&rdquo;
+          constitute a legally binding agreement between you and the operator of{" "}
+          {LEGAL.productName} (&ldquo;<LegalStrong>Ghost</LegalStrong>,&rdquo;
           &ldquo;<LegalStrong>we</LegalStrong>,&rdquo; &ldquo;
           <LegalStrong>us</LegalStrong>,&rdquo; or &ldquo;
           <LegalStrong>our</LegalStrong>&rdquo;) governing your access to and
           use of the {LEGAL.productName} desktop application, website, APIs,
           documentation, and related services (collectively, the &ldquo;
-          <LegalStrong>Service</LegalStrong>&rdquo;).
+          <LegalStrong>Service</LegalStrong>&rdquo;). {LEGAL.businessStructure}
         </LegalP>
         <LegalP>
-          By creating an account, downloading the application, clicking
-          &ldquo;Continue,&rdquo; &ldquo;Sign up,&rdquo; or otherwise accessing
-          or using the Service, you acknowledge that you have read, understood,
-          and agree to be bound by these Terms and our{" "}
+          By creating an account, checking the agreement box at registration,
+          downloading the application, clicking &ldquo;Continue,&rdquo;
+          &ldquo;Sign up,&rdquo; or otherwise accessing or using the Service,
+          you acknowledge that you have read, understood, and agree to be bound
+          by these Terms and our{" "}
           <a href={LEGAL_ROUTES.privacy} className="text-ghost-600 underline">
             Privacy Policy
           </a>
@@ -146,8 +147,9 @@ export const termsSections: LegalSection[] = [
       <>
         <LegalP>
           <LegalStrong>
-            THE SERVICE USES ARTIFICIAL INTELLIGENCE. AI-GENERATED OUTPUTS MAY
-            BE INACCURATE, INCOMPLETE, BIASED, OUTDATED, OR INAPPROPRIATE.
+            AI CAN MAKE MISTAKES. THE SERVICE USES ARTIFICIAL INTELLIGENCE.
+            AI-GENERATED OUTPUTS MAY BE INACCURATE, INCOMPLETE, BIASED, OUTDATED,
+            OR INAPPROPRIATE.
           </LegalStrong>{" "}
           You must independently review, verify, and approve all suggestions
           before relying on or communicating them to any person.
@@ -391,7 +393,7 @@ export const termsSections: LegalSection[] = [
         </LegalP>
         <LegalP>
           We do not warrant that the Service will be uninterrupted, error-free,
-          secure, invisible in all screen-sharing scenarios, compliant with your
+          secure, compatible with all screen-sharing platforms, compliant with your
           employer&apos;s policies, or free from harmful components.
         </LegalP>
         <LegalP>
@@ -408,9 +410,8 @@ export const termsSections: LegalSection[] = [
       <>
         <LegalP>
           <LegalStrong>
-            TO THE MAXIMUM EXTENT PERMITTED BY LAW, GHOST AND ITS OFFICERS,
-            DIRECTORS, EMPLOYEES, AGENTS, AFFILIATES, AND LICENSORS WILL NOT BE
-            LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL,
+            TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE GHOST OPERATOR AND ITS
+            CONTRACTORS, AGENTS, AFFILIATES, AND LICENSORS WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL,
             EXEMPLARY, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUE,
             DATA, GOODWILL, BUSINESS OPPORTUNITY, OR REPUTATION, ARISING FROM OR
             RELATED TO THE SERVICE OR THESE TERMS, EVEN IF ADVISED OF THE
@@ -423,8 +424,8 @@ export const termsSections: LegalSection[] = [
             AGGREGATE LIABILITY FOR ALL CLAIMS ARISING OUT OF OR RELATING TO THE
             SERVICE OR THESE TERMS WILL NOT EXCEED THE GREATER OF (A) THE AMOUNT
             YOU PAID TO GHOST FOR THE SERVICE IN THE TWELVE (12) MONTHS BEFORE
-            THE EVENT GIVING RISE TO LIABILITY, OR (B) ONE HUNDRED U.S. DOLLARS
-            (US$100).
+            THE EVENT GIVING RISE TO LIABILITY, OR (B) ONE HUNDRED POUNDS
+            STERLING (£100).
           </LegalStrong>
         </LegalP>
         <LegalP>
@@ -440,9 +441,8 @@ export const termsSections: LegalSection[] = [
     content: (
       <>
         <LegalP>
-          You will defend, indemnify, and hold harmless Ghost and its officers,
-          directors, employees, agents, affiliates, and licensors from and
-          against any claims, damages, losses, liabilities, costs, and expenses
+          You will defend, indemnify, and hold harmless the Ghost operator and
+          its contractors, agents, affiliates, and licensors from and against any claims, damages, losses, liabilities, costs, and expenses
           (including reasonable attorneys&apos; fees) arising out of or related
           to:
         </LegalP>
@@ -532,10 +532,10 @@ export const termsSections: LegalSection[] = [
     content: (
       <>
         <LegalP>
-          These Terms are governed by the laws of the State of{" "}
-          {LEGAL.jurisdiction.state} and the {LEGAL.jurisdiction.country},
-          without regard to conflict-of-law principles, except where mandatory
-          consumer protection laws of your jurisdiction apply.
+          These Terms are governed by the laws of {LEGAL.jurisdiction.region},{" "}
+          {LEGAL.jurisdiction.country}, without regard to conflict-of-law
+          principles, except where mandatory consumer protection laws of your
+          jurisdiction apply.
         </LegalP>
         <LegalP>
           If arbitration does not apply, you agree to exclusive jurisdiction in
@@ -551,10 +551,10 @@ export const termsSections: LegalSection[] = [
     content: (
       <>
         <LegalP>
-          The Service is controlled and operated from the United States. You
-          are responsible for compliance with local laws where you access or use
-          the Service. You may not use the Service where prohibited or in
-          violation of U.S. export control or sanctions laws.
+          The Service may be accessed internationally. You are responsible for
+          compliance with local laws where you access or use the Service,
+          including laws relating to recording, employment, privacy, and
+          telecommunications.
         </LegalP>
       </>
     ),

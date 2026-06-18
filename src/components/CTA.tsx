@@ -1,16 +1,24 @@
-import { MacDownloadLink } from "./MacDownloadLink";
+import { DownloadLink } from "./DownloadLink";
 
-export function CTA() {
+export function CTA({
+  className = "bg-[#f7f8fa]",
+  showGlow = true,
+}: {
+  className?: string;
+  showGlow?: boolean;
+}) {
   return (
-    <section className="relative overflow-hidden bg-[#f7f8fa]">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(191, 219, 254, 0.45) 0%, rgba(247, 248, 250, 0) 70%)",
-        }}
-        aria-hidden
-      />
+    <section className={`relative overflow-hidden ${className}`}>
+      {showGlow ? (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(191, 219, 254, 0.45) 0%, rgba(247, 248, 250, 0) 70%)",
+          }}
+          aria-hidden
+        />
+      ) : null}
 
       <div className="relative mx-auto flex max-w-[1200px] items-center justify-between gap-12 px-6 py-24 md:py-32">
         <div className="max-w-[560px]">
@@ -21,7 +29,7 @@ export function CTA() {
             Try Ghost on your next call today.
           </p>
           <div className="mt-8">
-            <MacDownloadLink />
+            <DownloadLink />
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import ghostMark from "../assets/ghost-mark.png";
+import { AI_DISCLAIMER_OVERLAY } from "../lib/ai-disclaimer";
 import type { QuickAction } from "../services/ai";
 import type { PillThemeStyles } from "../hooks/usePillBackdrop";
 
@@ -287,12 +288,19 @@ export function SuggestionPill({
             <span className={`overlay-pill-copy text-[15px] ${pillTheme.transcriptMuted}`}>Thinking…</span>
           </div>
         ) : (
-          <p className={`overlay-pill-copy text-[16px] font-semibold leading-snug tracking-[-0.01em] ${pillTheme.body}`}>
-            {display}
-            {loading ? (
-              <span className="ml-0.5 inline-block h-[16px] w-[2px] animate-pulse bg-zinc-500/70" />
+          <>
+            <p className={`overlay-pill-copy text-[16px] font-semibold leading-snug tracking-[-0.01em] ${pillTheme.body}`}>
+              {display}
+              {loading ? (
+                <span className="ml-0.5 inline-block h-[16px] w-[2px] animate-pulse bg-zinc-500/70" />
+              ) : null}
+            </p>
+            {!loading && display ? (
+              <p className={`overlay-pill-copy mt-2 text-[10px] leading-snug ${pillTheme.transcriptMuted}`}>
+                {AI_DISCLAIMER_OVERLAY}
+              </p>
             ) : null}
-          </p>
+          </>
         )}
       </div>
     </div>
