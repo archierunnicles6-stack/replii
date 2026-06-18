@@ -28,10 +28,12 @@ export function DownloadInstallGuide() {
           </h2>
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-[14px] leading-relaxed text-zinc-600">
             <li>
-              Download and run <strong>{filename}</strong>
+              Download and extract <strong>{filename}</strong>
             </li>
-            <li>Follow the installer prompts</li>
-            <li>Open Ghost from the Start menu or desktop shortcut</li>
+            <li>
+              Open the extracted folder and double-click <strong>Ghost.exe</strong>
+            </li>
+            <li>Pin Ghost to the taskbar or create a desktop shortcut if you like</li>
             <li>Allow microphone access when prompted</li>
             <li>
               Click <strong>Start Ghost</strong> on your next sales call

@@ -11,7 +11,7 @@ const categories = [
     articles: [
       {
         q: "How do I download and install Ghost?",
-        a: "Download Ghost for Mac or Windows from the homepage or visit our download page. On Mac, open the DMG and drag Ghost to Applications. On Windows, run Ghost-Setup.exe and follow the installer. Sign in with email or Google to get started.",
+        a: "Download Ghost for Mac or Windows from the homepage or visit our download page. On Mac, open the DMG and drag Ghost to Applications. On Windows, extract Ghost-Windows.zip and run Ghost.exe. Sign in with email or Google to get started.",
       },
       {
         q: "Who is Ghost for?",

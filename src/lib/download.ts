@@ -7,10 +7,10 @@ export const RELEASE_PAGE_URL =
   "https://github.com/archierunnicles6-stack/ghost/releases/latest";
 
 export const MAC_DOWNLOAD_GITHUB_URL = `https://github.com/archierunnicles6-stack/ghost/releases/download/${DOWNLOAD_RELEASE_TAG}/Ghost.dmg`;
-export const WINDOWS_DOWNLOAD_GITHUB_URL = `https://github.com/archierunnicles6-stack/ghost/releases/download/${DOWNLOAD_RELEASE_TAG}/Ghost-Setup.exe`;
+export const WINDOWS_DOWNLOAD_GITHUB_URL = `https://github.com/archierunnicles6-stack/ghost/releases/download/${DOWNLOAD_RELEASE_TAG}/Ghost-Windows.zip`;
 
 export const MAC_DOWNLOAD_FILENAME = "Ghost.dmg";
-export const WINDOWS_DOWNLOAD_FILENAME = "Ghost-Setup.exe";
+export const WINDOWS_DOWNLOAD_FILENAME = "Ghost-Windows.zip";
 
 /** @deprecated Use DOWNLOAD_RELEASE_TAG */
 export const MAC_DOWNLOAD_RELEASE_TAG = DOWNLOAD_RELEASE_TAG;
