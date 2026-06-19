@@ -16,7 +16,20 @@ export function BillingSuccessRedirect() {
     if (sessionId) params.set("session_id", sessionId);
     if (!params.has("to")) params.set("to", "billing");
 
-    window.location.replace(`ghost://billing/success?${params}`);
+    const redirectToApp = () => {
+      window.location.replace(`ghost://billing/success?${params}`);
+    };
+
+    if (sessionId && sessionId !== "{CHECKOUT_SESSION_ID}") {
+      void fetch(
+        `/api/stripe/sync-from-session?session_id=${encodeURIComponent(sessionId)}`,
+      )
+        .catch(() => undefined)
+        .finally(redirectToApp);
+      return;
+    }
+
+    redirectToApp();
   }, [searchParams]);
 
   return null;

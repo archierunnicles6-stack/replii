@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { resolveBillingOrigin } from "@/lib/billing-api-base";
 import { normalizeBillingReturnUrl } from "@/lib/billing-return-urls";
 import {
   stripePriceIdForPlan,
@@ -39,9 +40,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const origin =
-      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-      new URL(request.url).origin;
+    const origin = resolveBillingOrigin(request);
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",

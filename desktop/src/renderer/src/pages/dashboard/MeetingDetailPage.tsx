@@ -8,7 +8,6 @@ import { AI_DISCLAIMER_SHORT } from "../../lib/ai-disclaimer";
 import { SUGGESTION_TAG_LABELS } from "../../lib/suggestion-tags";
 import { useAppStore } from "../../store/useAppStore";
 import {
-  DEMO_MEETINGS,
   isUserMeeting,
   type SummarySection,
   type SuggestionRecord,
@@ -223,10 +222,8 @@ function SummaryView({
 
 function TranscriptView({
   transcript,
-  isWelcomeDemo,
 }: {
   transcript: { id: string; speaker: string; text: string; timestamp: number }[];
-  isWelcomeDemo: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -246,18 +243,6 @@ function TranscriptView({
   if (transcript.length === 0) {
     return (
       <p className="py-8 text-[15px] text-zinc-500">No transcript recorded.</p>
-    );
-  }
-
-  if (isWelcomeDemo) {
-    return (
-      <div className="space-y-5">
-        {transcript.map((line) => (
-          <p key={line.id} className="text-[15px] leading-relaxed text-zinc-700">
-            {line.text}
-          </p>
-        ))}
-      </div>
     );
   }
 
@@ -315,9 +300,8 @@ export function MeetingDetailPage() {
   const savedMeeting = useAppStore((s) => s.meetings.find((m) => m.id === id));
   const deleteMeeting = useAppStore((s) => s.deleteMeeting);
   const plan = useAppStore((s) => s.plan);
-  const freeSessionsUsed = useAppStore((s) => s.freeSessionsUsed);
-  const meetings = useAppStore((s) => s.meetings);
-  const meeting = savedMeeting ?? DEMO_MEETINGS.find((m) => m.id === id);
+  const freeOverlaySecondsUsed = useAppStore((s) => s.freeOverlaySecondsUsed);
+  const meeting = savedMeeting;
   const [tab, setTab] = useState<Tab>("summary");
   const canDelete = meeting ? isUserMeeting(meeting) : false;
   const canEdit = meeting ? isUserMeeting(meeting) : false;
@@ -333,7 +317,6 @@ export function MeetingDetailPage() {
     );
   }
 
-  const isWelcomeDemo = meeting.id === "demo-welcome";
   const processing = meeting.status === "processing";
   const sections: SummarySection[] =
     meeting.summarySections ??
@@ -395,8 +378,7 @@ export function MeetingDetailPage() {
           <WarmUpgradePrompt
             meeting={meeting}
             plan={plan}
-            freeSessionsUsed={freeSessionsUsed}
-            meetings={meetings}
+            freeOverlaySecondsUsed={freeOverlaySecondsUsed}
             onUpgrade={(message) => onRequestUpgrade(message)}
           />
         </>
@@ -435,10 +417,7 @@ export function MeetingDetailPage() {
             canEdit={canEdit}
           />
         ) : (
-          <TranscriptView
-            transcript={meeting.transcript}
-            isWelcomeDemo={isWelcomeDemo}
-          />
+          <TranscriptView transcript={meeting.transcript} />
         )}
       </div>
     </div>

@@ -12,7 +12,7 @@ export interface PaidPlanPricing {
 }
 
 export const PAID_PLAN_PRICING: Record<"pro", PaidPlanPricing> = {
-  pro: { monthly: 20, annualYearly: 136.99 },
+  pro: { monthly: 20, annualYearly: 167.88 },
 };
 
 export const ANNUAL_DISCOUNT_PERCENT = Math.round(
@@ -38,7 +38,7 @@ export function priceForInterval(
 }
 
 export const STARTER_FEATURES = [
-  "Limited AI responses",
+  "30 minutes of live overlay",
   "Unlimited real-time meeting notetaking",
   "Customize instructions & upload files",
   "Ask AI about all your past meetings",

@@ -5,6 +5,7 @@ import {
 import {
   DEFAULT_SETTINGS,
   DEFAULT_UPCOMING,
+  resolveFreeOverlaySecondsUsed,
   SALES_MODES,
   type MeetingRecord,
   type Plan,
@@ -27,7 +28,9 @@ export interface AccountProfile {
   settings: UserSettings;
   meetings: MeetingRecord[];
   upcoming: UpcomingCall[];
-  freeSessionsUsed: number;
+  freeOverlaySecondsUsed: number;
+  /** @deprecated Remote payloads may still include legacy session counts. */
+  freeSessionsUsed?: number;
 }
 
 export type AccountProfiles = Record<string, AccountProfile>;
@@ -46,7 +49,7 @@ export function createDefaultAccountProfile(): AccountProfile {
     settings: { ...DEFAULT_SETTINGS },
     meetings: [],
     upcoming: [...DEFAULT_UPCOMING],
-    freeSessionsUsed: 0,
+    freeOverlaySecondsUsed: 0,
   };
 }
 
@@ -63,7 +66,7 @@ export function extractAccountProfile(state: {
   settings: UserSettings;
   meetings: MeetingRecord[];
   upcoming: UpcomingCall[];
-  freeSessionsUsed: number;
+  freeOverlaySecondsUsed: number;
 }): AccountProfile {
   return {
     onboardingComplete: state.onboardingComplete,
@@ -78,7 +81,7 @@ export function extractAccountProfile(state: {
     settings: { ...state.settings },
     meetings: [...state.meetings],
     upcoming: [...state.upcoming],
-    freeSessionsUsed: state.freeSessionsUsed,
+    freeOverlaySecondsUsed: state.freeOverlaySecondsUsed,
   };
 }
 
@@ -98,7 +101,7 @@ export function applyAccountProfile(profile: AccountProfile) {
     settings: { ...profile.settings },
     meetings: [...profile.meetings],
     upcoming: [...profile.upcoming],
-    freeSessionsUsed: profile.freeSessionsUsed,
+    freeOverlaySecondsUsed: profile.freeOverlaySecondsUsed,
   };
 }
 
@@ -131,6 +134,9 @@ export function extractLegacyAccountProfile(
     upcoming: Array.isArray(state.upcoming)
       ? [...(state.upcoming as UpcomingCall[])]
       : defaults.upcoming,
-    freeSessionsUsed: Number(state.freeSessionsUsed) || 0,
+    freeOverlaySecondsUsed: resolveFreeOverlaySecondsUsed(
+      Number(state.freeOverlaySecondsUsed) || undefined,
+      Number(state.freeSessionsUsed) || undefined,
+    ),
   };
 }

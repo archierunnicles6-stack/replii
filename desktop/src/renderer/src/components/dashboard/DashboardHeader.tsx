@@ -78,7 +78,7 @@ export function DashboardHeader({
   onRequestUpgrade,
   canStartSession = true,
   sessionActive = false,
-  sessionsRemaining,
+  overlayTimeRemainingLabel,
   isPaid = false,
   showCalendarPrompt = false,
 }: {
@@ -86,7 +86,7 @@ export function DashboardHeader({
   onRequestUpgrade: () => void;
   canStartSession?: boolean;
   sessionActive?: boolean;
-  sessionsRemaining?: number;
+  overlayTimeRemainingLabel?: string;
   isPaid?: boolean;
   showCalendarPrompt?: boolean;
 }) {
@@ -110,13 +110,13 @@ export function DashboardHeader({
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
-          {!isPaid && sessionsRemaining !== undefined && (
+          {!isPaid && overlayTimeRemainingLabel ? (
             <span className="hidden text-[12px] text-zinc-500 sm:inline">
               {canStartSession
-                ? `${sessionsRemaining} free session${sessionsRemaining === 1 ? "" : "s"} left`
-                : "Free limit reached"}
+                ? overlayTimeRemainingLabel
+                : "Free overlay time used up"}
             </span>
-          )}
+          ) : null}
           <button
             type="button"
             onClick={() => {
@@ -135,7 +135,7 @@ export function DashboardHeader({
                 ? "Session active — click to show overlay"
                 : canStartSession
                   ? "Start Ghost"
-                  : "Upgrade to start more sessions on the free plan"
+                  : "Upgrade for unlimited overlay time on the free plan"
             }
             className="flex h-9 items-center gap-2 rounded-full bg-gradient-to-b from-[#4d9cf8] to-[#3b82f6] px-4 text-[13px] font-medium text-white shadow-[0_2px_8px_rgba(59,130,246,0.3)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
           >

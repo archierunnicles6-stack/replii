@@ -3,6 +3,7 @@ import {
   billingPortalReturnWebUrl,
   billingSuccessWebUrl,
 } from "../lib/billing-return";
+import { resolveApiBase } from "../lib/billing-api-base";
 import type { Plan } from "../store/types";
 import type { BillingInterval, PricingTierId } from "../lib/pricing";
 import { pricingTierToPlan } from "../lib/pricing";
@@ -10,10 +11,6 @@ import { isPaidPlan } from "../store/types";
 import { syncPlanLimitsToMain, useAppStore } from "../store/useAppStore";
 
 const PAID: Plan[] = ["pro", "solo", "undetectable"];
-
-function apiBase(): string {
-  return (import.meta.env.VITE_API_BASE_URL ?? "https://ghost.ai").replace(/\/$/, "");
-}
 
 async function openCheckoutUrl(url: string): Promise<void> {
   if (window.ghost?.openExternal) {
@@ -39,7 +36,7 @@ export async function startStripeCheckout(
     return { ok: false, error: "Invalid plan" };
   }
 
-  const base = apiBase();
+  const base = await resolveApiBase();
   let res: Response;
   try {
     res = await fetch(`${base}/api/stripe/checkout`, {
@@ -86,7 +83,7 @@ export type PortalResult =
 
 /** Open Stripe Customer Portal to manage subscription & payment method. */
 export async function openStripeBillingPortal(userId: string): Promise<PortalResult> {
-  const base = apiBase();
+  const base = await resolveApiBase();
   const res = await fetch(`${base}/api/stripe/portal`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -148,7 +145,7 @@ export async function syncPlanFromProfile(userId: string): Promise<Plan | null> 
 }
 
 async function syncPlanFromStripeApi(userId: string): Promise<Plan | null> {
-  const base = apiBase();
+  const base = await resolveApiBase();
   const res = await fetch(`${base}/api/stripe/sync`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

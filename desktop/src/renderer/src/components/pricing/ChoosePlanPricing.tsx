@@ -11,6 +11,8 @@ import { useAppStore } from "../../store/useAppStore";
 import {
   BillingToggle,
   EnterprisePlanCard,
+  PricingCardColumn,
+  PricingCardsRow,
   ProPlanCard,
 } from "./PaywallPlanCards";
 import { legalLinks, openLegalLink } from "../../lib/legal-urls";
@@ -108,15 +110,19 @@ export function ChoosePlanPricing({
 
       {error ? <p className="mt-3 text-[13px] text-red-600">{error}</p> : null}
 
-      <div className="mt-5 grid grid-cols-2 gap-4">
-        <ProPlanCard
-          interval={interval}
-          loading={loadingTier === "pro"}
-          isCurrent={displayPlan === "pro"}
-          onSelect={() => onSelect("pro", interval)}
-        />
-        <EnterprisePlanCard onContactSales={onContactSales} />
-      </div>
+      <PricingCardsRow className="mt-5">
+        <PricingCardColumn>
+          <ProPlanCard
+            interval={interval}
+            loading={loadingTier === "pro"}
+            isCurrent={displayPlan === "pro"}
+            onSelect={() => onSelect("pro", interval)}
+          />
+        </PricingCardColumn>
+        <PricingCardColumn>
+          <EnterprisePlanCard onContactSales={onContactSales} />
+        </PricingCardColumn>
+      </PricingCardsRow>
 
       <FreePlanStrip currentPlan={plan} />
 

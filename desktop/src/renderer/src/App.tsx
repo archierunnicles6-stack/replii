@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAuthBootstrap } from "./hooks/useAuthBootstrap";
 import { useBillingReturn } from "./hooks/useBillingReturn";
 import { bootstrapOpenAIKey } from "./services/whisper";
+import { resolveApiBase } from "./lib/billing-api-base";
 import { MicHelperApp } from "./mic/MicHelperApp";
 import { useAppStore } from "./store/useAppStore";
 import { WelcomePage } from "./pages/welcome/WelcomePage";
@@ -72,6 +73,7 @@ export default function App() {
 
   useEffect(() => {
     void bootstrapOpenAIKey();
+    void resolveApiBase();
   }, []);
 
   return (

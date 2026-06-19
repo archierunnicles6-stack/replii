@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
+import { subscriptionIdFromInvoice } from "@/lib/stripe-invoice";
 import { planFromStripePriceId } from "@/lib/stripe-plans";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -34,6 +35,24 @@ async function setUserPlan(
 function userIdFromMeta(meta: Stripe.Metadata | null | undefined): string | null {
   const id = meta?.userId?.trim();
   return id || null;
+}
+
+async function syncSubscriptionPlan(_stripe: Stripe, sub: Stripe.Subscription) {
+  const userId = userIdFromMeta(sub.metadata);
+  if (!userId) return;
+
+  if (sub.status === "active" || sub.status === "trialing") {
+    const priceId = sub.items.data[0]?.price?.id ?? "";
+    const plan = planFromStripePriceId(priceId);
+    await setUserPlan(
+      userId,
+      plan === "free" ? sub.metadata?.plan ?? "pro" : plan,
+      typeof sub.customer === "string" ? sub.customer : sub.customer?.id,
+      sub.id,
+    );
+  } else {
+    await setUserPlan(userId, "free", null, null);
+  }
 }
 
 export async function POST(request: Request) {
@@ -79,20 +98,25 @@ export async function POST(request: Request) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
-        const userId = userIdFromMeta(sub.metadata);
-        if (!userId) break;
-
-        if (sub.status === "active" || sub.status === "trialing") {
-          const priceId = sub.items.data[0]?.price?.id ?? "";
-          const plan = planFromStripePriceId(priceId);
-          await setUserPlan(
-            userId,
-            plan === "free" ? sub.metadata?.plan ?? "pro" : plan,
-            typeof sub.customer === "string" ? sub.customer : sub.customer?.id,
-            sub.id,
-          );
-        } else {
-          await setUserPlan(userId, "free", null, null);
+        await syncSubscriptionPlan(stripe, sub);
+        break;
+      }
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = subscriptionIdFromInvoice(invoice);
+        if (!subscriptionId) break;
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        await syncSubscriptionPlan(stripe, sub);
+        break;
+      }
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = subscriptionIdFromInvoice(invoice);
+        if (!subscriptionId) break;
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        if (sub.status !== "active" && sub.status !== "trialing") {
+          const userId = userIdFromMeta(sub.metadata);
+          if (userId) await setUserPlan(userId, "free", null, null);
         }
         break;
       }

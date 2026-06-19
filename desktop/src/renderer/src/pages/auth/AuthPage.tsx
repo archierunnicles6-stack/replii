@@ -143,13 +143,15 @@ export function AuthPage() {
     setLoading(true);
     try {
       if (!configured) {
-        afterAuth("demo@ghost.ai", "Demo User");
-        return;
+        throw new Error(
+          "Sign-in is not configured. Add Supabase credentials to desktop/.env and restart the app.",
+        );
       }
       const supabase = getSupabase();
       if (!supabase) {
-        afterAuth("demo@ghost.ai", "Demo User");
-        return;
+        throw new Error(
+          "Sign-in is not configured. Add Supabase credentials to desktop/.env and restart the app.",
+        );
       }
       const googleEnabled = await isGoogleAuthEnabled();
       if (!googleEnabled) {
@@ -182,21 +184,18 @@ export function AuthPage() {
     setLoading(true);
     try {
       if (!configured) {
-        afterAuth(
-          email || "demo@ghost.ai",
-          email.split("@")[0],
-          mode === "signup",
+        throw new Error(
+          "Sign-in is not configured. Add Supabase credentials to desktop/.env and restart the app.",
         );
-        return;
       }
       const supabase = getSupabase();
       if (!supabase) {
-        afterAuth(
-          email || "demo@ghost.ai",
-          email.split("@")[0],
-          mode === "signup",
+        throw new Error(
+          "Sign-in is not configured. Add Supabase credentials to desktop/.env and restart the app.",
         );
-        return;
+      }
+      if (!email.trim()) {
+        throw new Error("Enter your email address.");
       }
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({

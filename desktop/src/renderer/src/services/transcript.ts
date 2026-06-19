@@ -14,8 +14,36 @@ export function speechLangFromSetting(meetingLanguage: string): string {
   return LANGUAGE_MAP[meetingLanguage] ?? "en-US";
 }
 
+const TRANSCRIPT_REPLACEMENT_CHAR = "\uFFFD";
+
+/** Drop binary/noise strings that occasionally leak from bad audio chunks. */
+export function isReadableTranscriptText(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed === "…") return !!trimmed;
+
+  let bad = 0;
+  for (const char of trimmed) {
+    const code = char.charCodeAt(0);
+    if (code === TRANSCRIPT_REPLACEMENT_CHAR.charCodeAt(0)) {
+      bad += 1;
+      continue;
+    }
+    if (code < 32 && char !== "\t") {
+      bad += 1;
+      continue;
+    }
+    if (code > 0x10ffff) {
+      bad += 1;
+    }
+  }
+
+  return bad / trimmed.length < 0.12;
+}
+
 export function normalizeTranscriptText(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized || !isReadableTranscriptText(normalized)) return "";
+  return normalized;
 }
 
 const OBJECTION_PATTERN =
@@ -108,16 +136,18 @@ export function suggestionTriggerKey(text: string): string {
 /** Whether live/interim text should fire a suggestion while still speaking. */
 export function shouldSuggestFromInterim(text: string): boolean {
   const normalized = normalizeTranscriptText(text);
-  if (normalized.length < 5) return false;
-  return isDirectQuestion(normalized);
+  if (normalized.length < 4) return false;
+  if (isDirectQuestion(normalized)) return true;
+  if (OBJECTION_PATTERN.test(normalized)) return true;
+  return normalized.length >= 12;
 }
 
 export function autoTriggerDelayMs(text: string, isInterim: boolean): number | null {
   const action = pickAutoAction(text);
   if (!action) return null;
-  if (isDirectQuestion(text)) return isInterim ? 100 : 40;
-  if (action === "objection") return isInterim ? 180 : 80;
-  return isInterim ? 250 : 280;
+  if (isDirectQuestion(text)) return isInterim ? 50 : 25;
+  if (action === "objection") return isInterim ? 90 : 50;
+  return isInterim ? 120 : 140;
 }
 
 /** Include in-progress speech so OpenAI can respond before final recognition. */

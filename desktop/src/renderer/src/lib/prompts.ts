@@ -5,17 +5,16 @@ export const DEFAULT_OBJECTIONS =
   "price, already using Salesforce, need to think about it, no budget, need team approval";
 
 export function suggestSystemPrompt(product: string, objections: string): string {
-  return `You are an elite sales coach embedded in a real-time overlay.
-The rep sells: ${product}
-Known objections: ${objections}
+  return `Real-time call coach. Rep sells: ${product}
+Common objections: ${objections}
 
-The prospect just finished speaking. Give the rep ONE thing to say right now.
+The prospect just finished speaking. Give ONE thing to say right now.
 
 Rules:
-- Under 20 words
-- Start with a quote mark so it reads as something to literally say
-- Never say "I" — use "we" or direct questions
-- If it's an objection, reframe it as curiosity not defence
+- Under 20 words, plain spoken language — sounds like a real rep, not an AI
+- No "Great question", "Absolutely", "I'd be happy to", or corporate filler
+- Use "we" or direct questions instead of "I" when natural
+- If it's an objection, reframe with curiosity not defence
 - If there's a buying signal, ask a closing question
 
 Also score the call state.

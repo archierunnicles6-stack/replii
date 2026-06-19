@@ -12,7 +12,7 @@ interface PermissionItem {
   icon: React.ReactNode;
   title: string;
   description: string;
-  reassurance: string;
+  reassurance?: string;
   step: number | null;
 }
 
@@ -35,7 +35,6 @@ const PERMISSIONS: PermissionItem[] = [
     title: "Enable Ghost shortcuts",
     description:
       "Ghost needs accessibility access so it can appear on any call with one hotkey.",
-    reassurance: "macOS will ask you to allow Ghost — this takes about 10 seconds.",
   },
   {
     key: "microphone",
@@ -204,7 +203,7 @@ export function OnboardingPage() {
                   : focusPerm.description}
               </p>
 
-              {!requiredGranted ? (
+              {!requiredGranted && focusPerm.reassurance ? (
                 <p className="mt-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[13px] leading-relaxed text-blue-900/80">
                   {focusPerm.reassurance}
                 </p>

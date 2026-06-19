@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/api/webhooks/stripe",
+        destination: "/api/stripe/webhook",
+      },
+    ];
+  },
   async headers() {
     return [
       {

@@ -68,7 +68,7 @@ export interface GhostAPI {
   notifyStoreChanged: () => Promise<boolean>;
   syncPlanLimits: (state: {
     plan: string;
-    freeSessionsUsed: number;
+    freeOverlaySecondsUsed: number;
   }) => Promise<boolean>;
   onAuthCallback?: (callback: (url: string) => void) => () => void;
   onBillingCallback?: (callback: (url: string) => void) => () => void;
@@ -76,6 +76,7 @@ export interface GhostAPI {
   getDesktopAudioSources: () => Promise<Array<{ id: string; name: string }>>;
   ensureMicrophone: () => Promise<boolean>;
   getOpenAIKey: () => Promise<string | undefined>;
+  getApiBaseUrl: () => Promise<string>;
   onMicGranted: (callback: () => void) => () => void;
   sampleBackdrop: (rect: {
     x: number;
@@ -112,7 +113,7 @@ export interface GhostAPI {
 }
 
 const ghostAPI: GhostAPI = {
-  syncPlanLimits: (state: { plan: string; freeSessionsUsed: number }) =>
+  syncPlanLimits: (state: { plan: string; freeOverlaySecondsUsed: number }) =>
     ipcRenderer.invoke("ghost:sync-plan-limits", state),
   getSettings: () => ipcRenderer.invoke("ghost:get-settings"),
   setContentProtection: (enabled, plan) =>
@@ -194,6 +195,7 @@ const ghostAPI: GhostAPI = {
   },
   ensureMicrophone: () => ipcRenderer.invoke("ghost:ensure-microphone"),
   getOpenAIKey: () => ipcRenderer.invoke("ghost:get-openai-key"),
+  getApiBaseUrl: () => ipcRenderer.invoke("ghost:get-api-base-url"),
   onMicGranted: (callback) => {
     const handler = () => callback();
     ipcRenderer.on("ghost:mic-granted", handler);

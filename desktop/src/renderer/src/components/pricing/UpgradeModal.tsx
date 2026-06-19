@@ -36,7 +36,7 @@ export function UpgradeModal({
           </button>
         </div>
 
-        <div className="px-8 pb-10 pt-2">
+        <div className="px-10 pb-10 pt-2">
           {error ? (
             <p className="mb-6 text-center text-[13px] text-red-600">{error}</p>
           ) : null}

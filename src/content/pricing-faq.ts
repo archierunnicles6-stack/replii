@@ -1,3 +1,14 @@
+import {
+  ANNUAL_DISCOUNT_PERCENT,
+  formatPrice,
+  PAID_PLAN_PRICING,
+} from "@/lib/pricing";
+
+const proPricing = PAID_PLAN_PRICING.pro;
+const proAnnualMonthly = formatPrice(proPricing.annualYearly / 12);
+const proAnnualYearly = formatPrice(proPricing.annualYearly);
+const proMonthly = formatPrice(proPricing.monthly);
+
 export const PRICING_FAQS = [
   {
     q: "What's included in the free Starter plan?",
@@ -9,7 +20,7 @@ export const PRICING_FAQS = [
   },
   {
     q: "How does annual billing work?",
-    a: "Pay annually and get Pro for $11.42/month (billed as $136.99/year). That's 43% off the $20/month price. Choose monthly or annual billing when you subscribe in the Ghost desktop app.",
+    a: `Pay annually and get Pro for ${proAnnualMonthly}/month (billed as ${proAnnualYearly}/year). That's ${ANNUAL_DISCOUNT_PERCENT}% off the ${proMonthly}/month price. Choose monthly or annual billing when you subscribe in the Ghost desktop app.`,
   },
   {
     q: "Can I upgrade or downgrade my plan?",

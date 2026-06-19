@@ -1,25 +1,26 @@
 import { useCallback } from "react";
 import {
   canStartSession,
-  getFreeSessionsRemaining,
+  formatFreeOverlayRemaining,
+  getFreeOverlaySecondsRemaining,
   isPaidPlan,
 } from "../store/types";
 import { syncPlanLimitsToMain, useAppStore } from "../store/useAppStore";
 
 export function useStartGhostSession() {
   const plan = useAppStore((s) => s.plan);
-  const freeSessionsUsed = useAppStore((s) => s.freeSessionsUsed);
-  const meetings = useAppStore((s) => s.meetings);
+  const freeOverlaySecondsUsed = useAppStore((s) => s.freeOverlaySecondsUsed);
   const sessionActive = useAppStore((s) => s.sessionActive);
   const setSessionActive = useAppStore((s) => s.setSessionActive);
-  const incrementFreeSessionUsage = useAppStore((s) => s.incrementFreeSessionUsage);
 
-  const canStart = canStartSession(plan, freeSessionsUsed, meetings);
-  const sessionsRemaining = getFreeSessionsRemaining(
+  const canStart = canStartSession(plan, freeOverlaySecondsUsed);
+  const overlaySecondsRemaining = getFreeOverlaySecondsRemaining(
     plan,
-    freeSessionsUsed,
-    meetings,
+    freeOverlaySecondsUsed,
   );
+  const overlayTimeRemainingLabel = Number.isFinite(overlaySecondsRemaining)
+    ? formatFreeOverlayRemaining(overlaySecondsRemaining)
+    : undefined;
 
   const startSession = useCallback(async () => {
     const state = useAppStore.getState();
@@ -28,10 +29,9 @@ export function useStartGhostSession() {
       return true;
     }
 
-    const { plan: currentPlan, freeSessionsUsed: used, meetings: currentMeetings } =
-      state;
-    if (!canStartSession(currentPlan, used, currentMeetings)) {
-      console.warn("[ghost] Cannot start — free session limit reached.");
+    const { plan: currentPlan, freeOverlaySecondsUsed: used } = state;
+    if (!canStartSession(currentPlan, used)) {
+      console.warn("[ghost] Cannot start — free overlay time limit reached.");
       return false;
     }
 
@@ -53,20 +53,20 @@ export function useStartGhostSession() {
 
     const started = await window.ghost.startSession();
     if (!started) {
-      console.warn("[ghost] Session start blocked — check free session limit.");
+      console.warn("[ghost] Session start blocked — check free overlay time limit.");
       return false;
     }
 
-    incrementFreeSessionUsage();
     setSessionActive(true);
     return true;
-  }, [incrementFreeSessionUsage, setSessionActive]);
+  }, [setSessionActive]);
 
   return {
     startSession,
     canStart: canStart && !sessionActive,
     sessionActive,
-    sessionsRemaining,
+    overlaySecondsRemaining,
+    overlayTimeRemainingLabel,
     isPaid: isPaidPlan(plan),
   };
 }

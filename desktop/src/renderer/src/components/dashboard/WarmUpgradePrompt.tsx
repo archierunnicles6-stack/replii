@@ -4,8 +4,9 @@ import {
   shouldShowWarmUpgrade,
 } from "../../lib/session-value";
 import {
-  FREE_SESSION_LIMIT,
-  getFreeSessionsRemaining,
+  FREE_OVERLAY_LIMIT_SECONDS,
+  formatFreeOverlayRemaining,
+  getFreeOverlaySecondsRemaining,
   type MeetingRecord,
   type Plan,
 } from "../../store/types";
@@ -30,14 +31,12 @@ function dismissMeeting(meetingId: string) {
 export function WarmUpgradePrompt({
   meeting,
   plan,
-  freeSessionsUsed,
-  meetings,
+  freeOverlaySecondsUsed,
   onUpgrade,
 }: {
   meeting: MeetingRecord;
   plan: Plan;
-  freeSessionsUsed: number;
-  meetings: MeetingRecord[];
+  freeOverlaySecondsUsed: number;
   onUpgrade: (message: string) => void;
 }) {
   const [dismissed, setDismissed] = useState(loadDismissed);
@@ -46,9 +45,12 @@ export function WarmUpgradePrompt({
     return null;
   }
 
-  const remaining = getFreeSessionsRemaining(plan, freeSessionsUsed, meetings);
+  const remainingSeconds = getFreeOverlaySecondsRemaining(
+    plan,
+    freeOverlaySecondsUsed,
+  );
   const message = getWarmUpgradeMessage(meeting);
-  const sessionsUsed = FREE_SESSION_LIMIT - remaining;
+  const usedSeconds = FREE_OVERLAY_LIMIT_SECONDS - remainingSeconds;
 
   const handleDismiss = () => {
     dismissMeeting(meeting.id);
@@ -65,10 +67,14 @@ export function WarmUpgradePrompt({
           <p className="mt-1 text-[15px] font-medium leading-snug text-zinc-900">
             {message}
           </p>
-          {Number.isFinite(remaining) && remaining < FREE_SESSION_LIMIT ? (
+          {Number.isFinite(remainingSeconds) &&
+          remainingSeconds > 0 &&
+          remainingSeconds < FREE_OVERLAY_LIMIT_SECONDS ? (
             <p className="mt-1.5 text-[13px] text-zinc-500">
-              {remaining} free session{remaining === 1 ? "" : "s"} left
-              {sessionsUsed > 0 ? ` (${sessionsUsed} used)` : ""}
+              {formatFreeOverlayRemaining(remainingSeconds)} on the free plan
+              {usedSeconds > 0
+                ? ` (${Math.ceil(usedSeconds / 60)} min used)`
+                : ""}
             </p>
           ) : null}
         </div>

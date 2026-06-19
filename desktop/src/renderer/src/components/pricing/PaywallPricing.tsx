@@ -3,10 +3,12 @@ import type { BillingInterval, PricingTierId } from "../../lib/pricing";
 import {
   BillingToggle,
   EnterprisePlanCard,
+  PricingCardColumn,
+  PricingCardsRow,
   ProPlanCard,
 } from "./PaywallPlanCards";
 import { legalLinks, openLegalLink } from "../../lib/legal-urls";
-import { FREE_SESSION_LIMIT } from "../../store/types";
+import { FREE_OVERLAY_LIMIT_SECONDS } from "../../store/types";
 
 function StarIcon() {
   return (
@@ -16,19 +18,16 @@ function StarIcon() {
   );
 }
 
-function buildFreeLinkLabel(freeSessionsRemaining?: number): string {
-  if (freeSessionsRemaining == null) {
-    return `Continue with ${FREE_SESSION_LIMIT} free sessions →`;
+function buildFreeLinkLabel(freeOverlaySecondsRemaining?: number): string {
+  const totalMinutes = FREE_OVERLAY_LIMIT_SECONDS / 60;
+  if (freeOverlaySecondsRemaining == null) {
+    return `Continue with ${totalMinutes} min of free overlay →`;
   }
-  if (freeSessionsRemaining <= 0) {
+  if (freeOverlaySecondsRemaining <= 0) {
     return "Stay on free plan →";
   }
-  const afterThis = Math.max(0, freeSessionsRemaining - 1);
-  const base = `Continue with ${freeSessionsRemaining} free session${freeSessionsRemaining === 1 ? "" : "s"}`;
-  if (afterThis > 0 && freeSessionsRemaining < FREE_SESSION_LIMIT) {
-    return `${base} (${afterThis} remaining after this) →`;
-  }
-  return `${base} →`;
+  const mins = Math.ceil(freeOverlaySecondsRemaining / 60);
+  return `Continue with ${mins} min of overlay left →`;
 }
 
 export function PaywallPricing({
@@ -37,7 +36,7 @@ export function PaywallPricing({
   onContactSales,
   onStartFree,
   freeLinkLabel,
-  freeSessionsRemaining,
+  freeOverlaySecondsRemaining,
   showFreeLink = true,
   variant = "page",
   headline,
@@ -48,7 +47,7 @@ export function PaywallPricing({
   onContactSales: () => void;
   onStartFree: () => void;
   freeLinkLabel?: string;
-  freeSessionsRemaining?: number;
+  freeOverlaySecondsRemaining?: number;
   showFreeLink?: boolean;
   variant?: "page" | "embedded";
   headline?: string;
@@ -57,7 +56,7 @@ export function PaywallPricing({
   const [interval, setInterval] = useState<BillingInterval>("annual");
   const embedded = variant === "embedded";
   const resolvedFreeLabel =
-    freeLinkLabel ?? buildFreeLinkLabel(freeSessionsRemaining);
+    freeLinkLabel ?? buildFreeLinkLabel(freeOverlaySecondsRemaining);
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -83,18 +82,18 @@ export function PaywallPricing({
         <BillingToggle interval={interval} onChange={setInterval} />
       </div>
 
-      <div
-        className={`grid w-full gap-4 ${
-          embedded ? "mt-5 max-w-none" : "mt-12 max-w-[720px] md:grid-cols-2"
-        }`}
-      >
-        <ProPlanCard
-          interval={interval}
-          loading={loadingTier === "pro"}
-          onSelect={() => onSelect("pro", interval)}
-        />
-        <EnterprisePlanCard onContactSales={onContactSales} />
-      </div>
+      <PricingCardsRow className={embedded ? "mt-5 max-w-[940px]" : "mt-12 max-w-[800px]"}>
+        <PricingCardColumn>
+          <ProPlanCard
+            interval={interval}
+            loading={loadingTier === "pro"}
+            onSelect={() => onSelect("pro", interval)}
+          />
+        </PricingCardColumn>
+        <PricingCardColumn>
+          <EnterprisePlanCard onContactSales={onContactSales} />
+        </PricingCardColumn>
+      </PricingCardsRow>
 
       <p className={`text-center text-[11px] leading-relaxed text-zinc-400 ${embedded ? "mt-4" : "mt-5"}`}>
         Subscriptions renew automatically until cancelled. By upgrading you agree

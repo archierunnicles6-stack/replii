@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
+import { resolveBillingOrigin } from "@/lib/billing-api-base";
 import { normalizeBillingReturnUrl } from "@/lib/billing-return-urls";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -64,9 +65,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const origin =
-      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-      new URL(request.url).origin;
+    const origin = resolveBillingOrigin(request);
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,

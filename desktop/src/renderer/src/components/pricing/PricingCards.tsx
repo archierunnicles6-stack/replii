@@ -4,6 +4,8 @@ import type { Plan } from "../../store/types";
 import {
   ProPlanCard,
   EnterprisePlanCard,
+  PricingCardColumn,
+  PricingCardsRow,
 } from "./PaywallPlanCards";
 
 export function PricingCards({
@@ -24,20 +26,18 @@ export function PricingCards({
   const displayPlan = normalizeDisplayPlan(currentPlan);
 
   return (
-    <div
-      className={
-        layout === "row"
-          ? "grid w-full gap-4 md:grid-cols-2"
-          : "space-y-4"
-      }
-    >
-      <ProPlanCard
-        interval={interval}
-        loading={loadingTier === "pro"}
-        isCurrent={displayPlan === "pro"}
-        onSelect={() => onSelect("pro")}
-      />
-      <EnterprisePlanCard onContactSales={onContactSales} />
-    </div>
+    <PricingCardsRow className={layout === "stack" ? "flex-col" : ""}>
+      <PricingCardColumn>
+        <ProPlanCard
+          interval={interval}
+          loading={loadingTier === "pro"}
+          isCurrent={displayPlan === "pro"}
+          onSelect={() => onSelect("pro")}
+        />
+      </PricingCardColumn>
+      <PricingCardColumn>
+        <EnterprisePlanCard onContactSales={onContactSales} />
+      </PricingCardColumn>
+    </PricingCardsRow>
   );
 }

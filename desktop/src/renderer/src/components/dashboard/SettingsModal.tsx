@@ -557,7 +557,7 @@ export function SettingsModal({
       <div
         className={`no-drag relative flex w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl ${
           section === "billing"
-            ? "h-[min(640px,calc(100vh-48px))] max-w-[min(900px,calc(100vw-48px))]"
+            ? "h-[min(720px,calc(100vh-48px))] max-w-[min(1080px,calc(100vw-48px))]"
             : "h-[min(560px,calc(100vh-48px))] max-w-[720px]"
         }`}
       >

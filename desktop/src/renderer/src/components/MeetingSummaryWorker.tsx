@@ -47,7 +47,13 @@ function finalizeMeeting(
         });
       } else {
         updateMeeting(meetingId, {
-          summary: `Session with ${transcript.length} transcript lines.`,
+          summary: "Ghost couldn't generate a summary. Check your OpenAI API key and try again.",
+          summarySections: [
+            {
+              heading: "Summary unavailable",
+              items: ["Ghost couldn't generate a summary. Check your OpenAI API key and try again."],
+            },
+          ],
           status: "ready",
         });
       }

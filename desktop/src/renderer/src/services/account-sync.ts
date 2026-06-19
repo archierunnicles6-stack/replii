@@ -1,6 +1,7 @@
 import { getSupabase, isSupabaseConfigured } from "../lib/supabase";
 import { extractAccountProfile } from "../store/accountProfile";
 import type { AccountProfile } from "../store/accountProfile";
+import { resolveFreeOverlaySecondsUsed } from "../store/types";
 import type { MeetingRecord } from "../store/types";
 import { notifyAppStoreChanged, syncPlanLimitsToMain, useAppStore } from "../store/useAppStore";
 
@@ -157,9 +158,12 @@ function mergeAppState(
       ? { ...local.settings, ...remote.settings }
       : local.settings,
     upcoming: pick(local.upcoming, remote.upcoming),
-    freeSessionsUsed: Math.max(
-      local.freeSessionsUsed,
-      remote.freeSessionsUsed ?? 0,
+    freeOverlaySecondsUsed: Math.max(
+      local.freeOverlaySecondsUsed,
+      resolveFreeOverlaySecondsUsed(
+        remote.freeOverlaySecondsUsed,
+        remote.freeSessionsUsed,
+      ),
     ),
     meetings: local.meetings,
   };
@@ -326,7 +330,7 @@ export async function syncAccountData(userId: string): Promise<void> {
       settings: mergedProfile.settings,
       meetings: mergedMeetings,
       upcoming: mergedProfile.upcoming,
-      freeSessionsUsed: mergedProfile.freeSessionsUsed,
+      freeOverlaySecondsUsed: mergedProfile.freeOverlaySecondsUsed,
     });
 
     notifyAppStoreChanged();
@@ -348,6 +352,7 @@ export function hasLocalAccountProfile(userId: string): boolean {
   return (
     profile.onboardingComplete ||
     profile.shortcutTutorialComplete ||
+    profile.paywallComplete ||
     profile.meetings.length > 0
   );
 }

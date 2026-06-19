@@ -138,15 +138,7 @@ export function ListeningPill({
     <div className="overlay-glass drag-region overflow-hidden rounded-full" style={pillTheme.glass}>
       <div className="overlay-pill-inner flex min-w-[340px] max-w-[520px] items-center gap-2.5 px-4 py-2.5">
         <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-            listening &&
-            (hearingAudio || hasMic) &&
-            (!error || error === "mic-optional")
-              ? hearingAudio
-                ? "animate-pulse-glow"
-                : "animate-pulse"
-              : ""
-          }`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
           style={{
             background:
               error && error !== "mic-optional"
@@ -279,13 +271,13 @@ export function SuggestionPill({
     >
       <div className="overlay-pill-inner px-5 py-3.5">
         <p className={`overlay-pill-copy mb-1.5 text-[11px] font-medium uppercase tracking-[0.06em] ${pillTheme.label}`}>
-          Suggestion
+          Say this
         </p>
 
         {loading && !display ? (
           <div className="flex items-center gap-2 py-0.5">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400" />
-            <span className={`overlay-pill-copy text-[15px] ${pillTheme.transcriptMuted}`}>Thinking…</span>
+            <span className={`overlay-pill-copy text-[15px] ${pillTheme.transcriptMuted}`}>…</span>
           </div>
         ) : (
           <>

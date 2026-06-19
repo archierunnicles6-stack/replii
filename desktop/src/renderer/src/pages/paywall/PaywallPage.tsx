@@ -5,7 +5,7 @@ import { BackButton } from "../../components/ui";
 import { usePricingCheckout } from "../../hooks/usePricingCheckout";
 import { useBillingSync } from "../../hooks/useBillingSync";
 import { hasDashboardAccess } from "../../lib/dashboard-access";
-import { getFreeSessionsRemaining } from "../../store/types";
+import { getFreeOverlaySecondsRemaining } from "../../store/types";
 import { useAppStore } from "../../store/useAppStore";
 
 export function PaywallPage() {
@@ -16,9 +16,11 @@ export function PaywallPage() {
     paywallComplete,
     plan,
   } = useAppStore();
-  const freeSessionsUsed = useAppStore((s) => s.freeSessionsUsed);
-  const meetings = useAppStore((s) => s.meetings);
-  const freeSessionsRemaining = getFreeSessionsRemaining(plan, freeSessionsUsed, meetings);
+  const freeOverlaySecondsUsed = useAppStore((s) => s.freeOverlaySecondsUsed);
+  const freeOverlaySecondsRemaining = getFreeOverlaySecondsRemaining(
+    plan,
+    freeOverlaySecondsUsed,
+  );
 
   const finishFree = () => {
     navigate("/");
@@ -84,8 +86,10 @@ export function PaywallPage() {
           onSelect={(id, interval) => void handleTierSelect(id, interval)}
           onContactSales={handleContactSales}
           onStartFree={finishFreeWithPaywall}
-          freeSessionsRemaining={
-            Number.isFinite(freeSessionsRemaining) ? freeSessionsRemaining : undefined
+          freeOverlaySecondsRemaining={
+            Number.isFinite(freeOverlaySecondsRemaining)
+              ? freeOverlaySecondsRemaining
+              : undefined
           }
         />
       </div>

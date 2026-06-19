@@ -7,42 +7,62 @@ export type SalesMode =
 
 export type Plan = "free" | "solo" | "pro" | "undetectable";
 
-/** Free tier session limit (start + end cycles). Paid plans are unlimited. */
-export const FREE_SESSION_LIMIT = 3;
+/** Free tier overlay-on time (seconds). Paid plans are unlimited. */
+export const FREE_OVERLAY_LIMIT_SECONDS = 30 * 60;
+
+/** Legacy session limit — used only when migrating persisted state. */
+const LEGACY_FREE_SESSION_LIMIT = 3;
 
 export function isPaidPlan(plan: Plan): boolean {
   return plan !== "free";
 }
 
-/** Sessions with no captured transcript should not count against the free tier. */
-export function getEffectiveFreeSessionsUsed(
-  meetings: MeetingRecord[],
-  freeSessionsUsed: number,
+/** Convert legacy session counts to overlay seconds for migration. */
+export function migrateLegacyFreeSessionsUsed(freeSessionsUsed: number): number {
+  if (freeSessionsUsed >= LEGACY_FREE_SESSION_LIMIT) {
+    return FREE_OVERLAY_LIMIT_SECONDS;
+  }
+  return Math.min(
+    freeSessionsUsed * 600,
+    FREE_OVERLAY_LIMIT_SECONDS,
+  );
+}
+
+export function resolveFreeOverlaySecondsUsed(
+  freeOverlaySecondsUsed: number | undefined,
+  legacyFreeSessionsUsed: number | undefined,
 ): number {
-  const billableMeetings = meetings.filter(
-    (m) => (m.transcript?.length ?? 0) > 0,
-  ).length;
-  const pendingSessions = Math.max(0, freeSessionsUsed - meetings.length);
-  return billableMeetings + pendingSessions;
+  if (typeof freeOverlaySecondsUsed === "number" && freeOverlaySecondsUsed > 0) {
+    return Math.max(0, freeOverlaySecondsUsed);
+  }
+  if (typeof legacyFreeSessionsUsed === "number" && legacyFreeSessionsUsed > 0) {
+    return migrateLegacyFreeSessionsUsed(legacyFreeSessionsUsed);
+  }
+  return Math.max(0, freeOverlaySecondsUsed ?? 0);
 }
 
 export function canStartSession(
   plan: Plan,
-  freeSessionsUsed: number,
-  meetings: MeetingRecord[] = [],
+  freeOverlaySecondsUsed: number,
 ): boolean {
-  const used = getEffectiveFreeSessionsUsed(meetings, freeSessionsUsed);
-  return isPaidPlan(plan) || used < FREE_SESSION_LIMIT;
+  return (
+    isPaidPlan(plan) || freeOverlaySecondsUsed < FREE_OVERLAY_LIMIT_SECONDS
+  );
 }
 
-export function getFreeSessionsRemaining(
+export function getFreeOverlaySecondsRemaining(
   plan: Plan,
-  freeSessionsUsed: number,
-  meetings: MeetingRecord[] = [],
+  freeOverlaySecondsUsed: number,
 ): number {
   if (isPaidPlan(plan)) return Number.POSITIVE_INFINITY;
-  const used = getEffectiveFreeSessionsUsed(meetings, freeSessionsUsed);
-  return Math.max(0, FREE_SESSION_LIMIT - used);
+  return Math.max(0, FREE_OVERLAY_LIMIT_SECONDS - freeOverlaySecondsUsed);
+}
+
+export function formatFreeOverlayRemaining(seconds: number): string {
+  if (seconds <= 0) return "0 min left";
+  if (seconds < 60) return "< 1 min left";
+  const mins = Math.ceil(seconds / 60);
+  return `${mins} min${mins === 1 ? "" : "s"} left`;
 }
 
 /** Overlay display toggle is only available on legacy grandfathered plans. */
@@ -227,221 +247,7 @@ export const SALES_MODES: SalesModeConfig[] = [
   },
 ];
 
-export const DEFAULT_UPCOMING: UpcomingCall[] = [
-  {
-    id: "up-1",
-    title: "Discovery — Acme Corp",
-    company: "Acme Corp",
-    datetime: new Date(Date.now() + 3600000).toISOString(),
-    participants: [
-      {
-        name: "Sarah Chen",
-        role: "VP Sales",
-        bio: "Former Salesforce AE. Joined Acme 8 months ago to rebuild outbound. Likely champion.",
-      },
-      {
-        name: "Marcus Webb",
-        role: "CRO",
-        bio: "Decision maker. Cares about rep productivity and forecast accuracy.",
-      },
-    ],
-    agenda: "Initial discovery — current stack, pain with rep ramp time, Q3 goals.",
-    talkingPoints: [
-      "Ask about current coaching workflow",
-      "Quantify cost of slow ramp (quota attainment)",
-      "Confirm decision timeline for Q3",
-    ],
-    previousContext: "Inbound from webinar. Downloaded pricing one-pager last week.",
-  },
-  {
-    id: "up-2",
-    title: "Demo — Northwind Systems",
-    company: "Northwind Systems",
-    datetime: new Date(Date.now() + 86400000).toISOString(),
-    participants: [
-      {
-        name: "James Okonkwo",
-        role: "Head of Revenue Ops",
-        bio: "Technical buyer. Evaluating Gong vs alternatives. Security-conscious.",
-      },
-    ],
-    agenda: "Product demo — live coaching overlay, manager review, CRM workflow.",
-    talkingPoints: [
-      "Lead with live coaching demo",
-      "Address data retention / SOC2",
-      "Pilot proposal for 5 reps",
-    ],
-    previousContext: "Completed discovery 2 weeks ago. Sent security questionnaire.",
-  },
-];
-
-export const DEMO_MEETINGS: MeetingRecord[] = [
-  {
-    id: "demo-welcome",
-    title: "Welcome to Ghost",
-    company: "Ghost",
-    date: new Date().toISOString(),
-    duration: 0,
-    mode: "sales",
-    summary:
-      "Ghost is ready. Start a session to capture live conversations and get AI coaching in the moment.",
-    nextSteps: ["Start your first session from the header"],
-    transcript: [
-      {
-        id: "demo-welcome-1",
-        speaker: "Other",
-        text: "Welcome to Ghost.",
-        timestamp: 0,
-      },
-      {
-        id: "demo-welcome-2",
-        speaker: "Other",
-        text: "Your workspace is ready. Start a session whenever you are.",
-        timestamp: 0,
-      },
-    ],
-    dealScore: 0,
-    objections: [],
-  },
-  {
-    id: "demo-discovery",
-    title: "Discovery — Acme Corp",
-    company: "Acme Corp",
-    date: new Date(Date.now() - 86400000).toISOString(),
-    duration: 1847,
-    mode: "discovery",
-    summary:
-      "Prospect evaluating coaching tools for a 12-rep team. Pain around ramp time and inconsistent discovery.",
-    summarySections: [
-      {
-        heading: "Action Items",
-        items: [
-          "Send security one-pager before end of week",
-          "Schedule demo with RevOps stakeholder",
-          "Follow up on Gong comparison with differentiation doc",
-        ],
-      },
-      {
-        heading: "Key Discussion Points",
-        items: [
-          "12-rep team struggling with ramp time and inconsistent discovery",
-          "Comparing Ghost to Gong — price and rep adoption are main concerns",
-          "Strong interest in live coaching during calls vs post-call review",
-        ],
-      },
-    ],
-    status: "ready" as const,
-    nextSteps: ["Send security one-pager", "Schedule demo with RevOps"],
-    transcript: [
-      {
-        id: "demo-discovery-1",
-        speaker: "Prospect",
-        text: "We're still comparing you to Gong.",
-        timestamp: 42,
-      },
-      {
-        id: "demo-discovery-2",
-        speaker: "You",
-        text: "Price and whether reps actually use it — if it sits in a tab, it won't stick.",
-        timestamp: 78,
-      },
-    ],
-    dealScore: 62,
-    objections: ["Gong comparison", "Rep adoption"],
-    dealOutcome: "open",
-    suggestions: [
-      {
-        id: "demo-sug-1",
-        text: "What would need to be true for reps to actually use this daily?",
-        tags: ["discovery"],
-        triggerText: "We're still comparing you to Gong.",
-        timestamp: 42,
-        health: 58,
-        source: "auto",
-      },
-      {
-        id: "demo-sug-2",
-        text: "If price weren't a factor, would live coaching solve the ramp problem?",
-        tags: ["pricing", "objection"],
-        triggerText: "Price and whether reps actually use it",
-        timestamp: 78,
-        health: 65,
-        source: "auto",
-        repUsed: true,
-      },
-    ],
-  },
-  {
-    id: "demo-onboarding",
-    title: "Discovery — Northwind Systems",
-    company: "Northwind Systems",
-    date: new Date(Date.now() - 172800000).toISOString(),
-    duration: 2134,
-    mode: "discovery",
-    summary:
-      "New reps struggling to hit quota. Strong interest in live coaching during calls.",
-    summarySections: [
-      {
-        heading: "Action Items",
-        items: [
-          "Share onboarding playbook with James",
-          "Propose 5-rep pilot starting next month",
-          "Confirm security review timeline with IT",
-        ],
-      },
-      {
-        heading: "Key Discussion Points",
-        items: [
-          "New reps take 3+ months to hit quota — current shadowing program insufficient",
-          "Head of RevOps wants live coaching, not just call recordings",
-          "Pilot budget available if security review passes",
-        ],
-      },
-    ],
-    status: "ready" as const,
-    nextSteps: ["Share onboarding playbook", "Propose 5-rep pilot"],
-    transcript: [
-      {
-        id: "demo-onboarding-1",
-        speaker: "Prospect",
-        text: "Our new reps take forever to hit quota.",
-        timestamp: 55,
-      },
-      {
-        id: "demo-onboarding-2",
-        speaker: "You",
-        text: "Usually shadowing for two weeks, then they're on their own — that's the gap we help close.",
-        timestamp: 91,
-      },
-    ],
-    dealScore: 71,
-    objections: ["Ramp time"],
-    dealOutcome: "won",
-    dealOutcomeAt: new Date(Date.now() - 86400000).toISOString(),
-    suggestions: [
-      {
-        id: "demo-sug-3",
-        text: "How long does it typically take new reps to hit quota today?",
-        tags: ["discovery"],
-        triggerText: "Our new reps take forever to hit quota.",
-        timestamp: 55,
-        health: 72,
-        source: "auto",
-        repUsed: true,
-      },
-      {
-        id: "demo-sug-4",
-        text: "Would a 5-rep pilot starting next month work for your team?",
-        tags: ["closing"],
-        triggerText: "Pilot budget available if security review passes",
-        timestamp: 120,
-        health: 78,
-        source: "assist",
-        repUsed: true,
-      },
-    ],
-  },
-];
+export const DEFAULT_UPCOMING: UpcomingCall[] = [];
 
 /** True for meetings saved from a live Ghost session (not demo/placeholder data). */
 export function isUserMeeting(meeting: MeetingRecord): boolean {

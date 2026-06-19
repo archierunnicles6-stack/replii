@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SUPPORT_ROUTES } from "@/content/legal/config";
-
-type BillingInterval = "monthly" | "annual";
+import { priceForInterval, type BillingInterval } from "@/lib/pricing";
 
 const STARTER_FEATURES = [
   "Limited AI responses",
@@ -21,7 +20,7 @@ const PRO_FEATURES = [
 ];
 
 const CARD_CLASS =
-  "flex flex-col rounded-[24px] border border-white/80 bg-white p-8 shadow-[0_8px_40px_rgba(15,23,42,0.08)]";
+  "flex h-full min-h-[460px] w-full flex-col rounded-[24px] border border-white/80 bg-white p-8 shadow-[0_8px_40px_rgba(15,23,42,0.08)]";
 
 const PRIMARY_BUTTON_CLASS =
   "mt-5 flex h-11 w-full items-center justify-center rounded-xl bg-[#1a1a1a] text-[14px] font-medium text-white transition-colors hover:bg-[#2a2a2a]";
@@ -152,16 +151,9 @@ function PlaceholderPlanButton({
   );
 }
 
-function proPrice(interval: BillingInterval) {
-  if (interval === "annual") {
-    return { current: "$11.42", original: "$20" };
-  }
-  return { current: "$20" };
-}
-
 export function PricingContent() {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
-  const { current, original } = proPrice(interval);
+  const { current, original } = priceForInterval("pro", interval);
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -172,54 +164,62 @@ export function PricingContent() {
         preview only.
       </p>
 
-      <div className="mt-10 grid w-full max-w-[1080px] gap-5 md:grid-cols-3">
-        <div className={CARD_CLASS}>
-          <h3 className="text-[15px] font-semibold text-zinc-900">Starter</h3>
-          <div className="mt-3">
-            <span className="text-[36px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
-              Free
-            </span>
+      <div className="mt-10 flex w-full max-w-[1080px] items-stretch gap-5">
+        <div className="flex min-w-0 flex-1">
+          <div className={CARD_CLASS}>
+            <h3 className="text-[15px] font-semibold text-zinc-900">Starter</h3>
+            <div className="mt-3">
+              <span className="text-[36px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
+                Free
+              </span>
+            </div>
+            <PlaceholderPlanButton splitChevron>Get for Mac</PlaceholderPlanButton>
+            <p className="mt-4 text-[13px] text-zinc-500">All essential features.</p>
+            <FeatureList features={STARTER_FEATURES} />
           </div>
-          <PlaceholderPlanButton splitChevron>Get for Mac</PlaceholderPlanButton>
-          <p className="mt-4 text-[13px] text-zinc-500">All essential features.</p>
-          <FeatureList features={STARTER_FEATURES} />
         </div>
 
-        <div className={CARD_CLASS}>
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-[15px] font-semibold text-zinc-900">Pro</h3>
-            <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
-              Most popular
-            </span>
+        <div className="flex min-w-0 flex-1">
+          <div className={CARD_CLASS}>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-[15px] font-semibold text-zinc-900">Pro</h3>
+              <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
+                Most popular
+              </span>
+            </div>
+            <div className="mt-3 flex items-baseline gap-1">
+              {original ? (
+                <span className="text-[15px] text-zinc-400 line-through">{original}</span>
+              ) : null}
+              <span className="text-[36px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
+                {current}
+              </span>
+              <span className="text-[14px] text-zinc-500">/ month</span>
+            </div>
+            <PlaceholderPlanButton>Subscribe</PlaceholderPlanButton>
+            <p className="mt-4 text-[13px] text-zinc-500">Unlimited access.</p>
+            <FeatureList
+              features={PRO_FEATURES}
+              includesLabel="Everything in Starter, plus..."
+            />
           </div>
-          <div className="mt-3 flex items-baseline gap-1">
-            {original ? (
-              <span className="text-[15px] text-zinc-400 line-through">{original}</span>
-            ) : null}
-            <span className="text-[36px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
-              {current}
-            </span>
-            <span className="text-[14px] text-zinc-500">/ month</span>
-          </div>
-          <PlaceholderPlanButton>Subscribe</PlaceholderPlanButton>
-          <p className="mt-4 text-[13px] text-zinc-500">Unlimited access.</p>
-          <FeatureList
-            features={PRO_FEATURES}
-            includesLabel="Everything in Starter, plus..."
-          />
         </div>
 
-        <div className={CARD_CLASS}>
-          <h3 className="text-[15px] font-semibold text-zinc-900">Enterprise</h3>
-          <div className="mt-3">
-            <span className="text-[36px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
-              Custom
-            </span>
+        <div className="flex min-w-0 flex-1">
+          <div className={CARD_CLASS}>
+            <h3 className="text-[15px] font-semibold text-zinc-900">Enterprise</h3>
+            <div className="mt-3">
+              <span className="text-[36px] font-semibold leading-none tracking-[-0.03em] text-zinc-900">
+                Custom
+              </span>
+            </div>
+            <p className="mt-4 text-[13px] text-zinc-500">Custom knowledge for teams.</p>
+            <div className="mt-auto">
+              <Link href={SUPPORT_ROUTES.contact} className={PRIMARY_BUTTON_CLASS}>
+                Contact Sales
+              </Link>
+            </div>
           </div>
-          <p className="mt-4 text-[13px] text-zinc-500">Custom knowledge for teams.</p>
-          <Link href={SUPPORT_ROUTES.contact} className={PRIMARY_BUTTON_CLASS}>
-            Contact Sales
-          </Link>
         </div>
       </div>
     </div>

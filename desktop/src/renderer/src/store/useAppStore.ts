@@ -10,6 +10,7 @@ import {
   createDefaultAccountProfile,
   extractAccountProfile,
   extractLegacyAccountProfile,
+  type AccountProfile,
   type AccountProfiles,
 } from "./accountProfile";
 import {
@@ -19,7 +20,7 @@ import {
   SALES_MODES,
   canUseDetectabilityToggle,
   normalizedInvisibleSetting,
-  getEffectiveFreeSessionsUsed,
+  resolveFreeOverlaySecondsUsed,
   type MeetingRecord,
   type MeetingStatus,
   type Plan,
@@ -31,7 +32,64 @@ import {
   type User,
   type UserSettings,
   isPaidPlan,
+  isUserMeeting,
 } from "./types";
+
+const FAKE_SUMMARY_MARKERS = [
+  "mid-market SaaS prospect",
+  "Review key points discussed and confirm next steps with the prospect",
+  "Send a follow-up summary email within 24 hours",
+  "Schedule the next meeting while momentum is high",
+  "Review the transcript and follow up on open items",
+];
+const EMPTY_SUMMARY_MESSAGE =
+  "No transcript was captured for this session, so Ghost could not generate a summary. Start a new session with your microphone enabled to record the conversation.";
+const SUMMARY_UNAVAILABLE_MESSAGE =
+  "Add your OpenAI API key to generate an AI summary.";
+
+function meetingContainsFakeSummary(meeting: MeetingRecord): boolean {
+  const text = [
+    meeting.summary ?? "",
+    ...(meeting.summarySections?.flatMap((section) => section.items) ?? []),
+    ...(meeting.nextSteps ?? []),
+    ...(meeting.objections ?? []),
+  ].join("\n");
+
+  return FAKE_SUMMARY_MARKERS.some((marker) => text.includes(marker));
+}
+
+function stripFakeDemoData(meetings: MeetingRecord[]): MeetingRecord[] {
+  return meetings
+    .filter((m) => !m.id.startsWith("demo-"))
+    .map((m) => {
+      if (!isUserMeeting(m) || !meetingContainsFakeSummary(m)) return m;
+
+      const hasTranscript = m.transcript.length > 0;
+      const message = hasTranscript
+        ? SUMMARY_UNAVAILABLE_MESSAGE
+        : EMPTY_SUMMARY_MESSAGE;
+      const heading = hasTranscript ? "Summary unavailable" : "Summary";
+
+      return {
+        ...m,
+        summary: message,
+        summarySections: [
+          {
+            heading,
+            format: hasTranscript ? undefined : ("paragraphs" as const),
+            items: [message],
+          },
+        ],
+        nextSteps: [],
+        objections: [],
+        dealScore: 0,
+      };
+    });
+}
+
+function stripFakeUpcoming(upcoming: UpcomingCall[]): UpcomingCall[] {
+  return upcoming.filter((call) => !call.id.startsWith("up-"));
+}
 
 function pushForCurrentUser(): void {
   const userId = useAppStore.getState().user?.id;
@@ -66,6 +124,58 @@ function switchToAccountProfile(
   };
 }
 
+/** Keep per-account profile in sync whenever top-level persisted fields change. */
+function withAccountProfile(
+  state: AppState,
+  patch: Partial<AppState>,
+): Partial<AppState> {
+  if (!state.user?.id) return patch;
+  const merged = { ...state, ...patch };
+  return {
+    ...patch,
+    accountProfiles: saveProfileForUser(
+      state.accountProfiles,
+      state.user.id,
+      merged,
+    ),
+  };
+}
+
+/** Never downgrade one-way completion flags when merging profile into live state. */
+function mergeAccountProfileIntoState(
+  state: Pick<
+    AppState,
+    | "onboardingComplete"
+    | "shortcutTutorialComplete"
+    | "paywallComplete"
+    | "onboardingStep"
+    | "plan"
+    | "activeMode"
+    | "customSystemPrompt"
+    | "companyInfo"
+    | "knowledgeFiles"
+    | "settings"
+    | "meetings"
+    | "upcoming"
+    | "freeOverlaySecondsUsed"
+  >,
+  profile: AccountProfile,
+): ReturnType<typeof applyAccountProfile> {
+  const applied = applyAccountProfile(profile);
+  return {
+    ...applied,
+    onboardingComplete:
+      applied.onboardingComplete || state.onboardingComplete,
+    shortcutTutorialComplete:
+      applied.shortcutTutorialComplete || state.shortcutTutorialComplete,
+    paywallComplete: applied.paywallComplete || state.paywallComplete,
+    freeOverlaySecondsUsed: Math.max(
+      applied.freeOverlaySecondsUsed,
+      state.freeOverlaySecondsUsed,
+    ),
+  };
+}
+
 interface AppState {
   user: User | null;
   isAuthenticated: boolean;
@@ -86,7 +196,7 @@ interface AppState {
   sessionActive: boolean;
   audioCaptureMode: "auto" | "mic" | "system";
   currentMeetingId: string | null;
-  freeSessionsUsed: number;
+  freeOverlaySecondsUsed: number;
   pendingSettingsSection: string | null;
 
   login: (
@@ -114,8 +224,7 @@ interface AppState {
   setSessionActive: (active: boolean) => void;
   setAudioCaptureMode: (mode: "auto" | "mic" | "system") => void;
   setCurrentMeetingId: (id: string | null) => void;
-  incrementFreeSessionUsage: () => void;
-  refundFreeSessionUsage: () => void;
+  addFreeOverlaySeconds: (seconds: number) => void;
   requestSettingsOpen: (section: string) => void;
   clearPendingSettingsOpen: () => void;
   saveMeetingFromSession: (data: {
@@ -165,7 +274,7 @@ export const useAppStore = create<AppState>()(
       sessionActive: false,
       audioCaptureMode: "mic" as const,
       currentMeetingId: null,
-      freeSessionsUsed: 0,
+      freeOverlaySecondsUsed: 0,
       pendingSettingsSection: null,
 
       login: (email, name, id, avatar, isNewAccount = false) => {
@@ -276,68 +385,82 @@ export const useAppStore = create<AppState>()(
       completeWelcome: () => set({ welcomeComplete: true }),
 
       completeOnboarding: () => {
-        set({ onboardingComplete: true });
+        set((s) => withAccountProfile(s, { onboardingComplete: true }));
         notifyAppStoreChanged();
         pushForCurrentUser();
       },
 
       completeShortcutTutorial: () => {
-        set({ shortcutTutorialComplete: true });
+        set((s) => withAccountProfile(s, { shortcutTutorialComplete: true }));
         notifyAppStoreChanged();
         pushForCurrentUser();
       },
 
       completePaywall: () => {
-        set({ paywallComplete: true });
+        set((s) => withAccountProfile(s, { paywallComplete: true }));
         notifyAppStoreChanged();
         pushForCurrentUser();
       },
 
       setOnboardingStep: (step) => {
-        set({ onboardingStep: step });
+        set((s) => withAccountProfile(s, { onboardingStep: step }));
         pushForCurrentUser();
       },
 
       setActiveMode: (mode) => {
         const config = SALES_MODES.find((m) => m.id === mode) ?? SALES_MODES[0];
-        set({ activeMode: mode, customSystemPrompt: config.systemPrompt });
+        set((s) =>
+          withAccountProfile(s, {
+            activeMode: mode,
+            customSystemPrompt: config.systemPrompt,
+          }),
+        );
         notifyAppStoreChanged();
         pushForCurrentUser();
       },
 
       setCustomSystemPrompt: (prompt) => {
-        set({ customSystemPrompt: prompt });
-        notifyAppStoreChanged();
-      },
-
-      updateCompanyInfo: (partial) => {
-        set((s) => ({
-          companyInfo: clampCompanyInfo({ ...s.companyInfo, ...partial }),
-        }));
+        set((s) => withAccountProfile(s, { customSystemPrompt: prompt }));
         notifyAppStoreChanged();
         pushForCurrentUser();
       },
 
-      addKnowledgeFile: (name) =>
-        set((s) => ({
-          knowledgeFiles: s.knowledgeFiles.includes(name)
-            ? s.knowledgeFiles
-            : [...s.knowledgeFiles, name],
-        })),
+      updateCompanyInfo: (partial) => {
+        set((s) =>
+          withAccountProfile(s, {
+            companyInfo: clampCompanyInfo({ ...s.companyInfo, ...partial }),
+          }),
+        );
+        notifyAppStoreChanged();
+        pushForCurrentUser();
+      },
 
-      removeKnowledgeFile: (name) =>
-        set((s) => ({
-          knowledgeFiles: s.knowledgeFiles.filter((f) => f !== name),
-        })),
+      addKnowledgeFile: (name) => {
+        set((s) => {
+          if (s.knowledgeFiles.includes(name)) return {};
+          return withAccountProfile(s, {
+            knowledgeFiles: [...s.knowledgeFiles, name],
+          });
+        });
+        notifyAppStoreChanged();
+        pushForCurrentUser();
+      },
+
+      removeKnowledgeFile: (name) => {
+        set((s) =>
+          withAccountProfile(s, {
+            knowledgeFiles: s.knowledgeFiles.filter((f) => f !== name),
+          }),
+        );
+        notifyAppStoreChanged();
+        pushForCurrentUser();
+      },
 
       updateSettings: (partial) => {
         set((s) => {
           const next = { ...s.settings, ...partial };
-          next.invisible = normalizedInvisibleSetting(
-            s.plan,
-            next.invisible,
-          );
-          return { settings: next };
+          next.invisible = normalizedInvisibleSetting(s.plan, next.invisible);
+          return withAccountProfile(s, { settings: next });
         });
         notifyAppStoreChanged();
         pushForCurrentUser();
@@ -353,9 +476,10 @@ export const useAppStore = create<AppState>()(
           if (invisible !== s.settings.invisible) {
             updates.settings = { ...s.settings, invisible };
           }
-          return updates;
+          return withAccountProfile(s, updates);
         });
         notifyAppStoreChanged();
+        pushForCurrentUser();
       },
 
       setSessionActive: (active) => set({ sessionActive: active }),
@@ -364,19 +488,14 @@ export const useAppStore = create<AppState>()(
 
       setCurrentMeetingId: (id) => set({ currentMeetingId: id }),
 
-      incrementFreeSessionUsage: () => {
+      addFreeOverlaySeconds: (seconds) => {
         const { plan } = get();
-        if (isPaidPlan(plan)) return;
-        set((s) => ({ freeSessionsUsed: s.freeSessionsUsed + 1 }));
-        notifyAppStoreChanged();
-      },
-
-      refundFreeSessionUsage: () => {
-        const { plan } = get();
-        if (isPaidPlan(plan)) return;
-        set((s) => ({
-          freeSessionsUsed: Math.max(0, s.freeSessionsUsed - 1),
-        }));
+        if (isPaidPlan(plan) || seconds <= 0) return;
+        set((s) =>
+          withAccountProfile(s, {
+            freeOverlaySecondsUsed: s.freeOverlaySecondsUsed + seconds,
+          }),
+        );
         notifyAppStoreChanged();
       },
 
@@ -407,7 +526,9 @@ export const useAppStore = create<AppState>()(
           suggestions: data.suggestions ?? [],
           dealOutcome: "open",
         };
-        set((s) => ({ meetings: [meeting, ...s.meetings] }));
+        set((s) =>
+          withAccountProfile(s, { meetings: [meeting, ...s.meetings] }),
+        );
         notifyAppStoreChanged();
         const userId = get().user?.id;
         if (userId) {
@@ -420,13 +541,14 @@ export const useAppStore = create<AppState>()(
 
       updateMeeting: (id, partial) => {
         let updated: MeetingRecord | undefined;
-        set((s) => ({
-          meetings: s.meetings.map((m) => {
+        set((s) => {
+          const meetings = s.meetings.map((m) => {
             if (m.id !== id) return m;
             updated = { ...m, ...partial };
             return updated;
-          }),
-        }));
+          });
+          return withAccountProfile(s, { meetings });
+        });
         notifyAppStoreChanged();
         const userId = get().user?.id;
         if (userId && updated) {
@@ -437,8 +559,8 @@ export const useAppStore = create<AppState>()(
       },
 
       updateSuggestion: (meetingId, suggestionId, partial) => {
-        set((s) => ({
-          meetings: s.meetings.map((m) => {
+        set((s) => {
+          const meetings = s.meetings.map((m) => {
             if (m.id !== meetingId || !m.suggestions) return m;
             return {
               ...m,
@@ -446,14 +568,19 @@ export const useAppStore = create<AppState>()(
                 sug.id === suggestionId ? { ...sug, ...partial } : sug,
               ),
             };
-          }),
-        }));
+          });
+          return withAccountProfile(s, { meetings });
+        });
         notifyAppStoreChanged();
       },
 
       deleteMeeting: (id) => {
         const userId = get().user?.id;
-        set((s) => ({ meetings: s.meetings.filter((m) => m.id !== id) }));
+        set((s) =>
+          withAccountProfile(s, {
+            meetings: s.meetings.filter((m) => m.id !== id),
+          }),
+        );
         notifyAppStoreChanged();
         if (userId) {
           void import("../services/account-sync").then(({ deleteRemoteMeeting }) =>
@@ -469,7 +596,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "ghost-app-storage",
-      version: 9,
+      version: 12,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
         if (version < 5) {
@@ -533,6 +660,61 @@ export const useAppStore = create<AppState>()(
           }
           state.accountProfiles = profiles;
         }
+        if (version < 10) {
+          state.freeOverlaySecondsUsed = resolveFreeOverlaySecondsUsed(
+            Number(state.freeOverlaySecondsUsed) || undefined,
+            Number(state.freeSessionsUsed) || undefined,
+          );
+          delete state.freeSessionsUsed;
+
+          const profiles =
+            (state.accountProfiles as AccountProfiles | undefined) ?? {};
+          for (const id of Object.keys(profiles)) {
+            const profile = profiles[id] as Record<string, unknown>;
+            profiles[id] = {
+              ...profiles[id],
+              freeOverlaySecondsUsed: resolveFreeOverlaySecondsUsed(
+                Number(profile.freeOverlaySecondsUsed) || undefined,
+                Number(profile.freeSessionsUsed) || undefined,
+              ),
+            };
+            delete (profiles[id] as Record<string, unknown>).freeSessionsUsed;
+          }
+          state.accountProfiles = profiles;
+        }
+        if (version < 11) {
+          if (Array.isArray(state.meetings)) {
+            state.meetings = stripFakeDemoData(state.meetings as MeetingRecord[]);
+          }
+          if (Array.isArray(state.upcoming)) {
+            state.upcoming = stripFakeUpcoming(state.upcoming as UpcomingCall[]);
+          }
+
+          const profiles =
+            (state.accountProfiles as AccountProfiles | undefined) ?? {};
+          for (const id of Object.keys(profiles)) {
+            profiles[id] = {
+              ...profiles[id],
+              meetings: stripFakeDemoData(profiles[id].meetings),
+              upcoming: stripFakeUpcoming(profiles[id].upcoming),
+            };
+          }
+          state.accountProfiles = profiles;
+        }
+        if (version < 12) {
+          if (Array.isArray(state.meetings)) {
+            state.meetings = stripFakeDemoData(state.meetings as MeetingRecord[]);
+          }
+          const profiles =
+            (state.accountProfiles as AccountProfiles | undefined) ?? {};
+          for (const id of Object.keys(profiles)) {
+            profiles[id] = {
+              ...profiles[id],
+              meetings: stripFakeDemoData(profiles[id].meetings),
+            };
+          }
+          state.accountProfiles = profiles;
+        }
         return state as AppState;
       },
       partialize: (state) => {
@@ -557,7 +739,7 @@ export const useAppStore = create<AppState>()(
           settings: state.settings,
           meetings: state.meetings,
           upcoming: state.upcoming,
-          freeSessionsUsed: state.freeSessionsUsed,
+          freeOverlaySecondsUsed: state.freeOverlaySecondsUsed,
         };
       },
       onRehydrateStorage: () => (state) => {
@@ -572,7 +754,7 @@ export const useAppStore = create<AppState>()(
         if (!state.user?.id) return;
         const profile = state.accountProfiles[state.user.id];
         if (!profile) return;
-        Object.assign(state, applyAccountProfile(profile));
+        Object.assign(state, mergeAccountProfileIntoState(state, profile));
         syncPlanLimitsToMain();
       },
     },
@@ -581,12 +763,27 @@ export const useAppStore = create<AppState>()(
 
 /** Pull the latest persisted state into this renderer (dashboard ↔ overlay sync). */
 export async function rehydrateAppStoreFromStorage(): Promise<void> {
+  const before = useAppStore.getState();
   await useAppStore.persist.rehydrate();
-  const { user, accountProfiles } = useAppStore.getState();
-  if (user?.id && accountProfiles[user.id]) {
-    useAppStore.setState(applyAccountProfile(accountProfiles[user.id]));
-    syncPlanLimitsToMain();
-  }
+  const after = useAppStore.getState();
+  if (!after.user?.id) return;
+  const profile = after.accountProfiles[after.user.id];
+  if (!profile) return;
+  useAppStore.setState(mergeAccountProfileIntoState(
+    {
+      ...before,
+      onboardingComplete: before.onboardingComplete || after.onboardingComplete,
+      shortcutTutorialComplete:
+        before.shortcutTutorialComplete || after.shortcutTutorialComplete,
+      paywallComplete: before.paywallComplete || after.paywallComplete,
+      freeOverlaySecondsUsed: Math.max(
+        before.freeOverlaySecondsUsed,
+        after.freeOverlaySecondsUsed,
+      ),
+    },
+    profile,
+  ));
+  syncPlanLimitsToMain();
 }
 
 /** Notify other Electron windows to rehydrate after a store write in this window. */
@@ -598,9 +795,8 @@ export function notifyAppStoreChanged(): void {
 /** Sync plan limits to the main process for hard enforcement at session start. */
 export async function syncPlanLimitsToMain(): Promise<void> {
   if (typeof window === "undefined" || !window.ghost?.syncPlanLimits) return;
-  const { plan, freeSessionsUsed, meetings } = useAppStore.getState();
-  const effectiveUsed = getEffectiveFreeSessionsUsed(meetings, freeSessionsUsed);
-  await window.ghost.syncPlanLimits({ plan, freeSessionsUsed: effectiveUsed });
+  const { plan, freeOverlaySecondsUsed } = useAppStore.getState();
+  await window.ghost.syncPlanLimits({ plan, freeOverlaySecondsUsed });
 }
 
 if (typeof window !== "undefined") {

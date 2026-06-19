@@ -93,9 +93,7 @@ export function ListeningPill({
     <div className="overflow-hidden rounded-full" style={theme.glass}>
       <div className="flex min-w-[340px] max-w-[520px] items-center gap-3 px-3.5 py-2.5">
         <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-            listening ? "animate-pulse-glow" : ""
-          }`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
           style={{
             background: "rgba(0,0,0,0.86)",
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 10px rgba(0,0,0,0.22)",

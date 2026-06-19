@@ -33,8 +33,7 @@ const OUTCOME_ORDER: DealOutcome[] = [
 
 export function getReviewableMeetings(meetings: MeetingRecord[]): MeetingRecord[] {
   return meetings
-    .filter((m) => isUserMeeting(m) || m.id.startsWith("demo-"))
-    .filter((m) => m.id !== "demo-welcome")
+    .filter((m) => isUserMeeting(m))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 

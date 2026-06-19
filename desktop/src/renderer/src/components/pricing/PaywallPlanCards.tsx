@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { BillingInterval } from "../../lib/pricing";
 import {
   ANNUAL_DISCOUNT_PERCENT,
@@ -122,6 +123,24 @@ function FeatureIcon({ icon }: { icon: "infinity" | "check" }) {
   );
 }
 
+export function PricingCardsRow({
+  className = "",
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`flex w-full items-stretch gap-5 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export function PricingCardColumn({ children }: { children: ReactNode }) {
+  return <div className="flex min-w-0 flex-1">{children}</div>;
+}
+
 export function ProPlanCard({
   interval,
   loading,
@@ -137,7 +156,7 @@ export function ProPlanCard({
   const showDiscount = interval === "annual";
 
   return (
-    <div className="flex min-h-[440px] flex-col rounded-[24px] bg-gradient-to-b from-[#4d9aff] to-[#3b82f6] p-6 shadow-[0_20px_50px_rgba(59,130,246,0.18)]">
+    <div className="flex h-full min-h-[460px] w-full flex-col rounded-[24px] bg-gradient-to-b from-[#4d9aff] to-[#3b82f6] p-8 shadow-[0_20px_50px_rgba(59,130,246,0.18)]">
       <p className="text-[14px] font-medium text-white/80">Pro plan</p>
 
       <div className="mt-4 flex items-baseline gap-2">
@@ -178,7 +197,7 @@ export function EnterprisePlanCard({
   onContactSales: () => void;
 }) {
   return (
-    <div className="flex min-h-[440px] flex-col rounded-[24px] border border-zinc-200 bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
+    <div className="flex h-full min-h-[460px] w-full flex-col rounded-[24px] border border-zinc-200 bg-white p-8 shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
       <p className="text-[14px] font-medium text-zinc-600">Enterprise</p>
 
       <div className="mt-4 flex items-baseline gap-2">

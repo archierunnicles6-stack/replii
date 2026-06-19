@@ -35,6 +35,12 @@ function parseEnvFile(contents: string): Record<string, string> {
 }
 
 function loadOpenAIKey(): string | undefined {
+  return loadEnvVar("VITE_OPENAI_API_KEY");
+}
+
+const DEFAULT_BILLING_API_BASE = "https://ghost-eight-virid.vercel.app";
+
+function loadEnvVar(key: string): string | undefined {
   const candidates = [
     path.join(app.getPath("userData"), ".env"),
     path.join(process.resourcesPath, ".env"),
@@ -45,14 +51,21 @@ function loadOpenAIKey(): string | undefined {
   for (const file of candidates) {
     try {
       if (!fs.existsSync(file)) continue;
-      const key = parseEnvFile(fs.readFileSync(file, "utf8")).VITE_OPENAI_API_KEY?.trim();
-      if (key) return key;
+      const value = parseEnvFile(fs.readFileSync(file, "utf8"))[key]?.trim();
+      if (value) return value;
     } catch {
       // ignore
     }
   }
 
-  return process.env.VITE_OPENAI_API_KEY?.trim() || undefined;
+  return process.env[key]?.trim() || undefined;
+}
+
+function loadBillingApiBase(): string {
+  const raw = loadEnvVar("VITE_API_BASE_URL")?.replace(/\/$/, "");
+  if (isDev && raw) return raw;
+  if (raw && !raw.includes("localhost") && !raw.includes("127.0.0.1")) return raw;
+  return DEFAULT_BILLING_API_BASE;
 }
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL;
@@ -115,12 +128,30 @@ let overlayPendingShow = false;
 let contentProtection = false;
 let sessionActive = false;
 
-const FREE_SESSION_LIMIT = 3;
+const FREE_OVERLAY_LIMIT_SECONDS = 30 * 60;
 const PLAN_STATE_PATH = () => path.join(app.getPath("userData"), "plan-state.json");
 
 interface PlanLimitsState {
   plan: string;
-  freeSessionsUsed: number;
+  freeOverlaySecondsUsed: number;
+}
+
+function migrateLegacyFreeSessionsUsed(freeSessionsUsed: number): number {
+  if (freeSessionsUsed >= 3) return FREE_OVERLAY_LIMIT_SECONDS;
+  return Math.min(freeSessionsUsed * 600, FREE_OVERLAY_LIMIT_SECONDS);
+}
+
+function resolveFreeOverlaySecondsUsed(
+  freeOverlaySecondsUsed: number | undefined,
+  legacyFreeSessionsUsed: number | undefined,
+): number {
+  if (typeof freeOverlaySecondsUsed === "number" && freeOverlaySecondsUsed > 0) {
+    return Math.max(0, freeOverlaySecondsUsed);
+  }
+  if (typeof legacyFreeSessionsUsed === "number" && legacyFreeSessionsUsed > 0) {
+    return migrateLegacyFreeSessionsUsed(legacyFreeSessionsUsed);
+  }
+  return Math.max(0, freeOverlaySecondsUsed ?? 0);
 }
 
 function readPlanLimits(): PlanLimitsState {
@@ -130,13 +161,16 @@ function readPlanLimits(): PlanLimitsState {
       const parsed = JSON.parse(fs.readFileSync(file, "utf8")) as Partial<PlanLimitsState>;
       return {
         plan: parsed.plan ?? "free",
-        freeSessionsUsed: parsed.freeSessionsUsed ?? 0,
+        freeOverlaySecondsUsed: resolveFreeOverlaySecondsUsed(
+          parsed.freeOverlaySecondsUsed,
+          parsed.freeSessionsUsed,
+        ),
       };
     }
   } catch {
     // ignore corrupt state
   }
-  return { plan: "free", freeSessionsUsed: 0 };
+  return { plan: "free", freeOverlaySecondsUsed: 0 };
 }
 
 function writePlanLimits(state: PlanLimitsState): void {
@@ -152,7 +186,10 @@ function isPaidPlan(plan: string): boolean {
 }
 
 function canStartSessionFromLimits(state: PlanLimitsState): boolean {
-  return isPaidPlan(state.plan) || state.freeSessionsUsed < FREE_SESSION_LIMIT;
+  return (
+    isPaidPlan(state.plan) ||
+    state.freeOverlaySecondsUsed < FREE_OVERLAY_LIMIT_SECONDS
+  );
 }
 
 function canDisableContentProtection(state: PlanLimitsState): boolean {
@@ -742,6 +779,8 @@ app.whenReady().then(async () => {
 
   ipcMain.handle("ghost:get-openai-key", () => loadOpenAIKey());
 
+  ipcMain.handle("ghost:get-api-base-url", () => loadBillingApiBase());
+
   ipcMain.handle(
     "ghost:sample-backdrop",
     async (_event, rect: { x: number; y: number; width: number; height: number }) =>
@@ -891,7 +930,6 @@ app.whenReady().then(async () => {
     if (sessionActive) {
       createDashboardWindow();
       createOverlayWindow();
-      setOverlayMode("active");
       showOverlay();
       dashboardWindow?.show();
       dashboardWindow?.focus();
@@ -910,7 +948,9 @@ app.whenReady().then(async () => {
     dashboardWindow?.show();
     dashboardWindow?.focus();
     createOverlayWindow();
-    setOverlayMode("active");
+    // Stay in pill mode until the overlay renderer activates listening and
+    // switches to active mode — fullscreen transparent windows with no UI
+    // corrupt macOS compositing and show garbled text over the dashboard.
     showOverlay();
     sendWhenReady(micHelperWindow, "ghost:session-started");
     sendWhenReady(dashboardWindow, "ghost:session-started");
@@ -963,7 +1003,7 @@ app.whenReady().then(async () => {
     (_event, state: PlanLimitsState) => {
       writePlanLimits({
         plan: state.plan ?? "free",
-        freeSessionsUsed: Math.max(0, state.freeSessionsUsed ?? 0),
+        freeOverlaySecondsUsed: Math.max(0, state.freeOverlaySecondsUsed ?? 0),
       });
       return true;
     },

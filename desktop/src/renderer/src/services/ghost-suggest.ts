@@ -114,9 +114,46 @@ function parseStreamChunk(line: string): string | null {
   }
 }
 
+const HUMAN_VOICE_RULES = `Sound like a sharp rep on a real call — not an AI assistant.
+- Plain spoken language. Contractions are fine.
+- Never use: "Great question", "Absolutely", "I'd be happy to", "leverage", "solution", "touch base", "circle back", "I understand your concern"
+- Follow the rep's coaching style and company context below.
+- One short sentence they can read aloud verbatim. Under 18 words. No quotes, labels, or preamble.`;
+
 function appendCoachingContext(base: string, coachingContext?: string): string {
   if (!coachingContext?.trim()) return base;
   return `${base}\n\n${coachingContext.trim()}`;
+}
+
+function appendLanguageHint(base: string, outputLanguage?: string): string {
+  if (!outputLanguage || outputLanguage === "English") return base;
+  return `${base}\n\nRespond in ${outputLanguage}.`;
+}
+
+function buildFastUserPrompt(
+  prospectText: string,
+  transcript: SuggestTranscriptLine[],
+  micOnly: boolean,
+  isQuestion: boolean,
+): string {
+  const recent = formatRecentTranscript(transcript, 8);
+  const speakerLabel = micOnly ? "Speaker" : "Prospect";
+
+  if (isQuestion) {
+    return `Recent conversation:
+${recent || "(just started)"}
+
+${speakerLabel} asked: "${prospectText}"
+
+Give the exact words to answer right now. One short sentence.`;
+  }
+
+  return `Recent conversation:
+${recent || "(just started)"}
+
+${speakerLabel} just said: "${prospectText}"
+
+Give the exact words to say next. One short sentence.`;
 }
 
 function buildSystemPrompt(
@@ -134,29 +171,26 @@ function buildStreamSystemPrompt(
   coachingContext: string | undefined,
   fast: boolean,
   isQuestion: boolean,
+  outputLanguage?: string,
 ): string {
-  if (isQuestion) {
-    return appendCoachingContext(
-      `Live sales call copilot. Product: ${product}. The prospect asked a direct question. Reply with ONLY the exact words the rep should say to answer it — under 18 words. No quotes, labels, or preamble.`,
-      coachingContext,
-    );
-  }
+  const base = fast
+    ? `Live call whisper-line. Rep sells: ${product}.
+Common objections: ${objections}
 
-  if (fast) {
-    return appendCoachingContext(
-      `Live sales call copilot. Product: ${product}. Reply with ONLY the exact words the rep should say next (under 18 words). No quotes, labels, or preamble.`,
-      coachingContext,
-    );
-  }
+${HUMAN_VOICE_RULES}`
+    : `Real-time call coach. Rep sells: ${product}.
+Common objections: ${objections}
 
-  return appendCoachingContext(
-    `You are a real-time meeting copilot embedded in a live coaching overlay.
-The rep sells: ${product}
-Known objections: ${objections}
+${HUMAN_VOICE_RULES}
+Under 20 words.`;
 
-Give ONE thing to say right now — under 20 words, exact words they can say verbatim.
-No preamble, no bullet lists, no JSON.`,
-    coachingContext,
+  const withQuestion = isQuestion
+    ? `${base}\nThe prospect asked a direct question — answer it naturally, not with a pitch.`
+    : base;
+
+  return appendLanguageHint(
+    appendCoachingContext(withQuestion, coachingContext),
+    outputLanguage,
   );
 }
 
@@ -278,6 +312,7 @@ export async function streamGhostSuggestion(
     micOnly?: boolean;
     fast?: boolean;
     isQuestion?: boolean;
+    outputLanguage?: string;
     signal?: AbortSignal;
   } = {},
 ): Promise<GhostSuggestion | null> {
@@ -301,13 +336,12 @@ export async function streamGhostSuggestion(
     options.coachingContext,
     fast,
     isQuestion,
+    options.outputLanguage,
   );
 
-  const userContent = isQuestion
-    ? `QUESTION: "${prospectText}"\n\nGive the exact answer the rep should say right now. One short sentence they can read verbatim.`
-    : fast
-      ? `They just said: "${prospectText}"\n\nWhat should the rep say next?`
-      : buildPipelineUserPrompt(prospectText, transcript, screenContent, options.micOnly);
+  const userContent = fast
+    ? buildFastUserPrompt(prospectText, transcript, options.micOnly ?? false, isQuestion)
+    : buildPipelineUserPrompt(prospectText, transcript, screenContent, options.micOnly);
 
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {

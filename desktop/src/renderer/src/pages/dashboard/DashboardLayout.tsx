@@ -21,7 +21,7 @@ export function DashboardLayout() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeContext, setUpgradeContext] = useState<string | undefined>();
   const { setSessionActive } = useAppStore();
-  const { startSession, canStart, sessionActive, sessionsRemaining, isPaid } =
+  const { startSession, canStart, sessionActive, overlayTimeRemainingLabel, isPaid } =
     useStartGhostSession();
 
   const isSubPage = SUB_PAGE_PATHS.some((p) => location.pathname.startsWith(p));
@@ -102,9 +102,7 @@ export function DashboardLayout() {
             onRequestUpgrade={() => openUpgrade()}
             canStartSession={canStart}
             sessionActive={sessionActive}
-            sessionsRemaining={
-              Number.isFinite(sessionsRemaining) ? sessionsRemaining : undefined
-            }
+            overlayTimeRemainingLabel={overlayTimeRemainingLabel}
             isPaid={isPaid}
             showCalendarPrompt={showCalendarPrompt}
           />
