@@ -48,6 +48,7 @@ export const PRO_FEATURES = [
   "Unlimited AI responses",
   "Unlimited access to latest AI models",
   "Priority support",
+  "Undetectable on screen share",
 ] as const;
 
 export type ProFeatureIcon = "infinity" | "check";
@@ -57,6 +58,7 @@ export const PRO_CARD_FEATURES: { icon: ProFeatureIcon; label: string }[] = [
   { icon: "infinity", label: "Unlimited AI responses" },
   { icon: "check", label: "Unlimited access to latest AI models" },
   { icon: "check", label: "Priority support" },
+  { icon: "check", label: "Undetectable on screen share" },
 ];
 
 export const ENTERPRISE_SALES_MAILTO =

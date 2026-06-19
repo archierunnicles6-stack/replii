@@ -19,6 +19,7 @@ export function DashboardLayout() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeContext, setUpgradeContext] = useState<string | undefined>();
   const { setSessionActive } = useAppStore();
   const { startSession, canStart, sessionActive, sessionsRemaining, isPaid } =
     useStartGhostSession();
@@ -75,6 +76,16 @@ export function DashboardLayout() {
     });
   }, [setSessionActive]);
 
+  const openUpgrade = (contextMessage?: string) => {
+    setUpgradeContext(contextMessage);
+    setUpgradeOpen(true);
+  };
+
+  const closeUpgrade = () => {
+    setUpgradeOpen(false);
+    setUpgradeContext(undefined);
+  };
+
   return (
     <div className="flex h-screen flex-col bg-white">
       <MeetingSummaryWorker />
@@ -88,7 +99,7 @@ export function DashboardLayout() {
         <>
           <DashboardHeader
             onStartSession={() => void startSession()}
-            onRequestUpgrade={() => setUpgradeOpen(true)}
+            onRequestUpgrade={() => openUpgrade()}
             canStartSession={canStart}
             sessionActive={sessionActive}
             sessionsRemaining={
@@ -100,13 +111,18 @@ export function DashboardLayout() {
         </>
       )}
 
-      {upgradeOpen ? <UpgradeModal onClose={() => setUpgradeOpen(false)} /> : null}
+      {upgradeOpen ? (
+        <UpgradeModal
+          onClose={closeUpgrade}
+          contextMessage={upgradeContext}
+        />
+      ) : null}
 
       <main className="no-drag min-h-0 flex-1 overflow-y-auto">
         <div
           className={`mx-auto px-8 ${isSubPage ? "max-w-3xl py-8" : "max-w-5xl pt-6 pb-12"}`}
         >
-          <Outlet context={{ searchQuery, onRequestUpgrade: () => setUpgradeOpen(true) }} />
+          <Outlet context={{ searchQuery, onRequestUpgrade: openUpgrade }} />
         </div>
         <p className="mx-auto max-w-5xl px-8 pb-6 text-center text-[11px] leading-relaxed text-zinc-400">
           {AI_DISCLAIMER_SHORT}
@@ -118,5 +134,5 @@ export function DashboardLayout() {
 
 export type DashboardOutletContext = {
   searchQuery: string;
-  onRequestUpgrade: () => void;
+  onRequestUpgrade: (contextMessage?: string) => void;
 };

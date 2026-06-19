@@ -4,6 +4,10 @@ export const PRICING_FAQS = [
     a: "Starter includes limited AI responses, unlimited real-time meeting notetaking, custom instructions with file uploads, and the ability to ask AI about your past meetings. No credit card required.",
   },
   {
+    q: "What's included in Pro?",
+    a: "Pro includes unlimited AI responses, access to the latest AI models, priority support, and undetectability on screen share so your overlay stays hidden during calls.",
+  },
+  {
     q: "How does annual billing work?",
     a: "Pay annually and get Pro for $11.42/month (billed as $136.99/year). That's 43% off the $20/month price. Choose monthly or annual billing when you subscribe in the Ghost desktop app.",
   },

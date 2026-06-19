@@ -2,7 +2,13 @@ import { PaywallPricing } from "./PaywallPricing";
 import { useBillingSync } from "../../hooks/useBillingSync";
 import { usePricingCheckout } from "../../hooks/usePricingCheckout";
 
-export function UpgradeModal({ onClose }: { onClose: () => void }) {
+export function UpgradeModal({
+  onClose,
+  contextMessage,
+}: {
+  onClose: () => void;
+  contextMessage?: string;
+}) {
   const { loadingTier, error, handleSelect, handleContactSales } = usePricingCheckout({
     onComplete: onClose,
     returnToAfterPurchase: "dashboard",
@@ -40,6 +46,9 @@ export function UpgradeModal({ onClose }: { onClose: () => void }) {
             onSelect={(id, interval) => void handleSelect(id, interval)}
             onContactSales={handleContactSales}
             onStartFree={onClose}
+            headline={contextMessage ? "Keep the momentum going" : undefined}
+            subheadline={contextMessage}
+            variant="embedded"
           />
         </div>
       </div>

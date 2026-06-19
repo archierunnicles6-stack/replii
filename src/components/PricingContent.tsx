@@ -17,6 +17,7 @@ const PRO_FEATURES = [
   "Unlimited AI responses",
   "Unlimited access to latest AI models",
   "Priority support",
+  "Undetectable on screen share",
 ];
 
 const CARD_CLASS =

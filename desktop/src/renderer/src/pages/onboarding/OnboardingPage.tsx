@@ -12,6 +12,8 @@ interface PermissionItem {
   icon: React.ReactNode;
   title: string;
   description: string;
+  reassurance: string;
+  step: number | null;
 }
 
 const REQUIRED_KEYS: PermissionKey[] = ["accessibility", "microphone"];
@@ -29,28 +31,36 @@ const PERMISSIONS: PermissionItem[] = [
   {
     key: "accessibility",
     icon: <BulbIcon />,
-    title: "Allow Ghost to assist",
+    step: 1,
+    title: "Enable Ghost shortcuts",
     description:
-      "Ghost uses accessibility access for global shortcuts and app-aware controls.",
+      "Ghost needs accessibility access so it can appear on any call with one hotkey.",
+    reassurance: "macOS will ask you to allow Ghost — this takes about 10 seconds.",
   },
   {
     key: "microphone",
     icon: <MicIcon />,
-    title: "Allow Ghost to hear audio",
-    description: "Ghost can listen to audio when you start a session.",
+    step: 2,
+    title: "Let Ghost hear your calls",
+    description:
+      "Your mic lets Ghost coach you in real time. Audio stays on your device.",
+    reassurance: "Choose Ghost in System Settings → Privacy → Microphone.",
   },
   {
     key: "screen",
     icon: <CallAudioIcon />,
-    title: "Allow Ghost to hear call audio",
+    step: null,
+    title: "Hear Zoom / Meet / Teams audio",
     description:
-      "Optional — macOS uses Screen Recording for Zoom, Meet, and Teams audio only. Ghost does not view your screen.",
+      "Optional — macOS uses Screen Recording for call audio only. Ghost never views your screen.",
+    reassurance: "Skip for now if you only use your mic — you can add this later.",
   },
 ];
 
 export function OnboardingPage() {
   const navigate = useNavigate();
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
+  const completeShortcutTutorial = useAppStore((s) => s.completeShortcutTutorial);
   const [granted, setGranted] = useState<Record<PermissionKey, boolean>>({
     accessibility: false,
     microphone: false,
@@ -85,9 +95,10 @@ export function OnboardingPage() {
     if (finishingRef.current) return;
     finishingRef.current = true;
     completeOnboarding();
+    completeShortcutTutorial();
     notifyAppStoreChanged();
-    navigate("/try");
-  }, [completeOnboarding, navigate]);
+    navigate("/");
+  }, [completeOnboarding, completeShortcutTutorial, navigate]);
 
   useEffect(() => {
     void refreshStatus();
@@ -151,7 +162,10 @@ export function OnboardingPage() {
 
   const requiredGranted = granted.accessibility && granted.microphone;
   const pendingRequiredKey = nextRequiredKey(granted);
-  const settingsKey = pendingRequiredKey ?? activeKey;
+  const focusKey = pendingRequiredKey ?? activeKey;
+  const focusPerm = PERMISSIONS.find((p) => p.key === focusKey) ?? PERMISSIONS[0];
+  const requiredStep = focusPerm.step;
+  const showOptionalScreen = requiredGranted;
 
   useEffect(() => {
     if (!requiredGranted || finishingRef.current) return;
@@ -160,9 +174,9 @@ export function OnboardingPage() {
   }, [requiredGranted, finish]);
 
   const settingsLabel =
-    settingsKey === "accessibility"
+    focusKey === "accessibility"
       ? "Open accessibility settings"
-      : settingsKey === "microphone"
+      : focusKey === "microphone"
         ? "Open microphone settings"
         : "Open call audio settings";
 
@@ -174,23 +188,44 @@ export function OnboardingPage() {
         left={
           <div className="flex min-h-full flex-col px-12 py-10">
             <div className="flex flex-1 flex-col justify-center">
-              <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900">
-                Let&apos;s get you set up
+              {requiredStep ? (
+                <p className="text-[13px] font-medium text-[#3b82f6]">
+                  Step {requiredStep} of {REQUIRED_KEYS.length}
+                </p>
+              ) : (
+                <p className="text-[13px] font-medium text-zinc-400">Optional</p>
+              )}
+              <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900">
+                {requiredGranted ? "You're ready to start" : focusPerm.title}
               </h1>
+              <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">
+                {requiredGranted
+                  ? "Start your first session now — Ghost will coach you live on your next call."
+                  : focusPerm.description}
+              </p>
+
+              {!requiredGranted ? (
+                <p className="mt-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[13px] leading-relaxed text-blue-900/80">
+                  {focusPerm.reassurance}
+                </p>
+              ) : null}
 
               <div className="mt-8 space-y-3">
-                {PERMISSIONS.map((perm) => (
-                  <PermissionCard
-                    key={perm.key}
-                    icon={perm.icon}
-                    title={perm.title}
-                    description={perm.description}
-                    enabled={granted[perm.key] || !!pending[perm.key]}
-                    active={activeKey === perm.key}
-                    onSelect={() => setActiveKey(perm.key)}
-                    onToggle={() => void handleToggle(perm.key)}
-                  />
-                ))}
+                {PERMISSIONS.filter((p) => p.step !== null || showOptionalScreen).map(
+                  (perm) => (
+                    <PermissionCard
+                      key={perm.key}
+                      icon={perm.icon}
+                      title={perm.title}
+                      description={perm.description}
+                      enabled={granted[perm.key] || !!pending[perm.key]}
+                      active={focusKey === perm.key}
+                      dimmed={!requiredGranted && perm.key !== focusKey}
+                      onSelect={() => setActiveKey(perm.key)}
+                      onToggle={() => void handleToggle(perm.key)}
+                    />
+                  ),
+                )}
               </div>
 
               {requiredGranted ? (
@@ -199,12 +234,12 @@ export function OnboardingPage() {
                   onClick={finish}
                   className="mt-8 flex h-[48px] w-full items-center justify-center rounded-xl bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] text-[15px] font-medium text-white shadow-[0_2px_12px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-90"
                 >
-                  Continue to Ghost
+                  Start my first session
                 </button>
               ) : (
                 <button
                   type="button"
-                  onClick={() => void openSettings(settingsKey)}
+                  onClick={() => void openSettings(focusKey)}
                   className="mt-8 flex h-[48px] w-full items-center justify-center rounded-xl bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] text-[15px] font-medium text-white shadow-[0_2px_12px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-90"
                 >
                   {settingsLabel}
@@ -217,7 +252,7 @@ export function OnboardingPage() {
               onClick={finish}
               className="mt-auto flex items-center gap-0.5 self-center py-2 text-[14px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
             >
-              Skip
+              {requiredGranted ? "Set up call audio later" : "Skip for now"}
               <span aria-hidden>›</span>
             </button>
           </div>
@@ -234,6 +269,7 @@ function PermissionCard({
   description,
   enabled,
   active,
+  dimmed,
   onSelect,
   onToggle,
 }: {
@@ -242,6 +278,7 @@ function PermissionCard({
   description: string;
   enabled: boolean;
   active: boolean;
+  dimmed?: boolean;
   onSelect: () => void;
   onToggle: () => void;
 }) {
@@ -257,11 +294,13 @@ function PermissionCard({
         }
       }}
       className={`flex w-full cursor-pointer items-center gap-3.5 rounded-2xl border px-4 py-3.5 text-left transition-all ${
-        enabled
-          ? "border-[#3b82f6]/25 bg-[#3b82f6]/[0.04]"
-          : active
-            ? "border-zinc-300 bg-zinc-50"
-            : "border-zinc-200/80 bg-transparent hover:border-zinc-300"
+        dimmed
+          ? "border-zinc-100 bg-zinc-50/50 opacity-60"
+          : enabled
+            ? "border-[#3b82f6]/25 bg-[#3b82f6]/[0.04]"
+            : active
+              ? "border-zinc-300 bg-zinc-50"
+              : "border-zinc-200/80 bg-transparent hover:border-zinc-300"
       }`}
     >
       <div

@@ -5,6 +5,7 @@ import { BackButton } from "../../components/ui";
 import { usePricingCheckout } from "../../hooks/usePricingCheckout";
 import { useBillingSync } from "../../hooks/useBillingSync";
 import { hasDashboardAccess } from "../../lib/dashboard-access";
+import { getFreeSessionsRemaining } from "../../store/types";
 import { useAppStore } from "../../store/useAppStore";
 
 export function PaywallPage() {
@@ -12,10 +13,12 @@ export function PaywallPage() {
   const {
     isAuthenticated,
     onboardingComplete,
-    shortcutTutorialComplete,
     paywallComplete,
     plan,
   } = useAppStore();
+  const freeSessionsUsed = useAppStore((s) => s.freeSessionsUsed);
+  const meetings = useAppStore((s) => s.meetings);
+  const freeSessionsRemaining = getFreeSessionsRemaining(plan, freeSessionsUsed, meetings);
 
   const finishFree = () => {
     navigate("/");
@@ -40,17 +43,12 @@ export function PaywallPage() {
       navigate("/onboarding", { replace: true });
       return;
     }
-    if (!shortcutTutorialComplete) {
-      navigate("/try", { replace: true });
-      return;
-    }
     if (hasDashboardAccess(plan, paywallComplete)) {
       navigate("/", { replace: true });
     }
   }, [
     isAuthenticated,
     onboardingComplete,
-    shortcutTutorialComplete,
     paywallComplete,
     plan,
     navigate,
@@ -74,7 +72,7 @@ export function PaywallPage() {
 
   return (
     <div className="no-drag relative flex h-screen max-h-screen w-full flex-col overflow-y-auto overscroll-contain bg-gradient-to-b from-[#e4ebf3] via-[#eef2f7] to-[#f3f5f8]">
-      <BackButton to="/try" />
+      <BackButton to="/" />
 
       <div className="mx-auto flex min-h-full w-full max-w-[1120px] flex-1 flex-col items-center justify-start px-8 pb-10 pt-16">
         {error ? (
@@ -86,6 +84,9 @@ export function PaywallPage() {
           onSelect={(id, interval) => void handleTierSelect(id, interval)}
           onContactSales={handleContactSales}
           onStartFree={finishFreeWithPaywall}
+          freeSessionsRemaining={
+            Number.isFinite(freeSessionsRemaining) ? freeSessionsRemaining : undefined
+          }
         />
       </div>
     </div>

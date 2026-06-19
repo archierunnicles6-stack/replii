@@ -11,7 +11,6 @@ import {
   recordTermsAcceptance,
   termsAcceptanceMetadata,
 } from "../../lib/legal-acceptance";
-import { hasDashboardAccess } from "../../lib/dashboard-access";
 import { hasLocalAccountProfile } from "../../services/account-sync";
 import { useAppStore } from "../../store/useAppStore";
 import { BackButton, PillButton } from "../../components/ui";
@@ -61,11 +60,7 @@ export function AuthPage() {
         navigate("/onboarding");
         return;
       }
-      if (!state.shortcutTutorialComplete) {
-        navigate("/try");
-        return;
-      }
-      navigate(hasDashboardAccess(state.plan, state.paywallComplete) ? "/" : "/paywall");
+      navigate("/");
     },
     [login, navigate],
   );

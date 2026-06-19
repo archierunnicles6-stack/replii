@@ -6,6 +6,7 @@ import {
   ProPlanCard,
 } from "./PaywallPlanCards";
 import { legalLinks, openLegalLink } from "../../lib/legal-urls";
+import { FREE_SESSION_LIMIT } from "../../store/types";
 
 function StarIcon() {
   return (
@@ -15,25 +16,48 @@ function StarIcon() {
   );
 }
 
+function buildFreeLinkLabel(freeSessionsRemaining?: number): string {
+  if (freeSessionsRemaining == null) {
+    return `Continue with ${FREE_SESSION_LIMIT} free sessions →`;
+  }
+  if (freeSessionsRemaining <= 0) {
+    return "Stay on free plan →";
+  }
+  const afterThis = Math.max(0, freeSessionsRemaining - 1);
+  const base = `Continue with ${freeSessionsRemaining} free session${freeSessionsRemaining === 1 ? "" : "s"}`;
+  if (afterThis > 0 && freeSessionsRemaining < FREE_SESSION_LIMIT) {
+    return `${base} (${afterThis} remaining after this) →`;
+  }
+  return `${base} →`;
+}
+
 export function PaywallPricing({
   loadingTier,
   onSelect,
   onContactSales,
   onStartFree,
-  freeLinkLabel = "Start with free →",
+  freeLinkLabel,
+  freeSessionsRemaining,
   showFreeLink = true,
   variant = "page",
+  headline,
+  subheadline,
 }: {
   loadingTier?: PricingTierId | null;
   onSelect: (id: PricingTierId, interval: BillingInterval) => void;
   onContactSales: () => void;
   onStartFree: () => void;
   freeLinkLabel?: string;
+  freeSessionsRemaining?: number;
   showFreeLink?: boolean;
   variant?: "page" | "embedded";
+  headline?: string;
+  subheadline?: string;
 }) {
   const [interval, setInterval] = useState<BillingInterval>("annual");
   const embedded = variant === "embedded";
+  const resolvedFreeLabel =
+    freeLinkLabel ?? buildFreeLinkLabel(freeSessionsRemaining);
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -42,8 +66,18 @@ export function PaywallPricing({
           embedded ? "text-[20px] leading-snug" : "text-[34px] leading-[1.1]"
         }`}
       >
-        Unlock all features with Ghost Pro
+        {headline ?? "Unlock all features with Ghost Pro"}
       </h1>
+
+      {subheadline ? (
+        <p
+          className={`max-w-lg text-center text-zinc-600 ${
+            embedded ? "mt-3 text-[14px] leading-relaxed" : "mt-4 text-[16px] leading-relaxed"
+          }`}
+        >
+          {subheadline}
+        </p>
+      ) : null}
 
       <div className={embedded ? "mt-5" : "mt-6"}>
         <BillingToggle interval={interval} onChange={setInterval} />
@@ -76,13 +110,18 @@ export function PaywallPricing({
       </p>
 
       {!embedded ? (
-        <div className="mt-6 flex items-center gap-2">
-          <div className="flex gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <StarIcon key={i} />
-            ))}
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <StarIcon key={i} />
+              ))}
+            </div>
+            <span className="text-[13px] text-zinc-600">Trusted by 430,000+ users</span>
           </div>
-          <span className="text-[13px] text-zinc-600">Trusted by 430,000+ users</span>
+          <p className="text-[13px] font-medium text-zinc-600">
+            Reps using Pro close 18% more deals
+          </p>
         </div>
       ) : null}
 
@@ -92,7 +131,7 @@ export function PaywallPricing({
           onClick={onStartFree}
           className="mt-5 text-[13px] text-zinc-500 transition-colors hover:text-zinc-800"
         >
-          {freeLinkLabel}
+          {resolvedFreeLabel}
         </button>
       ) : null}
     </div>

@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { SessionRecapHero } from "../../components/dashboard/SessionRecapHero";
+import { WarmUpgradePrompt } from "../../components/dashboard/WarmUpgradePrompt";
+import type { DashboardOutletContext } from "./DashboardLayout";
 import { sectionsToPlainText } from "../../services/ai";
 import { AI_DISCLAIMER_SHORT } from "../../lib/ai-disclaimer";
 import { SUGGESTION_TAG_LABELS } from "../../lib/suggestion-tags";
@@ -308,8 +311,12 @@ function TranscriptView({
 export function MeetingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { onRequestUpgrade } = useOutletContext<DashboardOutletContext>();
   const savedMeeting = useAppStore((s) => s.meetings.find((m) => m.id === id));
   const deleteMeeting = useAppStore((s) => s.deleteMeeting);
+  const plan = useAppStore((s) => s.plan);
+  const freeSessionsUsed = useAppStore((s) => s.freeSessionsUsed);
+  const meetings = useAppStore((s) => s.meetings);
   const meeting = savedMeeting ?? DEMO_MEETINGS.find((m) => m.id === id);
   const [tab, setTab] = useState<Tab>("summary");
   const canDelete = meeting ? isUserMeeting(meeting) : false;
@@ -381,6 +388,19 @@ export function MeetingDetailPage() {
       {meeting.company && meeting.company !== "Meeting" && (
         <p className="mt-1 text-[14px] text-zinc-500">{meeting.company}</p>
       )}
+
+      {canEdit ? (
+        <>
+          <SessionRecapHero meeting={meeting} />
+          <WarmUpgradePrompt
+            meeting={meeting}
+            plan={plan}
+            freeSessionsUsed={freeSessionsUsed}
+            meetings={meetings}
+            onUpgrade={(message) => onRequestUpgrade(message)}
+          />
+        </>
+      ) : null}
 
       <div className="mt-8 flex items-center gap-1 rounded-full bg-zinc-100 p-1 w-fit">
         {(["summary", "coaching", "transcript"] as const).map((t) => (
