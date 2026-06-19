@@ -12,9 +12,10 @@ export const MAC_DOWNLOAD_GITHUB_URL =
 
 export const WINDOWS_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL?.trim() ||
-  "https://github.com/archierunnicles6-stack/ghost/releases/latest/download/Ghost-Setup.exe";
+  "https://github.com/archierunnicles6-stack/ghost/releases/latest/download/Ghost-Windows.zip";
 
 export const MAC_DOWNLOAD_FILENAME = "Ghost.dmg";
+/** Preferred Windows installer; API falls back to Ghost-Windows.zip until published. */
 export const WINDOWS_DOWNLOAD_FILENAME = "Ghost-Setup.exe";
 
 /** @deprecated Use DOWNLOAD_RELEASE_TAG */
@@ -54,8 +55,17 @@ export function resolveDownloadHref(platform: DownloadPlatform): string {
     return getDownloadHref(platform);
   }
 
-  // Same-origin API resolves local files in dev and GitHub Release assets in prod.
-  return getDownloadHref(platform);
+  const host = window.location.hostname;
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+  const isVercel =
+    host.endsWith(".vercel.app") || host === "ghost-eight-virid.vercel.app";
+
+  if (isLocal || isVercel) {
+    return getDownloadHref(platform);
+  }
+
+  // ghost.ai is not on Vercel — direct GitHub links avoid 406 from legacy Apache host.
+  return getExternalDownloadUrl(platform);
 }
 
 export function getDownloadInfo(platform: DownloadPlatform) {
