@@ -3,37 +3,48 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getExternalDownloadUrl,
-  getLocalDownloadPath,
   MAC_DOWNLOAD_FILENAME,
   RELEASE_PAGE_URL,
   WINDOWS_DOWNLOAD_FILENAME,
 } from "@/lib/download";
+import { resolveGitHubAssetUrl } from "@/lib/github-release";
 import type { DownloadPlatform } from "@/lib/platform";
 
 function parsePlatform(value: string | null): DownloadPlatform {
   return value === "windows" ? "windows" : "mac";
 }
 
-function localInstallerPath(platform: DownloadPlatform): string | null {
-  const filename =
-    platform === "windows" ? WINDOWS_DOWNLOAD_FILENAME : MAC_DOWNLOAD_FILENAME;
-  const filePath = path.join(process.cwd(), "public", "downloads", filename);
-  return existsSync(filePath) ? filePath : null;
+const LOCAL_CANDIDATES: Record<DownloadPlatform, string[]> = {
+  mac: [MAC_DOWNLOAD_FILENAME, "Ghost-0.1.0-arm64.dmg"],
+  windows: [WINDOWS_DOWNLOAD_FILENAME, "Ghost-Setup.exe", "Ghost-Windows.zip"],
+};
+
+function findLocalInstaller(
+  platform: DownloadPlatform,
+): { filename: string; filePath: string } | null {
+  for (const filename of LOCAL_CANDIDATES[platform]) {
+    const filePath = path.join(process.cwd(), "public", "downloads", filename);
+    if (existsSync(filePath)) return { filename, filePath };
+  }
+  return null;
 }
 
 export async function GET(request: NextRequest) {
   const platform = parsePlatform(request.nextUrl.searchParams.get("platform"));
-  const filename =
+  const fallbackFilename =
     platform === "windows" ? WINDOWS_DOWNLOAD_FILENAME : MAC_DOWNLOAD_FILENAME;
-  const externalUrl = getExternalDownloadUrl(platform);
+  const fallbackUrl = getExternalDownloadUrl(platform);
 
-  const localFile = localInstallerPath(platform);
-  if (localFile) {
-    const localUrl = new URL(getLocalDownloadPath(platform), request.url);
+  const local = findLocalInstaller(platform);
+  if (local) {
+    const localUrl = new URL(
+      `/downloads/${local.filename}`,
+      request.url,
+    );
     const response = NextResponse.redirect(localUrl, 302);
     response.headers.set(
       "Content-Disposition",
-      `attachment; filename="${filename}"`,
+      `attachment; filename="${local.filename}"`,
     );
     return response;
   }
@@ -44,15 +55,20 @@ export async function GET(request: NextRequest) {
         error: "Installer not found locally",
         hint: "Run npm run desktop:package && npm run sync-downloads at the repo root.",
         platform,
-        filename,
+        filename: fallbackFilename,
         releasePage: RELEASE_PAGE_URL,
-        fallbackUrl: externalUrl,
+        fallbackUrl,
       },
       { status: 404 },
     );
   }
 
-  const response = NextResponse.redirect(externalUrl, 302);
+  const githubAsset = await resolveGitHubAssetUrl(platform);
+  const redirectUrl = githubAsset?.url ?? fallbackUrl;
+  const filename = githubAsset?.filename ?? fallbackFilename;
+
+  const response = NextResponse.redirect(redirectUrl, 302);
+  response.headers.set("Content-Disposition", `attachment; filename="${filename}"`);
   response.headers.set("Cache-Control", "public, max-age=300");
   return response;
 }

@@ -12,6 +12,7 @@ import {
   termsAcceptanceMetadata,
 } from "../../lib/legal-acceptance";
 import { hasDashboardAccess } from "../../lib/dashboard-access";
+import { hasLocalAccountProfile } from "../../services/account-sync";
 import { useAppStore } from "../../store/useAppStore";
 import { BackButton, PillButton } from "../../components/ui";
 import { TermsAgreement } from "../../components/auth/TermsAgreement";
@@ -38,7 +39,7 @@ export function AuthPage() {
   }, [welcomeComplete, navigate]);
 
   const afterAuth = useCallback(
-    (
+    async (
       userEmail: string,
       name?: string,
       isNewAccount = false,
@@ -46,9 +47,13 @@ export function AuthPage() {
       avatar?: string,
     ) => {
       login(userEmail, name, userId, avatar, isNewAccount);
-      if (isNewAccount) {
-        navigate("/onboarding");
-        return;
+      if (userId) {
+        try {
+          const { syncAccountData } = await import("../../services/account-sync");
+          await syncAccountData(userId);
+        } catch {
+          // Local profile still works offline.
+        }
       }
 
       const state = useAppStore.getState();
@@ -88,8 +93,9 @@ export function AuthPage() {
             return;
           }
           const u = toAppUser(data.user);
-          const isNew =
+          const oauthLooksNew =
             data.user.created_at === data.user.last_sign_in_at;
+          const isNew = oauthLooksNew && !hasLocalAccountProfile(u.id);
           if (isNew) {
             await recordTermsAcceptance(u.id);
           }

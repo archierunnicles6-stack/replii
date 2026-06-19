@@ -65,6 +65,7 @@
       "installerHeaderIcon": "build/icon.png"
     },
     "mac": {
+      "artifactName": "Ghost.${ext}",
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
       "hardenedRuntime": false,

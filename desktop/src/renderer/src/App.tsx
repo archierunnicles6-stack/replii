@@ -74,9 +74,14 @@ function AppRoutes() {
   );
 }
 
+function AppShell() {
+  useBillingReturn();
+
+  return <AppRoutes />;
+}
+
 export default function App() {
   useAuthBootstrap();
-  useBillingReturn();
 
   useEffect(() => {
     void bootstrapOpenAIKey();
@@ -84,7 +89,7 @@ export default function App() {
 
   return (
     <HashRouter>
-      <AppRoutes />
+      <AppShell />
     </HashRouter>
   );
 }

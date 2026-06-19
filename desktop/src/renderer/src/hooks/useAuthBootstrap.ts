@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { getSupabase, isSupabaseConfigured, toAppUser } from "../lib/supabase";
+import { syncAccountData } from "../services/account-sync";
 import { syncBillingState } from "../services/billing";
 import { useAppStore } from "../store/useAppStore";
 
@@ -12,7 +13,10 @@ export function useAuthBootstrap() {
     const syncUser = async (authenticated: boolean, user?: ReturnType<typeof toAppUser>) => {
       if (authenticated && user) {
         useAppStore.getState().setUser(user);
-        await syncBillingState(user.id);
+        await Promise.all([
+          syncBillingState(user.id),
+          syncAccountData(user.id),
+        ]);
       }
     };
 

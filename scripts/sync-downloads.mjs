@@ -20,11 +20,13 @@ function pickNewest(candidates) {
 
 mkdirSync(destDir, { recursive: true });
 
-const macSrc =
-  pickNewest(["Ghost.dmg", "Ghost-0.1.0-arm64.dmg"]) ??
-  pickNewest(["Ghost-0.1.0.dmg"]);
+const macSrc = pickNewest([
+  "Ghost.dmg",
+  "Ghost-0.1.0-arm64.dmg",
+  "Ghost-0.1.0.dmg",
+]);
 
-const winSrc = pickNewest(["Ghost-Windows.zip", "Ghost-Setup.exe"]);
+const winSrc = pickNewest(["Ghost-Setup.exe", "Ghost-Windows.zip"]);
 
 if (macSrc) {
   copyFileSync(macSrc, path.join(destDir, "Ghost.dmg"));
@@ -37,6 +39,11 @@ if (winSrc) {
   const destName = winSrc.endsWith(".exe") ? "Ghost-Setup.exe" : "Ghost-Windows.zip";
   copyFileSync(winSrc, path.join(destDir, destName));
   console.log(`[sync-downloads] ${destName} ← ${path.relative(root, winSrc)}`);
+  if (!winSrc.endsWith(".exe")) {
+    console.warn(
+      "[sync-downloads] Only a portable zip was found — run npm run desktop:package:win for Ghost-Setup.exe",
+    );
+  }
 } else {
   console.warn("[sync-downloads] No Windows installer found — run: npm run desktop:package:win");
 }

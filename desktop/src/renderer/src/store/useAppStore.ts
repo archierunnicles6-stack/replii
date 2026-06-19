@@ -33,6 +33,14 @@ import {
   isPaidPlan,
 } from "./types";
 
+function pushForCurrentUser(): void {
+  const userId = useAppStore.getState().user?.id;
+  if (!userId) return;
+  void import("../services/account-sync").then(({ scheduleAccountPush }) =>
+    scheduleAccountPush(userId),
+  );
+}
+
 function saveProfileForUser(
   profiles: AccountProfiles,
   userId: string,
@@ -175,7 +183,7 @@ export const useAppStore = create<AppState>()(
             profiles = saveProfileForUser(profiles, s.user.id, s);
           }
 
-          if (isNewAccount) {
+          if (isNewAccount && !profiles[userId]) {
             const freshProfile = createDefaultAccountProfile();
             profiles = { ...profiles, [userId]: freshProfile };
             return {
@@ -228,6 +236,9 @@ export const useAppStore = create<AppState>()(
           };
         });
         notifyAppStoreChanged();
+        void import("../services/account-sync").then(({ syncAccountData }) =>
+          syncAccountData(user.id),
+        );
       },
 
       updateUser: (partial) =>
@@ -236,10 +247,18 @@ export const useAppStore = create<AppState>()(
         ),
 
       logout: () => {
-        set((s) => {
-          const profiles = s.user
-            ? saveProfileForUser(s.accountProfiles, s.user.id, s)
-            : s.accountProfiles;
+        const snapshot = get();
+        const userId = snapshot.user?.id;
+        const profiles = userId
+          ? saveProfileForUser(snapshot.accountProfiles, userId, snapshot)
+          : snapshot.accountProfiles;
+        const profile = userId ? profiles[userId] : undefined;
+        if (userId && profile) {
+          void import("../services/account-sync").then(({ pushAccountData }) =>
+            pushAccountData(userId, profile),
+          );
+        }
+        set(() => {
           const defaults = createDefaultAccountProfile();
           return {
             accountProfiles: profiles,
@@ -248,7 +267,7 @@ export const useAppStore = create<AppState>()(
             sessionActive: false,
             currentMeetingId: null,
             ...defaults,
-            welcomeComplete: s.welcomeComplete,
+            welcomeComplete: snapshot.welcomeComplete,
           };
         });
         notifyAppStoreChanged();
@@ -256,21 +275,34 @@ export const useAppStore = create<AppState>()(
 
       completeWelcome: () => set({ welcomeComplete: true }),
 
-      completeOnboarding: () => set({ onboardingComplete: true }),
+      completeOnboarding: () => {
+        set({ onboardingComplete: true });
+        notifyAppStoreChanged();
+        pushForCurrentUser();
+      },
 
-      completeShortcutTutorial: () => set({ shortcutTutorialComplete: true }),
+      completeShortcutTutorial: () => {
+        set({ shortcutTutorialComplete: true });
+        notifyAppStoreChanged();
+        pushForCurrentUser();
+      },
 
       completePaywall: () => {
         set({ paywallComplete: true });
         notifyAppStoreChanged();
+        pushForCurrentUser();
       },
 
-      setOnboardingStep: (step) => set({ onboardingStep: step }),
+      setOnboardingStep: (step) => {
+        set({ onboardingStep: step });
+        pushForCurrentUser();
+      },
 
       setActiveMode: (mode) => {
         const config = SALES_MODES.find((m) => m.id === mode) ?? SALES_MODES[0];
         set({ activeMode: mode, customSystemPrompt: config.systemPrompt });
         notifyAppStoreChanged();
+        pushForCurrentUser();
       },
 
       setCustomSystemPrompt: (prompt) => {
@@ -283,6 +315,7 @@ export const useAppStore = create<AppState>()(
           companyInfo: clampCompanyInfo({ ...s.companyInfo, ...partial }),
         }));
         notifyAppStoreChanged();
+        pushForCurrentUser();
       },
 
       addKnowledgeFile: (name) =>
@@ -307,6 +340,7 @@ export const useAppStore = create<AppState>()(
           return { settings: next };
         });
         notifyAppStoreChanged();
+        pushForCurrentUser();
       },
 
       setPlan: (plan) => {
@@ -375,16 +409,31 @@ export const useAppStore = create<AppState>()(
         };
         set((s) => ({ meetings: [meeting, ...s.meetings] }));
         notifyAppStoreChanged();
+        const userId = get().user?.id;
+        if (userId) {
+          void import("../services/account-sync").then(({ pushMeeting }) =>
+            pushMeeting(userId, meeting),
+          );
+        }
         return meeting;
       },
 
       updateMeeting: (id, partial) => {
+        let updated: MeetingRecord | undefined;
         set((s) => ({
-          meetings: s.meetings.map((m) =>
-            m.id === id ? { ...m, ...partial } : m,
-          ),
+          meetings: s.meetings.map((m) => {
+            if (m.id !== id) return m;
+            updated = { ...m, ...partial };
+            return updated;
+          }),
         }));
         notifyAppStoreChanged();
+        const userId = get().user?.id;
+        if (userId && updated) {
+          void import("../services/account-sync").then(({ pushMeeting }) =>
+            pushMeeting(userId, updated!),
+          );
+        }
       },
 
       updateSuggestion: (meetingId, suggestionId, partial) => {
@@ -403,8 +452,14 @@ export const useAppStore = create<AppState>()(
       },
 
       deleteMeeting: (id) => {
+        const userId = get().user?.id;
         set((s) => ({ meetings: s.meetings.filter((m) => m.id !== id) }));
         notifyAppStoreChanged();
+        if (userId) {
+          void import("../services/account-sync").then(({ deleteRemoteMeeting }) =>
+            deleteRemoteMeeting(userId, id),
+          );
+        }
       },
 
       getActiveModeConfig: () => {
