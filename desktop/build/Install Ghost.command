@@ -21,5 +21,5 @@ cp "$DIR/Open Ghost.command" "$LAUNCHER" 2>/dev/null || cp "$DIR/Install Ghost.c
 chmod +x "$LAUNCHER" 2>/dev/null || true
 
 echo "Opening Ghost..."
-"$DEST/Contents/MacOS/Ghost" &
+open -a "$DEST"
 osascript -e 'display notification "If macOS still blocks Ghost, use Open Ghost on your Desktop." with title "Ghost installed"'

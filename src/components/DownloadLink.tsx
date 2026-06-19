@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { getDownloadInfo } from "@/lib/download";
+import { getDownloadInfo, resolveDownloadHref } from "@/lib/download";
 import type { DownloadPlatform } from "@/lib/platform";
 import { useDownloadPlatform } from "@/hooks/useDownloadPlatform";
 
@@ -46,11 +46,12 @@ function DownloadLinkContent({
 }: DownloadLinkProps) {
   const detectedPlatform = useDownloadPlatform();
   const platform = platformProp ?? detectedPlatform;
-  const { url, label } = getDownloadInfo(platform);
+  const { label } = getDownloadInfo(platform);
+  const href = resolveDownloadHref(platform);
 
   return (
     <a
-      href={url}
+      href={href}
       className={className ?? `${baseClassName} ${sizeClassName[size]}`}
     >
       {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}
@@ -67,7 +68,7 @@ function DownloadLinkFallback({
   children,
 }: DownloadLinkProps) {
   const platform = platformProp ?? "mac";
-  const { url, label } = getDownloadInfo(platform);
+  const { label, url } = getDownloadInfo(platform);
 
   return (
     <a

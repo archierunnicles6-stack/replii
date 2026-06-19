@@ -190,11 +190,23 @@ function runGhostAudioSetup(): boolean {
   return false;
 }
 
+function getRendererIndexPath(): string {
+  return path.join(app.getAppPath(), "out/renderer/index.html");
+}
+
 function getRendererUrl(route: string): string {
   if (isDev) {
     return `${process.env.ELECTRON_RENDERER_URL}#${route}`;
   }
-  return path.join(__dirname, "../renderer/index.html");
+  return getRendererIndexPath();
+}
+
+function bindWindowTitle(win: BrowserWindow, title = "Ghost"): void {
+  win.setTitle(title);
+  win.on("page-title-updated", (event) => {
+    event.preventDefault();
+    if (!win.isDestroyed()) win.setTitle(title);
+  });
 }
 
 function loadRoute(win: BrowserWindow, route: string): void {
@@ -204,7 +216,7 @@ function loadRoute(win: BrowserWindow, route: string): void {
   }
 
   const hash = route.startsWith("/") ? route : `/${route}`;
-  win.loadFile(path.join(__dirname, "../renderer/index.html"), { hash });
+  win.loadFile(getRendererIndexPath(), { hash });
 }
 
 function sendWhenReady(win: BrowserWindow | null, channel: string, ...args: unknown[]): void {
@@ -249,6 +261,8 @@ function createDashboardWindow(): void {
     },
   });
 
+  bindWindowTitle(dashboardWindow);
+
   dashboardWindow.webContents.setBackgroundThrottling(false);
 
   dashboardWindow.once("ready-to-show", () => {
@@ -261,6 +275,10 @@ function createDashboardWindow(): void {
   });
 
   loadRoute(dashboardWindow, "/");
+
+  dashboardWindow.webContents.on("did-fail-load", (_event, code, description, url) => {
+    console.error("[ghost] Dashboard failed to load:", code, description, url);
+  });
 
   dashboardWindow.webContents.on("before-input-event", (_event, input) => {
     if (isHideShowShortcutInput(input)) handleHideShowShortcut();
@@ -996,13 +1014,13 @@ app.whenReady().then(async () => {
   });
 });
 
-// Handle deep links: ghost://auth/callback, ghost://billing/success, etc.
+// Handle deep links: ghost://auth/callback, ghost://billing/success, ghost://open, etc.
 function handleDeepLink(url: string) {
   if (!url.startsWith("ghost://")) return;
   const path = url.slice("ghost://".length).split("?")[0]?.replace(/\/$/, "") ?? "";
   if (path.startsWith("billing/")) {
     sendWhenReady(dashboardWindow, "ghost:billing-callback", url);
-  } else {
+  } else if (path.startsWith("auth/")) {
     sendWhenReady(dashboardWindow, "ghost:auth-callback", url);
   }
   if (!dashboardWindow) createDashboardWindow();

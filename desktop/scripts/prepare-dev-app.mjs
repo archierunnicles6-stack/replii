@@ -57,15 +57,27 @@ function ensureDevAppBundle() {
   }
 }
 
+function installDevElectronLauncher() {
+  const launcherScript = path.join(__dirname, "install-dev-electron-launcher.sh");
+  const electronBin = path.join(destApp, "Contents/MacOS/Electron");
+  if (!existsSync(electronBin)) return;
+  execSync(`bash "${launcherScript}" "${path.dirname(electronBin)}"`, { stdio: "inherit" });
+}
+
+function refreshDevAppBundle() {
+  tryGenerateIcons();
+  installAppIcon(destApp);
+  installDevElectronLauncher();
+  writeFileSync(iconStampFile, iconSourceStamp());
+  signMacApp(destApp);
+}
+
 if (existsSync(stampFile) && (existsSync(destApp) || existsSync(legacyDevApp))) {
   ensureDevAppBundle();
   const stamp = readFileSync(stampFile, "utf8");
   if (stamp === electronVersion) {
-    tryGenerateIcons();
-    installAppIcon(destApp);
-    writeFileSync(iconStampFile, iconSourceStamp());
-    signMacApp(destApp);
-    console.log("[ghost] Refreshed Ghost dev app icon at", destApp);
+    refreshDevAppBundle();
+    console.log("[ghost] Refreshed Ghost dev app at", destApp);
     process.exit(0);
   }
 }
@@ -108,6 +120,7 @@ addPlist(
 
 signMacApp(destApp);
 installAppIcon(destApp);
+installDevElectronLauncher();
 
 writeFileSync(stampFile, electronVersion);
 writeFileSync(iconStampFile, iconSourceStamp());

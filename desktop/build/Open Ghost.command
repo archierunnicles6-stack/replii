@@ -3,9 +3,14 @@
 set -e
 
 APP="/Applications/Ghost.app"
+DEV_APP="$(cd "$(dirname "$0")/../.ghost-dev" 2>/dev/null && pwd)/Ghost.app"
 
 if [ ! -d "$APP" ]; then
-  osascript -e 'display alert "Install Ghost first — drag Ghost.app to Applications from the DMG." as warning'
+  if [ -d "$DEV_APP" ]; then
+    open "$DEV_APP"
+    exit 0
+  fi
+  osascript -e 'display alert "Install Ghost first — open the DMG and run Install Ghost.command, or download from ghost.ai/download." as warning'
   exit 1
 fi
 

@@ -1,48 +1,35 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getDownloadAssetUrl,
+  getExternalDownloadUrl,
+  getLocalDownloadPath,
   MAC_DOWNLOAD_FILENAME,
+  RELEASE_PAGE_URL,
   WINDOWS_DOWNLOAD_FILENAME,
 } from "@/lib/download";
 import type { DownloadPlatform } from "@/lib/platform";
-
-const RELEASE_PAGE =
-  "https://github.com/archierunnicles6-stack/ghost/releases/latest";
 
 function parsePlatform(value: string | null): DownloadPlatform {
   return value === "windows" ? "windows" : "mac";
 }
 
-async function assetIsAvailable(url: string): Promise<boolean> {
-  try {
-    const head = await fetch(url, {
-      method: "HEAD",
-      redirect: "follow",
-      cache: "no-store",
-    });
-    if (head.ok) return true;
-
-    // Some CDNs reject HEAD; a tiny ranged GET still confirms the asset exists.
-    const probe = await fetch(url, {
-      method: "GET",
-      headers: { Range: "bytes=0-0" },
-      redirect: "follow",
-      cache: "no-store",
-    });
-    return probe.ok || probe.status === 206;
-  } catch {
-    return false;
-  }
-}
-
-async function handleDownload(request: NextRequest) {
-  const platform = parsePlatform(request.nextUrl.searchParams.get("platform"));
-  const assetUrl = getDownloadAssetUrl(platform);
+function localInstallerPath(platform: DownloadPlatform): string | null {
   const filename =
     platform === "windows" ? WINDOWS_DOWNLOAD_FILENAME : MAC_DOWNLOAD_FILENAME;
+  const filePath = path.join(process.cwd(), "public", "downloads", filename);
+  return existsSync(filePath) ? filePath : null;
+}
 
-  if (assetUrl.startsWith("/")) {
-    const localUrl = new URL(assetUrl, request.url);
+export async function GET(request: NextRequest) {
+  const platform = parsePlatform(request.nextUrl.searchParams.get("platform"));
+  const filename =
+    platform === "windows" ? WINDOWS_DOWNLOAD_FILENAME : MAC_DOWNLOAD_FILENAME;
+  const externalUrl = getExternalDownloadUrl(platform);
+
+  const localFile = localInstallerPath(platform);
+  if (localFile) {
+    const localUrl = new URL(getLocalDownloadPath(platform), request.url);
     const response = NextResponse.redirect(localUrl, 302);
     response.headers.set(
       "Content-Disposition",
@@ -51,28 +38,25 @@ async function handleDownload(request: NextRequest) {
     return response;
   }
 
-  const available = await assetIsAvailable(assetUrl);
-  if (!available) {
+  if (process.env.NODE_ENV === "development") {
     return NextResponse.json(
       {
-        error: "Installer not available yet",
+        error: "Installer not found locally",
+        hint: "Run npm run desktop:package && npm run sync-downloads at the repo root.",
         platform,
         filename,
-        releasePage: RELEASE_PAGE,
+        releasePage: RELEASE_PAGE_URL,
+        fallbackUrl: externalUrl,
       },
       { status: 404 },
     );
   }
 
-  const response = NextResponse.redirect(assetUrl, 302);
+  const response = NextResponse.redirect(externalUrl, 302);
   response.headers.set("Cache-Control", "public, max-age=300");
   return response;
 }
 
-export async function GET(request: NextRequest) {
-  return handleDownload(request);
-}
-
 export async function HEAD(request: NextRequest) {
-  return handleDownload(request);
+  return GET(request);
 }
