@@ -14,6 +14,16 @@ type FooterColumn = {
   links: FooterLink[];
 };
 
+type Founder = {
+  role: string;
+  name: string;
+};
+
+const founders: Founder[] = [
+  { role: "CEO & Founder", name: "Archie Runnicles" },
+  { role: "CFO & Co-founder", name: "Dylan Williams" },
+];
+
 const columns: FooterColumn[] = [
   {
     title: "Resources",
@@ -85,6 +95,22 @@ export function Footer({ className = "bg-[#f7f8fa]" }: { className?: string }) {
                   </li>
                 ))}
               </ul>
+
+              {col.title === "Resources" ? (
+                <div className="mt-8">
+                  <p className="text-[14px] font-semibold text-[#0a0a0a]">Founders</p>
+                  <ul className="mt-4 space-y-3">
+                    {founders.map((founder) => (
+                      <li key={founder.name}>
+                        <p className="text-[14px] leading-snug text-[#5f6b7a]">
+                          <span className="block text-[#0a0a0a]">{founder.role}</span>
+                          {founder.name}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
