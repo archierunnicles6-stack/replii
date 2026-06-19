@@ -46,13 +46,11 @@ function DownloadLinkContent({
 }: DownloadLinkProps) {
   const detectedPlatform = useDownloadPlatform();
   const platform = platformProp ?? detectedPlatform;
-  const { url, filename, label } = getDownloadInfo(platform);
-  const isLocal = url.startsWith("/");
+  const { url, label } = getDownloadInfo(platform);
 
   return (
     <a
       href={url}
-      {...(isLocal ? { download: filename } : {})}
       className={className ?? `${baseClassName} ${sizeClassName[size]}`}
     >
       {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}
@@ -69,13 +67,11 @@ function DownloadLinkFallback({
   children,
 }: DownloadLinkProps) {
   const platform = platformProp ?? "mac";
-  const { url, filename, label } = getDownloadInfo(platform);
-  const isLocal = url.startsWith("/");
+  const { url, label } = getDownloadInfo(platform);
 
   return (
     <a
       href={url}
-      {...(isLocal ? { download: filename } : {})}
       className={className ?? `${baseClassName} ${sizeClassName[size]}`}
     >
       {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}

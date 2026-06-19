@@ -47,6 +47,7 @@ yarn-error.log*
 /desktop/release
 /public/downloads/*.dmg
 /public/downloads/*.exe
+/public/downloads/*.zip
 
 # typescript
 *.tsbuildinfo

@@ -4,6 +4,20 @@ import { getStripe } from "@/lib/stripe";
 import { planFromStripePriceId } from "@/lib/stripe-plans";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
+function isMissingBillingColumnError(error: {
+  code?: string;
+  message?: string;
+}): boolean {
+  return (
+    error.code === "42703" &&
+    Boolean(
+      error.message?.includes("plan") ||
+        error.message?.includes("stripe_customer_id") ||
+        error.message?.includes("stripe_subscription_id"),
+    )
+  );
+}
+
 async function planFromSubscription(sub: Stripe.Subscription): Promise<string> {
   if (sub.status !== "active" && sub.status !== "trialing") return "free";
   const priceId = sub.items.data[0]?.price?.id ?? "";
@@ -101,14 +115,21 @@ export async function POST(request: Request) {
       .eq("id", userId)
       .maybeSingle();
 
+    let billingColumnsReady = true;
     if (error) {
-      return NextResponse.json({ error: "Could not load profile" }, { status: 500 });
+      if (isMissingBillingColumnError(error)) {
+        console.warn("[stripe] sync: billing columns missing on profiles — returning Stripe plan only");
+        billingColumnsReady = false;
+      } else {
+        console.error("[stripe] sync profile load error:", error);
+        return NextResponse.json({ error: "Could not load profile" }, { status: 500 });
+      }
     }
 
     let synced: { plan: string; customerId: string; subscriptionId: string | null } | null =
       null;
 
-    if (profile?.stripe_customer_id) {
+    if (billingColumnsReady && profile?.stripe_customer_id) {
       synced = await syncFromStripeCustomer(stripe, userId, profile.stripe_customer_id);
     }
 
@@ -118,6 +139,10 @@ export async function POST(request: Request) {
 
     if (!synced) {
       return NextResponse.json({ plan: profile?.plan ?? "free", synced: false });
+    }
+
+    if (!billingColumnsReady) {
+      return NextResponse.json({ plan: synced.plan, synced: false, persisted: false });
     }
 
     const { error: updateError } = await supabase
@@ -131,6 +156,10 @@ export async function POST(request: Request) {
       .eq("id", userId);
 
     if (updateError) {
+      if (isMissingBillingColumnError(updateError)) {
+        return NextResponse.json({ plan: synced.plan, synced: false, persisted: false });
+      }
+      console.error("[stripe] sync profile update error:", updateError);
       return NextResponse.json({ error: "Could not update profile" }, { status: 500 });
     }
 

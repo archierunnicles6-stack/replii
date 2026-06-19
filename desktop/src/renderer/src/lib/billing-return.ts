@@ -4,6 +4,27 @@ import { useAppStore } from "../store/useAppStore";
 
 export type PurchaseReturnTo = "dashboard" | "billing";
 
+/** HTTPS URL Stripe redirects to after checkout; opens the desktop app via /billing/success. */
+export function billingSuccessWebUrl(
+  apiBase: string,
+  plan: string,
+  returnTo: PurchaseReturnTo = "dashboard",
+): string {
+  const base = apiBase.replace(/\/$/, "");
+  const params = new URLSearchParams({ plan, to: returnTo });
+  return `${base}/billing/success?${params}`;
+}
+
+/** HTTPS URL Stripe redirects to after the billing portal. */
+export function billingPortalReturnWebUrl(
+  apiBase: string,
+  returnTo: PurchaseReturnTo = "billing",
+): string {
+  const base = apiBase.replace(/\/$/, "");
+  const params = new URLSearchParams({ to: returnTo });
+  return `${base}/billing/success?${params}`;
+}
+
 export function billingDeepLink(
   plan: string,
   returnTo: PurchaseReturnTo = "dashboard",

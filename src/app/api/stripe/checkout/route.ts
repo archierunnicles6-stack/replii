@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { normalizeBillingReturnUrl } from "@/lib/billing-return-urls";
 import {
   stripePriceIdForPlan,
   type StripeBillingInterval,
@@ -46,9 +47,10 @@ export async function POST(request: Request) {
       mode: "subscription",
       customer_email: body.email?.trim() || undefined,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url:
-        body.successUrl?.trim() ||
-        `${origin}/billing/success?plan=${encodeURIComponent(plan)}&to=billing`,
+      success_url: normalizeBillingReturnUrl(body.successUrl, origin, {
+        plan,
+        to: "dashboard",
+      }),
       cancel_url: body.cancelUrl?.trim() || `${origin}/billing/cancel`,
       client_reference_id: body.userId,
       metadata: {

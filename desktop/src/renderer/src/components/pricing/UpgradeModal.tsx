@@ -1,10 +1,13 @@
 import { PaywallPricing } from "./PaywallPricing";
+import { useBillingSync } from "../../hooks/useBillingSync";
 import { usePricingCheckout } from "../../hooks/usePricingCheckout";
 
 export function UpgradeModal({ onClose }: { onClose: () => void }) {
   const { loadingTier, error, handleSelect, handleContactSales } = usePricingCheckout({
     onComplete: onClose,
+    returnToAfterPurchase: "dashboard",
   });
+  useBillingSync();
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">

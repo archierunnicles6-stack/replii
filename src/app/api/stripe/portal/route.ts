@@ -1,6 +1,29 @@
 import { NextResponse } from "next/server";
+import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
+import { normalizeBillingReturnUrl } from "@/lib/billing-return-urls";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+
+async function resolveStripeCustomerId(
+  stripe: Stripe,
+  userId: string,
+  profileCustomerId?: string | null,
+): Promise<string | null> {
+  if (profileCustomerId) return profileCustomerId;
+
+  const sessions = await stripe.checkout.sessions.list({ limit: 25 });
+  const match = sessions.data.find(
+    (session) =>
+      session.status === "complete" &&
+      session.client_reference_id === userId &&
+      session.mode === "subscription",
+  );
+  if (!match) return null;
+
+  return typeof match.customer === "string"
+    ? match.customer
+    : match.customer?.id ?? null;
+}
 
 export async function POST(request: Request) {
   try {
@@ -28,7 +51,13 @@ export async function POST(request: Request) {
       .eq("id", body.userId)
       .maybeSingle();
 
-    if (error || !profile?.stripe_customer_id) {
+    const customerId = await resolveStripeCustomerId(
+      stripe,
+      body.userId,
+      error ? null : profile?.stripe_customer_id,
+    );
+
+    if (!customerId) {
       return NextResponse.json(
         { error: "No active subscription found for this account" },
         { status: 404 },
@@ -40,8 +69,8 @@ export async function POST(request: Request) {
       new URL(request.url).origin;
 
     const session = await stripe.billingPortal.sessions.create({
-      customer: profile.stripe_customer_id,
-      return_url: body.returnUrl?.trim() || `${origin}/billing/success?to=billing`,
+      customer: customerId,
+      return_url: normalizeBillingReturnUrl(body.returnUrl, origin, { to: "billing" }),
     });
 
     return NextResponse.json({ url: session.url });

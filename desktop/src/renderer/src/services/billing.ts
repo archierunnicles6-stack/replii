@@ -1,5 +1,8 @@
 import type { PurchaseReturnTo } from "../lib/billing-return";
-import { billingDeepLink, billingPortalDeepLink } from "../lib/billing-return";
+import {
+  billingPortalReturnWebUrl,
+  billingSuccessWebUrl,
+} from "../lib/billing-return";
 import type { Plan } from "../store/types";
 import type { BillingInterval, PricingTierId } from "../lib/pricing";
 import { pricingTierToPlan } from "../lib/pricing";
@@ -47,7 +50,7 @@ export async function startStripeCheckout(
         interval,
         userId,
         email,
-        successUrl: billingDeepLink(plan, returnTo),
+        successUrl: billingSuccessWebUrl(base, plan, returnTo),
         cancelUrl: `${base}/billing/cancel`,
       }),
     });
@@ -89,7 +92,7 @@ export async function openStripeBillingPortal(userId: string): Promise<PortalRes
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       userId,
-      returnUrl: billingPortalDeepLink("billing"),
+      returnUrl: billingPortalReturnWebUrl(base, "billing"),
     }),
   });
 

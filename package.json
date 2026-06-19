@@ -11,8 +11,9 @@
     "desktop:open": "npm run open-app --prefix desktop",
     "desktop:open:dev": "npm run open-app:dev --prefix desktop",
     "desktop:build": "npm run build --prefix desktop",
-    "desktop:package": "npm run package:mac --prefix desktop",
-    "desktop:package:win": "npm run package:win --prefix desktop"
+    "desktop:package": "npm run package:mac --prefix desktop && npm run sync-downloads",
+    "desktop:package:win": "npm run package:win --prefix desktop && npm run sync-downloads",
+    "sync-downloads": "node scripts/sync-downloads.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",
