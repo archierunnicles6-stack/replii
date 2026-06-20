@@ -7,6 +7,9 @@ node_modules/
 out/
 .tools/
 
+# Large binaries — hosted on GitHub Releases (exceed Vercel 100MB deploy limit)
+public/downloads/
+
 # Local env and tooling
 .env*
 !.env.example

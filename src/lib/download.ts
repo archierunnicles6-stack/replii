@@ -9,16 +9,15 @@ export const VERCEL_APP_ORIGIN =
   "https://ghost-eight-virid.vercel.app";
 
 export const RELEASE_PAGE_URL =
-  process.env.NEXT_PUBLIC_RELEASE_PAGE_URL?.trim() ||
-  `${VERCEL_APP_ORIGIN}/download`;
+  "https://github.com/archierunnicles6-stack/replii/releases/latest";
 
 export const MAC_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL?.trim() ||
-  `${VERCEL_APP_ORIGIN}/downloads/Replii.dmg`;
+  "https://github.com/archierunnicles6-stack/replii/releases/latest/download/Replii.dmg";
 
 export const WINDOWS_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL?.trim() ||
-  `${VERCEL_APP_ORIGIN}/downloads/Replii-Windows.zip`;
+  "https://github.com/archierunnicles6-stack/replii/releases/latest/download/Replii-Windows.zip";
 
 export const MAC_DOWNLOAD_FILENAME = "Replii.dmg";
 /** Windows portable build until NSIS installer is published. */
@@ -64,7 +63,12 @@ function isVercelHost(host: string): boolean {
 
 /** Hosts that proxy marketing pages but block /api/* (Apache ModSecurity). */
 function isLegacyMarketingHost(host: string): boolean {
-  return host === "replii.ai" || host === "www.replii.ai" || host === "ghost.ai";
+  return (
+    host === "replii.ai" ||
+    host === "www.replii.ai" ||
+    host === "ghost.ai" ||
+    host === "www.ghost.ai"
+  );
 }
 
 /** Pick the best download URL in the browser (handles broken legacy hosts). */
@@ -76,16 +80,12 @@ export function resolveDownloadHref(platform: DownloadPlatform): string {
   const host = window.location.hostname;
   const isLocal = host === "localhost" || host === "127.0.0.1";
 
-  if (isLocal) {
-    return getLocalDownloadPath(platform);
-  }
-
   if (isLegacyMarketingHost(host)) {
     return getExternalDownloadUrl(platform);
   }
 
-  if (isVercelHost(host)) {
-    return getLocalDownloadPath(platform);
+  if (isLocal || isVercelHost(host)) {
+    return getDownloadHref(platform);
   }
 
   return getExternalDownloadUrl(platform);
