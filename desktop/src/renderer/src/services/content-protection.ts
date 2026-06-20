@@ -7,11 +7,11 @@ export async function applyContentProtection(
   plan: Plan,
   invisible: boolean,
 ): Promise<boolean> {
-  if (typeof window === "undefined" || !window.ghost?.setContentProtection) {
+  if (typeof window === "undefined" || !window.replii?.setContentProtection) {
     return false;
   }
 
   await syncPlanLimitsToMain();
   const enabled = effectiveContentProtection(plan, invisible);
-  return window.ghost.setContentProtection(enabled, plan);
+  return window.replii.setContentProtection(enabled, plan);
 }

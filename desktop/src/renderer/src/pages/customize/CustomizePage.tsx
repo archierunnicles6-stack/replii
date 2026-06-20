@@ -44,8 +44,8 @@ export function CustomizePage() {
   return (
     <div className="max-w-2xl">
       <PageHeader
-        title="Customize Ghost"
-        description="Tailor Ghost for your sales motion — pick a mode, edit the system prompt, and upload playbooks."
+        title="Customize Replii"
+        description="Tailor Replii for your sales motion — pick a mode, edit the system prompt, and upload playbooks."
       />
 
       <section className="mb-8">
@@ -66,7 +66,7 @@ export function CustomizePage() {
               }}
               className={`rounded-2xl border p-4 text-left transition-all ${
                 activeMode === mode.id
-                  ? "border-ghost-400 bg-ghost-50 ring-2 ring-ghost-200"
+                  ? "border-replii-400 bg-replii-50 ring-2 ring-replii-200"
                   : "border-zinc-200 bg-white hover:border-zinc-300"
               }`}
             >
@@ -119,7 +119,7 @@ export function CustomizePage() {
           {...dropzoneProps}
           className={`mt-4 rounded-2xl border border-dashed p-8 text-center transition-colors ${
             isDragging && canUpload
-              ? "border-ghost-400 bg-ghost-50 ring-2 ring-ghost-200"
+              ? "border-replii-400 bg-replii-50 ring-2 ring-replii-200"
               : "border-zinc-300 bg-zinc-50"
           }`}
         >

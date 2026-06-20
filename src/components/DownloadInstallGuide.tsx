@@ -12,7 +12,7 @@ export function DownloadInstallGuide() {
       <div className="mt-10 space-y-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
           <h2 className="text-[13px] font-semibold text-amber-900">
-            Windows blocked or warned about Ghost?
+            Windows blocked or warned about Replii?
           </h2>
           <p className="mt-2 text-[14px] leading-relaxed text-amber-900/80">
             New apps may show SmartScreen (&quot;Windows protected your PC&quot;) or Defender
@@ -31,10 +31,10 @@ export function DownloadInstallGuide() {
               Download and run <strong>{filename}</strong>
             </li>
             <li>Follow the installer prompts (choose install location if asked)</li>
-            <li>Launch Ghost from the Start menu or desktop shortcut</li>
+            <li>Launch Replii from the Start menu or desktop shortcut</li>
             <li>Allow microphone access when prompted</li>
             <li>
-              Click <strong>Start Ghost</strong> on your next sales call
+              Click <strong>Start Replii</strong> on your next sales call
             </li>
           </ol>
         </div>
@@ -47,7 +47,7 @@ export function DownloadInstallGuide() {
 {`cd desktop
 npm install
 npm run dev            # dev
-npm run package:win    # build Ghost-Setup.exe`}
+npm run package:win    # build Replii-Setup.exe`}
           </pre>
         </div>
       </div>
@@ -57,19 +57,19 @@ npm run package:win    # build Ghost-Setup.exe`}
   return (
     <div className="mt-10 space-y-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <h2 className="text-[13px] font-semibold text-amber-900">macOS blocked Ghost?</h2>
+        <h2 className="text-[13px] font-semibold text-amber-900">macOS blocked Replii?</h2>
         <p className="mt-2 text-[14px] leading-relaxed text-amber-900/80">
           Unsigned apps show &quot;Apple could not verify&quot; or &quot;damaged&quot;. After installing to
           Applications, run this once in Terminal:
         </p>
         <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-900 p-3 text-[12px] text-zinc-100">
-{`xattr -cr /Applications/Ghost.app
-codesign --force --deep --sign - /Applications/Ghost.app
-open /Applications/Ghost.app`}
+{`xattr -cr /Applications/Replii.app
+codesign --force --deep --sign - /Applications/Replii.app
+open /Applications/Replii.app`}
         </pre>
         <p className="mt-2 text-[13px] text-amber-900/70">
-          Fastest fix: use <strong>Open Ghost.command</strong> on your Desktop (or inside the DMG).
-          Or right-click Ghost in Applications → <strong>Open</strong> → <strong>Open</strong> again.
+          Fastest fix: use <strong>Open Replii.command</strong> on your Desktop (or inside the DMG).
+          Or right-click Replii in Applications → <strong>Open</strong> → <strong>Open</strong> again.
         </p>
       </div>
 
@@ -81,11 +81,11 @@ open /Applications/Ghost.app`}
           <li>
             Download and open <strong>{filename}</strong>
           </li>
-          <li>Drag Ghost into Applications (or run Install Ghost.command)</li>
+          <li>Drag Replii into Applications (or run Install Replii.command)</li>
           <li>If blocked, use the Terminal fix above</li>
-          <li>Open Ghost — allow mic when prompted</li>
+          <li>Open Replii — allow mic when prompted</li>
           <li>
-            Click <strong>Start Ghost</strong> on your next sales call
+            Click <strong>Start Replii</strong> on your next sales call
           </li>
         </ol>
       </div>
@@ -98,7 +98,7 @@ open /Applications/Ghost.app`}
 {`cd desktop
 npm install
 npm run dev          # dev
-npm run package:mac  # build Ghost.dmg`}
+npm run package:mac  # build Replii.dmg`}
         </pre>
       </div>
     </div>

@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  title: "Ghost — Live Sales Co-pilot",
+  title: "Replii — Live Sales Co-pilot",
   description:
     "Real-time AI coaching during sales calls. Live mic, meeting tab audio, GPT suggestions, follow-ups, and recap.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    title: "Ghost",
+    title: "Replii",
     statusBarStyle: "black-translucent",
   },
 };

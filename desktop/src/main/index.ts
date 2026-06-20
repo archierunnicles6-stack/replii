@@ -91,7 +91,7 @@ function setDockIcon(): void {
   }
 }
 
-app.setName("Ghost");
+app.setName("Replii");
 
 // Prevent dev crashes when stdout/stderr pipe closes (EPIPE on console.warn).
 for (const stream of [process.stdout, process.stderr]) {
@@ -102,7 +102,7 @@ for (const stream of [process.stdout, process.stderr]) {
 
 // Dev and packaged builds share the same app name — separate userData so both can run.
 if (isDev) {
-  app.setPath("userData", path.join(app.getPath("appData"), "ghost-desktop-dev"));
+  app.setPath("userData", path.join(app.getPath("appData"), "replii-desktop-dev"));
 }
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
@@ -110,7 +110,7 @@ if (!gotSingleInstanceLock) {
   app.quit();
 }
 
-/** Desktop OAuth lands here so the browser never needs to open ghost:// directly. */
+/** Desktop OAuth lands here so the browser never needs to open replii:// directly. */
 const OAUTH_LOOPBACK_PORT = 42817;
 const OAUTH_LOOPBACK_PATH = "/auth/callback";
 
@@ -124,15 +124,15 @@ function startOAuthLoopbackServer(): void {
     }
 
     const suffix = url.slice(OAUTH_LOOPBACK_PATH.length);
-    handleDeepLink(`ghost://auth/callback${suffix}`);
+    handleDeepLink(`replii://auth/callback${suffix}`);
 
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(`<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Signed in — Ghost</title></head>
+<head><meta charset="utf-8"><title>Signed in — Replii</title></head>
 <body style="font-family:system-ui,sans-serif;text-align:center;padding:48px 24px;color:#18181b">
   <h1 style="font-size:24px;font-weight:600">Signed in</h1>
-  <p style="margin-top:12px;color:#52525b">Return to Ghost — you can close this tab.</p>
+  <p style="margin-top:12px;color:#52525b">Return to Replii — you can close this tab.</p>
 </body>
 </html>`);
   });
@@ -140,29 +140,29 @@ function startOAuthLoopbackServer(): void {
   server.on("error", (err: NodeJS.ErrnoException) => {
     if (err.code === "EADDRINUSE") {
       console.warn(
-        `[ghost] OAuth loopback :${OAUTH_LOOPBACK_PORT} in use — restart Ghost if Google sign-in fails`,
+        `[replii] OAuth loopback :${OAUTH_LOOPBACK_PORT} in use — restart Replii if Google sign-in fails`,
       );
       return;
     }
-    console.error("[ghost] OAuth loopback server error:", err);
+    console.error("[replii] OAuth loopback server error:", err);
   });
 
   server.listen(OAUTH_LOOPBACK_PORT, "127.0.0.1", () => {
     console.log(
-      `[ghost] OAuth callback http://127.0.0.1:${OAUTH_LOOPBACK_PORT}${OAUTH_LOOPBACK_PATH}`,
+      `[replii] OAuth callback http://127.0.0.1:${OAUTH_LOOPBACK_PORT}${OAUTH_LOOPBACK_PATH}`,
     );
   });
 }
 
-// Register custom protocol for OAuth callbacks (ghost://auth/callback)
+// Register custom protocol for OAuth callbacks (replii://auth/callback)
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient("ghost", process.execPath, [
+    app.setAsDefaultProtocolClient("replii", process.execPath, [
       path.resolve(process.argv[1] ?? ""),
     ]);
   }
 } else {
-  app.setAsDefaultProtocolClient("ghost");
+  app.setAsDefaultProtocolClient("replii");
 }
 
 let dashboardWindow: BrowserWindow | null = null;
@@ -252,23 +252,23 @@ function consumeCallAudioSetupFlag(): boolean {
   return true;
 }
 
-function runGhostAudioSetup(): boolean {
+function runRepliiAudioSetup(): boolean {
   if (process.platform !== "darwin") return true;
 
   const candidates = [
-    path.join(app.getAppPath(), "scripts/setup-ghost-audio.swift"),
-    path.join(__dirname, "../../scripts/setup-ghost-audio.swift"),
+    path.join(app.getAppPath(), "scripts/setup-replii-audio.swift"),
+    path.join(__dirname, "../../scripts/setup-replii-audio.swift"),
   ];
   const scriptPath = candidates.find((p) => fs.existsSync(p));
   if (!scriptPath) return false;
 
   const result = spawnSync("swift", [scriptPath], { encoding: "utf8" });
   if (result.status === 0) {
-    console.log("[ghost] Audio routing ready");
+    console.log("[replii] Audio routing ready");
     return true;
   }
 
-  console.warn("[ghost] Audio setup:", result.stderr || result.stdout);
+  console.warn("[replii] Audio setup:", result.stderr || result.stdout);
   return false;
 }
 
@@ -283,7 +283,7 @@ function getRendererUrl(route: string): string {
   return getRendererIndexPath();
 }
 
-function bindWindowTitle(win: BrowserWindow, title = "Ghost"): void {
+function bindWindowTitle(win: BrowserWindow, title = "Replii"): void {
   win.setTitle(title);
   win.on("page-title-updated", (event) => {
     event.preventDefault();
@@ -325,7 +325,7 @@ function createDashboardWindow(): void {
     height: 660,
     minWidth: 800,
     minHeight: 560,
-    title: "Ghost",
+    title: "Replii",
     ...(process.platform === "darwin"
       ? {
           titleBarStyle: "hiddenInset" as const,
@@ -359,7 +359,7 @@ function createDashboardWindow(): void {
   loadRoute(dashboardWindow, "/");
 
   dashboardWindow.webContents.on("did-fail-load", (_event, code, description, url) => {
-    console.error("[ghost] Dashboard failed to load:", code, description, url);
+    console.error("[replii] Dashboard failed to load:", code, description, url);
   });
 
   dashboardWindow.webContents.on("before-input-event", (_event, input) => {
@@ -477,7 +477,7 @@ function revealOverlay(): void {
   }
   overlayWindow.showInactive();
   isOverlayHidden = false;
-  overlayWindow.webContents.send("ghost:visibility", true);
+  overlayWindow.webContents.send("replii:visibility", true);
 }
 
 function showOverlay(): void {
@@ -503,7 +503,7 @@ function showOverlay(): void {
 function hideOverlay(): void {
   overlayWindow?.hide();
   isOverlayHidden = true;
-  overlayWindow?.webContents.send("ghost:visibility", false);
+  overlayWindow?.webContents.send("replii:visibility", false);
 }
 
 function closeOverlay(): void {
@@ -519,10 +519,10 @@ function handleHideShowShortcut(): void {
   if (now - lastHideShowShortcutAt < 120) return;
   lastHideShowShortcutAt = now;
 
-  dashboardWindow?.webContents.send("ghost:shortcut-toggle");
+  dashboardWindow?.webContents.send("replii:shortcut-toggle");
 
   if (!overlayWindow || !sessionActive) return;
-  overlayWindow.webContents.send("ghost:shortcut-toggle");
+  overlayWindow.webContents.send("replii:shortcut-toggle");
 }
 
 function isHideShowShortcutInput(input: Electron.Input): boolean {
@@ -541,12 +541,12 @@ function registerShortcuts(): void {
   const hideShowAccelerator = "CommandOrControl+\\";
   if (!globalShortcut.register(hideShowAccelerator, handleHideShowShortcut)) {
     console.warn(
-      `[ghost] Failed to register global shortcut: ${hideShowAccelerator}`,
+      `[replii] Failed to register global shortcut: ${hideShowAccelerator}`,
     );
   }
 
   globalShortcut.register("CommandOrControl+Enter", () => {
-    if (sessionActive) overlayWindow?.webContents.send("ghost:assist");
+    if (sessionActive) overlayWindow?.webContents.send("replii:assist");
   });
 
   globalShortcut.register("CommandOrControl+Left", () => {
@@ -558,7 +558,7 @@ function registerShortcuts(): void {
   });
 
   globalShortcut.register("CommandOrControl+R", () => {
-    if (sessionActive) overlayWindow?.webContents.send("ghost:clear-session");
+    if (sessionActive) overlayWindow?.webContents.send("replii:clear-session");
   });
 }
 
@@ -573,9 +573,9 @@ async function requestMicAccess(): Promise<boolean> {
 async function fixMicAccess(): Promise<boolean> {
   const granted = await requestMicAccess();
   if (!granted) return false;
-  dashboardWindow?.webContents.send("ghost:mic-granted");
-  overlayWindow?.webContents.send("ghost:mic-granted");
-  micHelperWindow?.webContents.send("ghost:mic-granted");
+  dashboardWindow?.webContents.send("replii:mic-granted");
+  overlayWindow?.webContents.send("replii:mic-granted");
+  micHelperWindow?.webContents.send("replii:mic-granted");
   return true;
 }
 
@@ -597,7 +597,7 @@ async function capturePrimaryScreenJpeg(): Promise<string | null> {
 
     return source.thumbnail.toJPEG(75).toString("base64");
   } catch (err) {
-    console.warn("[ghost] Screen capture failed:", err);
+    console.warn("[replii] Screen capture failed:", err);
     return null;
   }
 }
@@ -662,7 +662,7 @@ async function sampleBackdropLuminanceAsync(rect: {
 }
 
 function micAppDisplayName(): string {
-  return "Ghost";
+  return "Replii";
 }
 
 function createMicHelperWindow(): BrowserWindow {
@@ -673,7 +673,7 @@ function createMicHelperWindow(): BrowserWindow {
     height: 320,
     show: false,
     skipTaskbar: true,
-    title: "Ghost Microphone",
+    title: "Replii Microphone",
     backgroundColor: "#09090b",
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
@@ -699,7 +699,7 @@ function showMicHelperWindow(): void {
   const win = createMicHelperWindow();
   win.show();
   win.focus();
-  win.webContents.send("ghost:request-mic-permission");
+  win.webContents.send("replii:request-mic-permission");
 }
 
 function hideMicHelperWindow(): void {
@@ -813,53 +813,53 @@ app.whenReady().then(async () => {
   setDockIcon();
   setupMediaPermissions();
   startOAuthLoopbackServer();
-  const startupUrl = process.argv.find((arg) => arg.startsWith("ghost://"));
+  const startupUrl = process.argv.find((arg) => arg.startsWith("replii://"));
   if (startupUrl) handleDeepLink(startupUrl);
 
   createDashboardWindow();
   createMicHelperWindow();
   registerShortcuts();
 
-  ipcMain.handle("ghost:ensure-microphone", async () => fixMicAccess());
+  ipcMain.handle("replii:ensure-microphone", async () => fixMicAccess());
 
-  ipcMain.handle("ghost:get-openai-key", () => loadOpenAIKey());
+  ipcMain.handle("replii:get-openai-key", () => loadOpenAIKey());
 
-  ipcMain.handle("ghost:get-api-base-url", () => loadBillingApiBase());
+  ipcMain.handle("replii:get-api-base-url", () => loadBillingApiBase());
 
   ipcMain.handle(
-    "ghost:sample-backdrop",
+    "replii:sample-backdrop",
     async (_event, rect: { x: number; y: number; width: number; height: number }) =>
       sampleBackdropLuminanceAsync(rect),
   );
 
-  ipcMain.handle("ghost:capture-screen", async () => capturePrimaryScreenJpeg());
+  ipcMain.handle("replii:capture-screen", async () => capturePrimaryScreenJpeg());
 
-  ipcMain.handle("ghost:ensure-audio-setup", async () => true);
+  ipcMain.handle("replii:ensure-audio-setup", async () => true);
 
-  ipcMain.handle("ghost:get-mic-app-name", () => micAppDisplayName());
+  ipcMain.handle("replii:get-mic-app-name", () => micAppDisplayName());
 
-  ipcMain.handle("ghost:show-mic-helper", () => {
+  ipcMain.handle("replii:show-mic-helper", () => {
     showMicHelperWindow();
     return true;
   });
 
-  ipcMain.handle("ghost:hide-mic-helper", () => {
+  ipcMain.handle("replii:hide-mic-helper", () => {
     hideMicHelperWindow();
     return true;
   });
 
-  ipcMain.on("ghost:trigger-mock", () => {
-    micHelperWindow?.webContents.send("ghost:trigger-mock");
-    dashboardWindow?.webContents.send("ghost:trigger-mock");
+  ipcMain.on("replii:trigger-mock", () => {
+    micHelperWindow?.webContents.send("replii:trigger-mock");
+    dashboardWindow?.webContents.send("replii:trigger-mock");
   });
 
-  ipcMain.on("ghost:request-live-transcript", () => {
-    micHelperWindow?.webContents.send("ghost:request-live-transcript");
-    dashboardWindow?.webContents.send("ghost:request-live-transcript");
+  ipcMain.on("replii:request-live-transcript", () => {
+    micHelperWindow?.webContents.send("replii:request-live-transcript");
+    dashboardWindow?.webContents.send("replii:request-live-transcript");
   });
 
   /** Prefer mic-helper as transcription source; dashboard only as fallback. */
-  ipcMain.on("ghost:live-transcript-push", (event, payload) => {
+  ipcMain.on("replii:live-transcript-push", (event, payload) => {
     const fromMicHelper =
       micHelperWindow &&
       !micHelperWindow.isDestroyed() &&
@@ -867,26 +867,27 @@ app.whenReady().then(async () => {
     if (!fromMicHelper && micHelperWindow && !micHelperWindow.isDestroyed()) {
       return;
     }
-    overlayWindow?.webContents.send("ghost:live-transcript", payload);
-    dashboardWindow?.webContents.send("ghost:live-transcript", payload);
+    overlayWindow?.webContents.send("replii:live-transcript", payload);
+    dashboardWindow?.webContents.send("replii:live-transcript", payload);
   });
 
-  ipcMain.on("ghost:session-listening", (_event, listening: boolean) => {
-    micHelperWindow?.webContents.send("ghost:session-listening", listening);
-    dashboardWindow?.webContents.send("ghost:session-listening", listening);
-    overlayWindow?.webContents.send("ghost:session-listening", listening);
+  ipcMain.on("replii:session-listening", (_event, listening: boolean) => {
+    micHelperWindow?.webContents.send("replii:session-listening", listening);
+    dashboardWindow?.webContents.send("replii:session-listening", listening);
+    overlayWindow?.webContents.send("replii:session-listening", listening);
   });
 
-  ipcMain.on("ghost:clear-live-transcript", () => {
-    micHelperWindow?.webContents.send("ghost:clear-live-transcript");
-    dashboardWindow?.webContents.send("ghost:clear-live-transcript");
+  ipcMain.on("replii:clear-live-transcript", () => {
+    micHelperWindow?.webContents.send("replii:clear-live-transcript");
+    dashboardWindow?.webContents.send("replii:clear-live-transcript");
   });
 
-  ipcMain.on("ghost:generate-meeting-summary", (_event, payload) => {
-    dashboardWindow?.webContents.send("ghost:generate-meeting-summary", payload);
+  ipcMain.on("replii:generate-meeting-summary", (_event, payload) => {
+    createDashboardWindow();
+    sendWhenReady(dashboardWindow, "replii:generate-meeting-summary", payload);
   });
 
-  ipcMain.handle("ghost:get-settings", () => ({
+  ipcMain.handle("replii:get-settings", () => ({
     contentProtection,
     platform: process.platform,
     sessionActive,
@@ -894,7 +895,7 @@ app.whenReady().then(async () => {
   }));
 
   ipcMain.handle(
-    "ghost:set-content-protection",
+    "replii:set-content-protection",
     (_event, enabled: boolean, plan?: string) => {
       const limits = readPlanLimits();
       const activePlan = plan ?? limits.plan;
@@ -913,26 +914,26 @@ app.whenReady().then(async () => {
     },
   );
 
-  ipcMain.handle("ghost:resize", (_event, width: number, height: number) => {
+  ipcMain.handle("replii:resize", (_event, width: number, height: number) => {
     if (!overlayWindow || overlayMode === "active") return;
     overlayWindow.setSize(Math.round(width), Math.round(height), false);
     repositionOverlayBottomCenter();
   });
 
-  ipcMain.handle("ghost:set-overlay-mode", (_event, mode: OverlayMode) => {
+  ipcMain.handle("replii:set-overlay-mode", (_event, mode: OverlayMode) => {
     setOverlayMode(mode);
   });
 
-  ipcMain.handle("ghost:overlay-ready", () => {
+  ipcMain.handle("replii:overlay-ready", () => {
     if (overlayPendingShow) revealOverlay();
     if (sessionActive) {
-      sendWhenReady(overlayWindow, "ghost:session-started");
-      sendWhenReady(micHelperWindow, "ghost:session-started");
+      sendWhenReady(overlayWindow, "replii:session-started");
+      sendWhenReady(micHelperWindow, "replii:session-started");
     }
   });
 
   ipcMain.handle(
-    "ghost:set-ignore-mouse-events",
+    "replii:set-ignore-mouse-events",
     (_event, ignore: boolean, options?: { forward?: boolean }) => {
       if (!overlayWindow) return;
       if (ignore) {
@@ -943,20 +944,20 @@ app.whenReady().then(async () => {
     },
   );
 
-  ipcMain.handle("ghost:move-by", (_event, dx: number, dy: number) => {
+  ipcMain.handle("replii:move-by", (_event, dx: number, dy: number) => {
     moveOverlay(dx, dy);
   });
 
-  ipcMain.handle("ghost:hide", () => hideOverlay());
+  ipcMain.handle("replii:hide", () => hideOverlay());
 
-  ipcMain.handle("ghost:show", () => showOverlay());
+  ipcMain.handle("replii:show", () => showOverlay());
 
-  ipcMain.handle("ghost:trigger-shortcut-toggle", () => {
+  ipcMain.handle("replii:trigger-shortcut-toggle", () => {
     handleHideShowShortcut();
     return true;
   });
 
-  ipcMain.handle("ghost:get-displays", () =>
+  ipcMain.handle("replii:get-displays", () =>
     screen.getAllDisplays().map((d, i) => ({
       id: d.id,
       label: `Display ${i + 1}`,
@@ -964,14 +965,14 @@ app.whenReady().then(async () => {
     })),
   );
 
-  ipcMain.handle("ghost:move-to-display", (_event, displayId: number) => {
+  ipcMain.handle("replii:move-to-display", (_event, displayId: number) => {
     const display = screen.getAllDisplays().find((d) => d.id === displayId);
     if (!display || !overlayWindow) return false;
     overlayWindow.setPosition(display.bounds.x + 24, display.bounds.y + 48);
     return true;
   });
 
-  ipcMain.handle("ghost:start-session", async () => {
+  ipcMain.handle("replii:start-session", async () => {
     if (sessionActive) {
       createDashboardWindow();
       createOverlayWindow();
@@ -997,9 +998,9 @@ app.whenReady().then(async () => {
     // switches to active mode — fullscreen transparent windows with no UI
     // corrupt macOS compositing and show garbled text over the dashboard.
     showOverlay();
-    sendWhenReady(micHelperWindow, "ghost:session-started");
-    sendWhenReady(dashboardWindow, "ghost:session-started");
-    sendWhenReady(overlayWindow, "ghost:session-started");
+    sendWhenReady(micHelperWindow, "replii:session-started");
+    sendWhenReady(dashboardWindow, "replii:session-started");
+    sendWhenReady(overlayWindow, "replii:session-started");
     micHelperWindow?.webContents.setBackgroundThrottling(false);
     dashboardWindow?.webContents.setBackgroundThrottling(false);
     if (!micGranted) {
@@ -1008,21 +1009,26 @@ app.whenReady().then(async () => {
     return true;
   });
 
-  ipcMain.handle("ghost:stop-session", () => {
+  ipcMain.handle("replii:stop-session", () => {
     sessionActive = false;
     overlayMode = "pill";
     closeOverlay();
-    micHelperWindow?.webContents.send("ghost:session-stopped");
-    dashboardWindow?.webContents.send("ghost:session-stopped");
+    micHelperWindow?.webContents.send("replii:session-stopped");
+    dashboardWindow?.webContents.send("replii:session-stopped");
     return true;
   });
 
-  ipcMain.handle("ghost:open-dashboard", () => {
+  ipcMain.handle("replii:request-end-session", () => {
+    sendWhenReady(overlayWindow, "replii:request-end-session");
+    return true;
+  });
+
+  ipcMain.handle("replii:open-dashboard", () => {
     createDashboardWindow();
     return true;
   });
 
-  ipcMain.handle("ghost:toggle-dashboard", () => {
+  ipcMain.handle("replii:toggle-dashboard", () => {
     if (dashboardWindow?.isVisible()) {
       dashboardWindow.hide();
       return false;
@@ -1031,20 +1037,25 @@ app.whenReady().then(async () => {
     return true;
   });
 
-  ipcMain.handle("ghost:focus-dashboard", (_event, path?: string) => {
+  ipcMain.handle("replii:focus-dashboard", (_event, path?: string) => {
     createDashboardWindow();
-    if (path) dashboardWindow?.webContents.send("ghost:navigate", path);
+    if (path) sendWhenReady(dashboardWindow, "replii:navigate", path);
+    dashboardWindow?.show();
+    dashboardWindow?.focus();
+    if (process.platform === "darwin") {
+      app.dock?.show();
+    }
     return true;
   });
 
-  ipcMain.handle("ghost:notify-store-changed", () => {
-    dashboardWindow?.webContents.send("ghost:store-changed");
-    overlayWindow?.webContents.send("ghost:store-changed");
+  ipcMain.handle("replii:notify-store-changed", () => {
+    dashboardWindow?.webContents.send("replii:store-changed");
+    overlayWindow?.webContents.send("replii:store-changed");
     return true;
   });
 
   ipcMain.handle(
-    "ghost:sync-plan-limits",
+    "replii:sync-plan-limits",
     (_event, state: PlanLimitsState) => {
       writePlanLimits({
         plan: state.plan ?? "free",
@@ -1054,23 +1065,23 @@ app.whenReady().then(async () => {
     },
   );
 
-  ipcMain.handle("ghost:quit", () => {
+  ipcMain.handle("replii:quit", () => {
     app.quit();
   });
 
-  ipcMain.handle("ghost:open-external", (_event, url: string) => {
+  ipcMain.handle("replii:open-external", (_event, url: string) => {
     return shell.openExternal(url);
   });
 
-  ipcMain.handle("ghost:get-permission-status", () => getPermissionStatus());
+  ipcMain.handle("replii:get-permission-status", () => getPermissionStatus());
 
-  ipcMain.handle("ghost:open-permission-settings", (_event, key: PermissionKey) => {
+  ipcMain.handle("replii:open-permission-settings", (_event, key: PermissionKey) => {
     openPermissionSettings(key);
     return true;
   });
 
   ipcMain.handle(
-    "ghost:set-dashboard-layout",
+    "replii:set-dashboard-layout",
     (_event, layout: "onboarding" | "dashboard" | "paywall") => {
       if (!dashboardWindow) return false;
       if (layout === "onboarding") {
@@ -1099,14 +1110,14 @@ app.whenReady().then(async () => {
   });
 });
 
-// Handle deep links: ghost://auth/callback, ghost://billing/success, ghost://open, etc.
+// Handle deep links: replii://auth/callback, replii://billing/success, replii://open, etc.
 function handleDeepLink(url: string) {
-  if (!url.startsWith("ghost://")) return;
-  const path = url.slice("ghost://".length).split("?")[0]?.replace(/\/$/, "") ?? "";
+  if (!url.startsWith("replii://")) return;
+  const path = url.slice("replii://".length).split("?")[0]?.replace(/\/$/, "") ?? "";
   if (path.startsWith("billing/")) {
-    sendWhenReady(dashboardWindow, "ghost:billing-callback", url);
+    sendWhenReady(dashboardWindow, "replii:billing-callback", url);
   } else if (path.startsWith("auth/")) {
-    sendWhenReady(dashboardWindow, "ghost:auth-callback", url);
+    sendWhenReady(dashboardWindow, "replii:auth-callback", url);
   }
   if (!dashboardWindow) createDashboardWindow();
   else {
@@ -1124,7 +1135,7 @@ app.on("open-url", (event, url) => {
 
 // Windows/Linux: second instance carries the URL as argv
 app.on("second-instance", (_event, argv) => {
-  const url = argv.find((a) => a.startsWith("ghost://"));
+  const url = argv.find((a) => a.startsWith("replii://"));
   if (url) handleDeepLink(url);
   if (process.platform === "darwin") app.dock?.show();
   if (dashboardWindow) {

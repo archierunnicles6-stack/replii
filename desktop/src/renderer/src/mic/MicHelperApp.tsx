@@ -11,7 +11,7 @@ function MicHelperPermissionUI() {
     setVisible(true);
     setMessage("Requesting microphone…");
     try {
-      const permitted = await window.ghost?.ensureMicrophone?.();
+      const permitted = await window.replii?.ensureMicrophone?.();
       if (!permitted) {
         setStatus("denied");
         setMessage("Microphone access denied.");
@@ -31,7 +31,7 @@ function MicHelperPermissionUI() {
       setMessage("Microphone ready.");
       window.setTimeout(() => {
         setVisible(false);
-        window.ghost?.hideMicHelper?.();
+        window.replii?.hideMicHelper?.();
       }, 600);
     } catch {
       setStatus("denied");
@@ -40,14 +40,14 @@ function MicHelperPermissionUI() {
   }, []);
 
   useEffect(() => {
-    return window.ghost?.onRequestMicPermission?.(() => void requestMic());
+    return window.replii?.onRequestMicPermission?.(() => void requestMic());
   }, [requestMic]);
 
   if (!visible) return null;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-8 text-white">
-      <p className="mb-2 text-lg font-semibold">Ghost microphone</p>
+      <p className="mb-2 text-lg font-semibold">Replii microphone</p>
       <p className="mb-6 max-w-sm text-center text-sm text-zinc-400">{message}</p>
       {status === "denied" && (
         <div className="flex flex-col gap-3">
@@ -60,7 +60,7 @@ function MicHelperPermissionUI() {
           </button>
           <button
             type="button"
-            onClick={() => void window.ghost?.openPermissionSettings?.("microphone")}
+            onClick={() => void window.replii?.openPermissionSettings?.("microphone")}
             className="rounded-full border border-white/20 px-5 py-2.5 text-sm text-white"
           >
             Open System Settings

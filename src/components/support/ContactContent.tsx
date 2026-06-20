@@ -23,12 +23,12 @@ const contactOptions = [
   {
     title: "Security",
     description: "Report vulnerabilities or security concerns.",
-    email: "security@ghost.ai",
+    email: "security@replii.ai",
   },
   {
     title: "Press",
     description: "Media inquiries and press requests.",
-    email: "press@ghost.ai",
+    email: "press@replii.ai",
   },
 ];
 
@@ -39,7 +39,7 @@ export function ContactContent() {
   const [message, setMessage] = useState("");
 
   const mailtoHref = `mailto:${LEGAL.contact.support}?subject=${encodeURIComponent(
-    `[Ghost] ${topic}`,
+    `[Replii] ${topic}`,
   )}&body=${encodeURIComponent(
     `Name: ${name}\nEmail: ${email}\nTopic: ${topic}\n\n${message}`,
   )}`;

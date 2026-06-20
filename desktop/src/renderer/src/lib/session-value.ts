@@ -1,7 +1,7 @@
 import type { MeetingRecord, Plan } from "../store/types";
 import { isPaidPlan } from "../store/types";
 
-/** Session had enough Ghost value to warrant a warm upgrade nudge. */
+/** Session had enough Replii value to warrant a warm upgrade nudge. */
 export function isStrongSession(meeting: MeetingRecord): boolean {
   const suggestions = meeting.suggestions?.length ?? 0;
   const uses = meeting.suggestionUses ?? 0;
@@ -45,7 +45,7 @@ export function getWarmUpgradeMessage(meeting: MeetingRecord): string {
   if ((meeting.dealScore ?? 0) >= 60) {
     return `Deal score ${meeting.dealScore} — Pro adds deeper coaching analytics and unlimited sessions.`;
   }
-  return "Ghost is working on your calls — Pro unlocks unlimited sessions and full coaching.";
+  return "Replii is working on your calls — Pro unlocks unlimited sessions and full coaching.";
 }
 
 export function shouldShowWarmUpgrade(

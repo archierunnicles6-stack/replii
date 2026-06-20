@@ -4,7 +4,7 @@ import { LEGAL, LEGAL_ROUTES } from "@/content/legal/config";
 import { privacySections } from "@/content/legal/privacy-sections";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Ghost",
+  title: "Privacy Policy — Replii",
   description: `How ${LEGAL.productName} collects, uses, and protects your personal information.`,
 };
 
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
             Your privacy is important to us. This Privacy Policy
             (&ldquo;Policy&rdquo;) applies to services provided by{" "}
             {LEGAL.legalEntity} (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or
-            &ldquo;Ghost&rdquo;) and our website (the &ldquo;Site&rdquo;),
+            &ldquo;Replii&rdquo;) and our website (the &ldquo;Site&rdquo;),
             product pages, desktop or web applications, or other digital products
             that link to or reference this Policy (collectively, the
             &ldquo;Services&rdquo;) and explains what information we collect from
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
       }
       highlight={
         <>
-          Ghost does not sell your data or train on your data. You can email{" "}
+          Replii does not sell your data or train on your data. You can email{" "}
           <a href={`mailto:${LEGAL.contact.privacy}`} className="font-medium underline">
             {LEGAL.contact.privacy}
           </a>{" "}

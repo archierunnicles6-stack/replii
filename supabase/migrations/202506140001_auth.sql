@@ -1,4 +1,4 @@
--- Ghost auth bootstrap: profiles + signup trigger + avatar storage
+-- Replii auth bootstrap: profiles + signup trigger + avatar storage
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 

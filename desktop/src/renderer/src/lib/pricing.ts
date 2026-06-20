@@ -62,7 +62,7 @@ export const PRO_CARD_FEATURES: { icon: ProFeatureIcon; label: string }[] = [
 ];
 
 export const ENTERPRISE_SALES_MAILTO =
-  "mailto:sales@ghost.app?subject=Ghost%20Enterprise";
+  "mailto:sales@replii.app?subject=Replii%20Enterprise";
 
 export const ENTERPRISE_TAGLINE = "Custom knowledge for teams.";
 

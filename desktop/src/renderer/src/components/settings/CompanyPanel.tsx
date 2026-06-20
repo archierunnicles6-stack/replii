@@ -32,7 +32,7 @@ export function CompanyPanel() {
       <div className="mb-6 border-b border-zinc-100 pb-5">
         <h2 className="text-[15px] font-semibold text-zinc-900">Personalise</h2>
         <p className="mt-1 text-[12px] text-zinc-500">
-          Upload playbooks or battlecards. Ghost reads each file once, stores it
+          Upload playbooks or battlecards. Replii reads each file once, stores it
           locally, and uses it throughout your calls.
         </p>
       </div>
@@ -77,7 +77,7 @@ export function CompanyPanel() {
               disabled={!canUpload}
               className={`flex w-full flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                 isDragging && canUpload
-                  ? "border-ghost-400 bg-ghost-50 text-ghost-700 ring-2 ring-ghost-200"
+                  ? "border-replii-400 bg-replii-50 text-replii-700 ring-2 ring-replii-200"
                   : "border-zinc-300 bg-zinc-50/80 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-100"
               }`}
             >
@@ -105,7 +105,7 @@ export function CompanyPanel() {
 
       {knowledgeContext.trim() && (
         <p className="mt-2 text-[11px] font-medium text-emerald-600">
-          Knowledge indexed — Ghost will reference your docs in live calls.
+          Knowledge indexed — Replii will reference your docs in live calls.
         </p>
       )}
 

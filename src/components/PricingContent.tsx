@@ -129,7 +129,7 @@ function PlaceholderPlanButton({
       type="button"
       disabled
       aria-disabled="true"
-      title="Subscriptions are available in the Ghost desktop app"
+      title="Subscriptions are available in the Replii desktop app"
       className={className}
     >
       <span className="flex flex-1 items-center justify-center">{children}</span>
@@ -160,7 +160,7 @@ export function PricingContent() {
       <BillingToggle interval={interval} onChange={setInterval} />
 
       <p className="mt-6 max-w-[520px] text-center text-[13px] leading-relaxed text-zinc-500">
-        Pro subscriptions are purchased in the Ghost desktop app. Plan buttons here are for
+        Pro subscriptions are purchased in the Replii desktop app. Plan buttons here are for
         preview only.
       </p>
 

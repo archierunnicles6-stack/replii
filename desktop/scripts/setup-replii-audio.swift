@@ -2,8 +2,8 @@
 import CoreAudio
 import Foundation
 
-let ghostMultiName = "Ghost Audio"
-let ghostInputName = "Ghost Input"
+let repliiMultiName = "Replii Audio"
+let repliiInputName = "Replii Input"
 
 func statusString(_ status: OSStatus) -> String {
   if let err = SecCopyErrorMessageString(status, nil) as String? {
@@ -155,7 +155,7 @@ let speakers =
   devices.first {
     $0.name.localizedCaseInsensitiveContains("speaker") &&
       !$0.name.localizedCaseInsensitiveContains("multi") &&
-      !$0.name.localizedCaseInsensitiveContains("ghost")
+      !$0.name.localizedCaseInsensitiveContains("replii")
   }
 
 let microphone =
@@ -164,7 +164,7 @@ let microphone =
   devices.first {
     $0.name.localizedCaseInsensitiveContains("microphone") &&
       !$0.name.localizedCaseInsensitiveContains("aggregate") &&
-      !$0.name.localizedCaseInsensitiveContains("ghost")
+      !$0.name.localizedCaseInsensitiveContains("replii")
   }
 
 guard let speakers else {
@@ -176,44 +176,44 @@ guard let microphone else {
   exit(1)
 }
 
-destroyExisting(name: ghostMultiName, in: devices)
-destroyExisting(name: ghostInputName, in: devices)
+destroyExisting(name: repliiMultiName, in: devices)
+destroyExisting(name: repliiInputName, in: devices)
 
-let multiUID = "com.ghost.audio.multi-\(UUID().uuidString)"
+let multiUID = "com.replii.audio.multi-\(UUID().uuidString)"
 var status = createAggregate(
-  name: ghostMultiName,
+  name: repliiMultiName,
   uid: multiUID,
   subUIDs: [speakers.uid, blackhole.uid],
   masterUID: speakers.uid,
   stacked: 1,
 )
 if status != noErr {
-  fputs("ERROR creating Ghost Audio: \(statusString(status))\n", stderr)
+  fputs("ERROR creating Replii Audio: \(statusString(status))\n", stderr)
   exit(1)
 }
-print("Created \"\(ghostMultiName)\"")
+print("Created \"\(repliiMultiName)\"")
 
-let inputUID = "com.ghost.audio.input-\(UUID().uuidString)"
+let inputUID = "com.replii.audio.input-\(UUID().uuidString)"
 status = createAggregate(
-  name: ghostInputName,
+  name: repliiInputName,
   uid: inputUID,
   subUIDs: [blackhole.uid, microphone.uid],
   masterUID: blackhole.uid,
   stacked: 0,
 )
 if status != noErr {
-  fputs("ERROR creating Ghost Input: \(statusString(status))\n", stderr)
+  fputs("ERROR creating Replii Input: \(statusString(status))\n", stderr)
   exit(1)
 }
-print("Created \"\(ghostInputName)\"")
+print("Created \"\(repliiInputName)\"")
 
 let refreshed = listDevices()
-if setDefaultOutput(uid: ghostMultiName, devices: refreshed) {
-  print("Set system output to \"\(ghostMultiName)\"")
+if setDefaultOutput(uid: repliiMultiName, devices: refreshed) {
+  print("Set system output to \"\(repliiMultiName)\"")
 } else if setDefaultOutput(uid: multiUID, devices: refreshed) {
-  print("Set system output to \"\(ghostMultiName)\"")
+  print("Set system output to \"\(repliiMultiName)\"")
 } else {
-  fputs("WARN: Could not set default output automatically. Choose \"Ghost Audio\" in System Settings → Sound.\n", stderr)
+  fputs("WARN: Could not set default output automatically. Choose \"Replii Audio\" in System Settings → Sound.\n", stderr)
 }
 
 print("DONE")

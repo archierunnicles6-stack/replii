@@ -1,12 +1,12 @@
 import { DOWNLOAD_RELEASE_TAG } from "./download";
 import type { DownloadPlatform } from "./platform";
 
-const GITHUB_REPO = "archierunnicles6-stack/ghost";
+const GITHUB_REPO = "archierunnicles6-stack/replii";
 
 /** Preferred asset names per platform (first match wins). */
 const ASSET_PREFERENCES: Record<DownloadPlatform, string[]> = {
-  mac: ["Ghost.dmg", "Ghost-0.1.0-arm64.dmg", "Ghost-0.1.0.dmg", "Ghost.zip"],
-  windows: ["Ghost-Setup.exe", "Ghost-Windows.zip"],
+  mac: ["Replii.dmg", "Replii-0.1.0-arm64.dmg", "Replii-0.1.0.dmg", "Replii.zip"],
+  windows: ["Replii-Setup.exe", "Replii-Windows.zip"],
 };
 
 type GitHubReleaseAsset = {
@@ -25,7 +25,7 @@ const CACHE_MS = 5 * 60 * 1000;
 
 const GITHUB_HEADERS = {
   Accept: "application/vnd.github+json",
-  "User-Agent": "ghost-download",
+  "User-Agent": "replii-download",
 } as const;
 
 async function fetchReleaseAssets(

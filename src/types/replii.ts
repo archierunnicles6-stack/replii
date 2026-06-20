@@ -7,7 +7,7 @@ export interface TranscriptLine {
   timestamp: number;
 }
 
-export interface GhostSuggestion {
+export interface RepliiSuggestion {
   suggestion: string;
   health: number;
   talkRatio: number;

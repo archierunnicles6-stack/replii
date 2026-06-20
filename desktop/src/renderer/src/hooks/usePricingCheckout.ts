@@ -23,7 +23,7 @@ export function usePricingCheckout({
   const [error, setError] = useState<string | null>(null);
 
   const handleContactSales = () => {
-    void window.ghost?.openExternal?.(ENTERPRISE_SALES_MAILTO);
+    void window.replii?.openExternal?.(ENTERPRISE_SALES_MAILTO);
   };
 
   const handleSelect = async (tierId: PricingTierId, interval: BillingInterval) => {

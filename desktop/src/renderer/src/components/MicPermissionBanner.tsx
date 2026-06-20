@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { detectGhostAudioSetup, type GhostAudioSetup } from "../services/audio-capture";
+import { detectRepliiAudioSetup, type RepliiAudioSetup } from "../services/audio-capture";
 import { useAppStore } from "../store/useAppStore";
 
 export function MicPermissionBanner() {
   const audioCaptureMode = useAppStore((s) => s.audioCaptureMode);
   const setAudioCaptureMode = useAppStore((s) => s.setAudioCaptureMode);
-  const [setup, setSetup] = useState<GhostAudioSetup | null>(null);
+  const [setup, setSetup] = useState<RepliiAudioSetup | null>(null);
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
-    setSetup(await detectGhostAudioSetup());
+    setSetup(await detectRepliiAudioSetup());
   }, []);
 
   useEffect(() => {
@@ -23,13 +23,13 @@ export function MicPermissionBanner() {
   const enableMic = async () => {
     setBusy(true);
     setAudioCaptureMode("mic");
-    await window.ghost?.ensureMicrophone?.();
+    await window.replii?.ensureMicrophone?.();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       stream.getTracks().forEach((t) => t.stop());
-      await window.ghost?.hideMicHelper?.();
+      await window.replii?.hideMicHelper?.();
     } catch {
-      await window.ghost?.showMicHelper?.();
+      await window.replii?.showMicHelper?.();
     }
     setBusy(false);
     void refresh();
@@ -39,7 +39,7 @@ export function MicPermissionBanner() {
     <div className="no-drag border-b border-amber-100 bg-amber-50 px-6 py-3">
       <p className="text-[13px] font-medium text-amber-950">Turn on your microphone</p>
       <p className="mt-0.5 text-[12px] text-amber-900">
-        System Settings → Privacy &amp; Security → Microphone → enable <strong>Ghost</strong>, then click
+        System Settings → Privacy &amp; Security → Microphone → enable <strong>Replii</strong>, then click
         below.
       </p>
       <button

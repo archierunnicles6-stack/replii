@@ -20,11 +20,11 @@ export const PRICING_FAQS = [
   },
   {
     q: "How does annual billing work?",
-    a: `Pay annually and get Pro for ${proAnnualMonthly}/month (billed as ${proAnnualYearly}/year). That's ${ANNUAL_DISCOUNT_PERCENT}% off the ${proMonthly}/month price. Choose monthly or annual billing when you subscribe in the Ghost desktop app.`,
+    a: `Pay annually and get Pro for ${proAnnualMonthly}/month (billed as ${proAnnualYearly}/year). That's ${ANNUAL_DISCOUNT_PERCENT}% off the ${proMonthly}/month price. Choose monthly or annual billing when you subscribe in the Replii desktop app.`,
   },
   {
     q: "Can I upgrade or downgrade my plan?",
-    a: "Yes. Upgrade to Pro anytime from the Ghost desktop app (Settings → Billing or during onboarding). Subscriptions cannot be purchased on the website. If you downgrade, you'll keep Pro access until the end of your current billing period, then move back to Starter.",
+    a: "Yes. Upgrade to Pro anytime from the Replii desktop app (Settings → Billing or during onboarding). Subscriptions cannot be purchased on the website. If you downgrade, you'll keep Pro access until the end of your current billing period, then move back to Starter.",
   },
   {
     q: "What payment methods do you accept?",
@@ -36,6 +36,6 @@ export const PRICING_FAQS = [
   },
   {
     q: "Do you offer refunds?",
-    a: "If you're not satisfied within the first 14 days of a Pro subscription, contact us at support@ghost.ai and we'll issue a full refund — no questions asked.",
+    a: "If you're not satisfied within the first 14 days of a Pro subscription, contact us at support@replii.ai and we'll issue a full refund — no questions asked.",
   },
 ] as const;

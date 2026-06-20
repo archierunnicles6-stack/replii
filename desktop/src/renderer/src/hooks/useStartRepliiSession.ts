@@ -7,7 +7,7 @@ import {
 } from "../store/types";
 import { syncPlanLimitsToMain, useAppStore } from "../store/useAppStore";
 
-export function useStartGhostSession() {
+export function useStartRepliiSession() {
   const plan = useAppStore((s) => s.plan);
   const freeOverlaySecondsUsed = useAppStore((s) => s.freeOverlaySecondsUsed);
   const sessionActive = useAppStore((s) => s.sessionActive);
@@ -25,35 +25,35 @@ export function useStartGhostSession() {
   const startSession = useCallback(async () => {
     const state = useAppStore.getState();
     if (state.sessionActive) {
-      void window.ghost?.show?.();
+      void window.replii?.show?.();
       return true;
     }
 
     const { plan: currentPlan, freeOverlaySecondsUsed: used } = state;
     if (!canStartSession(currentPlan, used)) {
-      console.warn("[ghost] Cannot start — free overlay time limit reached.");
+      console.warn("[replii] Cannot start — free overlay time limit reached.");
       return false;
     }
 
     await syncPlanLimitsToMain();
 
-    const permissions = await window.ghost?.getPermissionStatus?.();
+    const permissions = await window.replii?.getPermissionStatus?.();
     if (permissions && !permissions.microphone) {
-      const granted = await window.ghost?.ensureMicrophone?.();
+      const granted = await window.replii?.ensureMicrophone?.();
       if (!granted) {
-        await window.ghost?.showMicHelper?.();
+        await window.replii?.showMicHelper?.();
         return false;
       }
     }
 
-    if (!window.ghost?.startSession) {
-      console.error("[ghost] startSession unavailable — run inside the Electron app.");
+    if (!window.replii?.startSession) {
+      console.error("[replii] startSession unavailable — run inside the Electron app.");
       return false;
     }
 
-    const started = await window.ghost.startSession();
+    const started = await window.replii.startSession();
     if (!started) {
-      console.warn("[ghost] Session start blocked — check free overlay time limit.");
+      console.warn("[replii] Session start blocked — check free overlay time limit.");
       return false;
     }
 

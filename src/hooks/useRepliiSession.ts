@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { startMockConversation } from "@/lib/mock-audio";
-import type { TranscriptLine } from "@/types/ghost";
+import type { TranscriptLine } from "@/types/replii";
 import { useTabAudio } from "@/hooks/useTabAudio";
 import { useWebSpeech } from "@/hooks/useWebSpeech";
 
@@ -18,7 +18,7 @@ function mergeLines(...groups: TranscriptLine[][]): TranscriptLine[] {
   );
 }
 
-export function useGhostSession(active: boolean, mode: SessionMode) {
+export function useRepliiSession(active: boolean, mode: SessionMode) {
   const mic = useWebSpeech(active && mode === "live", "You");
   const tab = useTabAudio(active && mode === "live");
 

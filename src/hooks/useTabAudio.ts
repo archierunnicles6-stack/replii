@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { normalizeTranscriptText } from "@/lib/transcript";
-import type { TranscriptLine } from "@/types/ghost";
+import type { TranscriptLine } from "@/types/replii";
 
 const CHUNK_MS = 2000;
 const MIN_BYTES = 80;

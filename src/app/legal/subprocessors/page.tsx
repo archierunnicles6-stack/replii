@@ -4,7 +4,7 @@ import { LEGAL, LEGAL_ROUTES } from "@/content/legal/config";
 import { subprocessors } from "@/content/legal/subprocessors";
 
 export const metadata: Metadata = {
-  title: "Subprocessors — Ghost",
+  title: "Subprocessors — Replii",
   description: `Third-party subprocessors used by ${LEGAL.productName}.`,
 };
 

@@ -90,7 +90,7 @@ export async function bootstrapOpenAIKey(): Promise<string | undefined> {
   }
 
   if (!bootstrapPromise) {
-    bootstrapPromise = window.ghost
+    bootstrapPromise = window.replii
       ?.getOpenAIKey?.()
       .then((key) => {
         const trimmed = key?.trim();
@@ -138,7 +138,7 @@ export async function transcribeAudioChunk(
     });
 
     if (!res.ok) {
-      console.warn("[ghost] Whisper failed:", res.status, await res.text().catch(() => ""));
+      console.warn("[replii] Whisper failed:", res.status, await res.text().catch(() => ""));
       return null;
     }
 
@@ -147,7 +147,7 @@ export async function transcribeAudioChunk(
     if (!text || isLikelyWhisperHallucination(text, data.segments)) return null;
     return text;
   } catch (err) {
-    console.warn("[ghost] Whisper error:", err);
+    console.warn("[replii] Whisper error:", err);
     return null;
   }
 }

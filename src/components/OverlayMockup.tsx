@@ -75,16 +75,16 @@ function ResponsePanel() {
 
       <div className="space-y-3 text-[13px] leading-[1.65] text-[#3f3f46]">
         <p>
-          I can see you&apos;re currently viewing the Ghost website homepage.
-          This page introduces Ghost as an AI assistant that provides real-time
+          I can see you&apos;re currently viewing the Replii website homepage.
+          This page introduces Replii as an AI assistant that provides real-time
           help during meetings, interviews, sales calls, and other live
           conversations.
         </p>
 
         <div>
-          <p className="font-semibold text-[#0a0a0a]">What is Ghost?</p>
+          <p className="font-semibold text-[#0a0a0a]">What is Replii?</p>
           <p className="mt-1">
-            Ghost is a desktop AI coach that runs alongside your calls,
+            Replii is a desktop AI coach that runs alongside your calls,
             providing real-time suggestions and logging every session for
             manager review.
           </p>

@@ -32,7 +32,7 @@ export function WelcomePage() {
                 draggable={false}
               />
               <h1 className="min-w-0 break-words text-[34px] font-semibold leading-[1.15] tracking-[-0.025em] text-zinc-900">
-                Welcome to Ghost
+                Welcome to Replii
               </h1>
               <p className="mt-3 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500">
                 The real-time AI sales co-pilot

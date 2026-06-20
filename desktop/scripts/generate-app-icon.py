@@ -55,7 +55,7 @@ def make_macos_icon(src: Image.Image) -> Image.Image:
 def main() -> None:
     source_candidates = [
         SRC,
-        *([Path(os.environ["GHOST_ICON_SOURCE"])] if os.environ.get("GHOST_ICON_SOURCE") else []),
+        *([Path(os.environ["REPLII_ICON_SOURCE"])] if os.environ.get("REPLII_ICON_SOURCE") else []),
         ICON_OUT,
     ]
 
@@ -78,11 +78,11 @@ def main() -> None:
     icon = make_macos_icon(raw)
 
     icon.save(ICON_OUT, "PNG", optimize=True)
-    icon.save(ASSETS / "ghost-icon.png", "PNG", optimize=True)
+    icon.save(ASSETS / "replii-icon.png", "PNG", optimize=True)
     icon.save(PUBLIC / "app-icon.png", "PNG", optimize=True)
     icon.save(PUBLIC / "apple-touch-icon.png", "PNG", optimize=True)
 
-    print(f"[ghost] Generated app icon from {source}")
+    print(f"[replii] Generated app icon from {source}")
     print(f"  canvas={icon.width}x{icon.height}")
 
 

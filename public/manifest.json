@@ -1,6 +1,6 @@
 {
-  "name": "Ghost",
-  "short_name": "Ghost",
+  "name": "Replii",
+  "short_name": "Replii",
   "description": "Live AI sales co-pilot — real-time coaching during calls",
   "start_url": "/app",
   "display": "standalone",

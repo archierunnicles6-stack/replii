@@ -9,19 +9,25 @@ export function useOverlayClickThrough(
 ) {
   useEffect(() => {
     if (!active) {
-      void window.ghost?.setIgnoreMouseEvents?.(false);
+      void window.replii?.setIgnoreMouseEvents?.(false);
       return;
     }
 
-    void window.ghost?.setIgnoreMouseEvents?.(true, { forward: true });
+    void window.replii?.setIgnoreMouseEvents?.(true, { forward: true });
 
     const isOverZone = (x: number, y: number) => {
+      const padding = 16;
       const zones = topPanelHidden ? [controlBarRef] : [topPanelRef, controlBarRef];
       return zones.some((ref) => {
         const el = ref.current;
         if (!el) return false;
         const rect = el.getBoundingClientRect();
-        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        return (
+          x >= rect.left - padding &&
+          x <= rect.right + padding &&
+          y >= rect.top - padding &&
+          y <= rect.bottom + padding
+        );
       });
     };
 
@@ -31,13 +37,13 @@ export function useOverlayClickThrough(
       const next = isOverZone(x, y);
       if (next === overZone) return;
       overZone = next;
-      void window.ghost?.setIgnoreMouseEvents?.(!next, { forward: true });
+      void window.replii?.setIgnoreMouseEvents?.(!next, { forward: true });
     };
 
     const onMove = (e: MouseEvent) => update(e.clientX, e.clientY);
     const onLeave = () => {
       overZone = false;
-      void window.ghost?.setIgnoreMouseEvents?.(true, { forward: true });
+      void window.replii?.setIgnoreMouseEvents?.(true, { forward: true });
     };
 
     window.addEventListener("mousemove", onMove);
@@ -46,7 +52,7 @@ export function useOverlayClickThrough(
     return () => {
       window.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseleave", onLeave);
-      void window.ghost?.setIgnoreMouseEvents?.(false);
+      void window.replii?.setIgnoreMouseEvents?.(false);
     };
   }, [active, topPanelHidden, topPanelRef, controlBarRef]);
 }

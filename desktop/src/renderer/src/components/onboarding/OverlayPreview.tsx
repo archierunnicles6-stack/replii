@@ -1,5 +1,5 @@
 import { ActionIcon, KeyHint, QUICK_ACTIONS } from "../../overlay/overlay-ui";
-import { GhostLogo } from "../ui";
+import { RepliiLogo } from "../ui";
 
 export function OverlayPreview({
   showTagline = true,
@@ -12,7 +12,7 @@ export function OverlayPreview({
     <div className="flex w-full max-w-[480px] shrink-0 flex-col items-center">
       <div className="flex items-center gap-0.5 rounded-full border border-black/[0.08] bg-white/90 px-1.5 py-1 shadow-[0_4px_24px_rgba(0,0,0,0.10)] backdrop-blur-xl">
         <div className="pl-0.5">
-          <GhostLogo />
+          <RepliiLogo />
         </div>
         <span className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-gray-600">
           Hide

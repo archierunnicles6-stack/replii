@@ -20,7 +20,7 @@ export function SessionMicBridge() {
 
   const pushNow = () => {
     const t = transcriptionRef.current;
-    window.ghost?.pushLiveTranscript?.({
+    window.replii?.pushLiveTranscript?.({
       lines: t.lines,
       interim: t.interim,
       error: t.error,
@@ -43,10 +43,10 @@ export function SessionMicBridge() {
     };
     const onStopped = () => setSessionActive(false);
 
-    const offStarted = window.ghost?.onSessionStarted?.(onStarted);
-    const offStopped = window.ghost?.onSessionStopped?.(onStopped);
+    const offStarted = window.replii?.onSessionStarted?.(onStarted);
+    const offStopped = window.replii?.onSessionStopped?.(onStopped);
 
-    void window.ghost?.getSettings?.().then((s) => {
+    void window.replii?.getSettings?.().then((s) => {
       if (s.sessionActive) onStarted();
     });
 
@@ -57,15 +57,15 @@ export function SessionMicBridge() {
   }, [setSessionActive]);
 
   useEffect(() => {
-    return window.ghost?.onSessionListening?.((active) => setListening(active));
+    return window.replii?.onSessionListening?.((active) => setListening(active));
   }, []);
 
   useEffect(() => {
-    return window.ghost?.onRequestLiveTranscript?.(() => pushNow());
+    return window.replii?.onRequestLiveTranscript?.(() => pushNow());
   }, []);
 
   useEffect(() => {
-    return window.ghost?.onClearLiveTranscript?.(() => transcriptionRef.current.clear());
+    return window.replii?.onClearLiveTranscript?.(() => transcriptionRef.current.clear());
   }, []);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export function SessionMicBridge() {
     if (!sessionActive || !transcription.error) return;
 
     const retry = window.setInterval(() => {
-      void window.ghost?.ensureMicrophone?.().then((granted) => {
+      void window.replii?.ensureMicrophone?.().then((granted) => {
         if (granted) pushNow();
       });
     }, 2000);

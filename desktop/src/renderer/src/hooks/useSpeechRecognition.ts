@@ -150,7 +150,7 @@ export function useSpeechRecognition(
       if (event.error === "no-speech" || event.error === "aborted") return;
 
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        void window.ghost?.getPermissionStatus?.().then((status) => {
+        void window.replii?.getPermissionStatus?.().then((status) => {
           if (status?.microphone) {
             // Web Speech often false-positives in Electron when macOS mic is already granted.
             setError(null);
@@ -203,10 +203,10 @@ export function useSpeechRecognition(
     if (!sessionStartRef.current) sessionStartRef.current = Date.now();
 
     void (async () => {
-      await window.ghost?.ensureMicrophone?.();
+      await window.replii?.ensureMicrophone?.();
       if (!activeRef.current || !recognitionRef.current) return;
 
-      const status = await window.ghost?.getPermissionStatus?.();
+      const status = await window.replii?.getPermissionStatus?.();
       if (!status?.microphone) {
         setError("not-allowed");
         return;

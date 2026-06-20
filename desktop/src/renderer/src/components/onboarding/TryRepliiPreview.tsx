@@ -1,6 +1,6 @@
-import { GhostLogo } from "../ui";
+import { RepliiLogo } from "../ui";
 
-export function TryGhostPreview({
+export function TryRepliiPreview({
   overlayVisible = true,
 }: {
   overlayVisible?: boolean;
@@ -43,7 +43,7 @@ function ListeningPillPreview() {
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 10px rgba(0,0,0,0.22)",
         }}
       >
-        <GhostLogo className="h-4 w-4" />
+        <RepliiLogo className="h-4 w-4" />
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <span className="shrink-0 text-[14px] font-semibold leading-none tracking-[-0.01em] text-zinc-800">

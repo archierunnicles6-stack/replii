@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { completeOAuthCallback } from "../lib/auth-callback";
 
-/** Handle ghost://auth/callback deep links after Google OAuth (app-wide). */
+/** Handle replii://auth/callback deep links after Google OAuth (app-wide). */
 export function useAuthCallback() {
   const navigate = useNavigate();
   const handlingRef = useRef(false);
@@ -29,7 +29,7 @@ export function useAuthCallback() {
   );
 
   useEffect(() => {
-    return window.ghost?.onAuthCallback?.((url) => {
+    return window.replii?.onAuthCallback?.((url) => {
       void handleAuthCallback(url);
     });
   }, [handleAuthCallback]);

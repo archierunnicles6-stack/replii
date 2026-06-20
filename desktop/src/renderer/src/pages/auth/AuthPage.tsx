@@ -34,7 +34,7 @@ export function AuthPage() {
   const configured = isSupabaseConfigured();
 
   useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("onboarding");
+    void window.replii?.setDashboardLayout?.("onboarding");
     if (!welcomeComplete) navigate("/welcome", { replace: true });
   }, [welcomeComplete, navigate]);
 
@@ -126,7 +126,7 @@ export function AuthPage() {
   );
 
   useEffect(() => {
-    return window.ghost?.onAuthCallback?.((url) => {
+    return window.replii?.onAuthCallback?.((url) => {
       void handleOAuthCallback(url);
     });
   }, [handleOAuthCallback]);
@@ -169,7 +169,7 @@ export function AuthPage() {
       });
       if (error) throw error;
       if (data.url) {
-        await window.ghost?.openExternal?.(data.url);
+        await window.replii?.openExternal?.(data.url);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Google sign-in failed");
@@ -263,8 +263,8 @@ export function AuthPage() {
       </h1>
       <p className="mt-2 text-[14px] text-zinc-500">
         {mode === "signup"
-          ? "Start closing more deals with Ghost"
-          : "Sign in to your Ghost account"}
+          ? "Start closing more deals with Replii"
+          : "Sign in to your Replii account"}
       </p>
 
       <button

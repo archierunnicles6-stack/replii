@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { normalizeTranscriptText, speechLangFromSetting } from "@/lib/transcript";
-import type { Speaker, TranscriptLine } from "@/types/ghost";
+import type { Speaker, TranscriptLine } from "@/types/replii";
 
 interface SpeechRecognitionEvent extends Event {
   resultIndex: number;

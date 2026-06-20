@@ -17,6 +17,7 @@ export function DashboardTopBar({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const user = useAppStore((s) => s.user);
+  const sessionActive = useAppStore((s) => s.sessionActive);
   const pendingSettingsSection = useAppStore((s) => s.pendingSettingsSection);
   const clearPendingSettingsOpen = useAppStore((s) => s.clearPendingSettingsOpen);
 
@@ -145,6 +146,16 @@ export function DashboardTopBar({
                 className="h-9 w-full select-text rounded-full border border-zinc-200/80 bg-white pl-10 pr-4 text-[13px] text-zinc-900 caret-zinc-900 outline-none transition-shadow placeholder:text-zinc-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
               />
             </div>
+
+            {sessionActive ? (
+              <button
+                type="button"
+                onClick={() => void window.replii?.requestEndSession?.()}
+                className="shrink-0 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100"
+              >
+                End session
+              </button>
+            ) : null}
 
             <div className="relative shrink-0">
               {avatarButton}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * End-to-end smoke test for Ghost audio + suggestion pipeline.
+ * End-to-end smoke test for Replii audio + suggestion pipeline.
  * Run: node scripts/test-audio-suggestions.mjs
  */
 import { execSync, spawnSync } from "node:child_process";
@@ -99,7 +99,7 @@ function parseSuggestionJson(raw) {
   };
 }
 
-async function getGhostSuggestion(apiKey, prospectText, transcript = []) {
+async function getRepliiSuggestion(apiKey, prospectText, transcript = []) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -130,7 +130,7 @@ async function getGhostSuggestion(apiKey, prospectText, transcript = []) {
   return parsed;
 }
 
-async function streamGhostSuggestion(apiKey, prospectText, transcript = []) {
+async function streamRepliiSuggestion(apiKey, prospectText, transcript = []) {
   const system = `You are a real-time meeting copilot embedded in a live coaching overlay.
 The rep sells: ${DEFAULT_PRODUCT}
 Known objections: ${DEFAULT_OBJECTIONS}
@@ -249,7 +249,7 @@ function fail(name, err) {
 }
 
 async function main() {
-  console.log("\nGhost audio + suggestions smoke test\n");
+  console.log("\nReplii audio + suggestions smoke test\n");
 
   let apiKey;
   try {
@@ -261,11 +261,11 @@ async function main() {
   }
 
   // 1. Suggestion API — all test lines
-  console.log("\n1. Ghost suggestions (JSON API)");
+  console.log("\n1. Replii suggestions (JSON API)");
   const transcript = MOCK_CONVERSATION.slice(0, 4);
   for (const line of TEST_PROSPECT_LINES) {
     try {
-      const result = await getGhostSuggestion(apiKey, line, transcript);
+      const result = await getRepliiSuggestion(apiKey, line, transcript);
       assert(result.suggestion.length > 5, "suggestion too short");
       assert(result.suggestion.split(/\s+/).length <= 30, "suggestion too long");
       assert(result.health >= 0 && result.health <= 100, "invalid health");
@@ -278,7 +278,7 @@ async function main() {
   // 2. Streaming suggestion
   console.log("\n2. Streaming suggestion");
   try {
-    const streamed = await streamGhostSuggestion(
+    const streamed = await streamRepliiSuggestion(
       apiKey,
       "What makes you different from Gong?",
       transcript,
@@ -343,7 +343,7 @@ async function main() {
     accumulated.push(entry);
     if (entry.speaker !== "Prospect") continue;
     try {
-      const result = await streamGhostSuggestion(apiKey, entry.text, accumulated);
+      const result = await streamRepliiSuggestion(apiKey, entry.text, accumulated);
       assert(result.length > 5, "empty suggestion");
       pass(`mock line: "${entry.text.slice(0, 42)}…"`, `"${result}"`);
     } catch (err) {

@@ -17,7 +17,7 @@ export const termsSections: LegalSection[] = [
         <LegalP>
           These Terms of Service (&ldquo;<LegalStrong>Terms</LegalStrong>&rdquo;)
           constitute a legally binding agreement between you and the operator of{" "}
-          {LEGAL.productName} (&ldquo;<LegalStrong>Ghost</LegalStrong>,&rdquo;
+          {LEGAL.productName} (&ldquo;<LegalStrong>Replii</LegalStrong>,&rdquo;
           &ldquo;<LegalStrong>we</LegalStrong>,&rdquo; &ldquo;
           <LegalStrong>us</LegalStrong>,&rdquo; or &ldquo;
           <LegalStrong>our</LegalStrong>&rdquo;) governing your access to and
@@ -31,7 +31,7 @@ export const termsSections: LegalSection[] = [
           &ldquo;Sign up,&rdquo; or otherwise accessing or using the Service,
           you acknowledge that you have read, understood, and agree to be bound
           by these Terms and our{" "}
-          <a href={LEGAL_ROUTES.privacy} className="text-ghost-600 underline">
+          <a href={LEGAL_ROUTES.privacy} className="text-replii-600 underline">
             Privacy Policy
           </a>
           , which is incorporated by reference. If you do not agree, do not use
@@ -66,7 +66,7 @@ export const termsSections: LegalSection[] = [
           discretion, including for violations of these Terms or our{" "}
           <a
             href={LEGAL_ROUTES.acceptableUse}
-            className="text-ghost-600 underline"
+            className="text-replii-600 underline"
           >
             Acceptable Use Policy
           </a>
@@ -127,7 +127,7 @@ export const termsSections: LegalSection[] = [
         </LegalP>
         <LegalP>
           The Service is designed to operate alongside third-party communication
-          platforms (e.g., video conferencing, telephony, CRM tools). Ghost is
+          platforms (e.g., video conferencing, telephony, CRM tools). Replii is
           not affiliated with, endorsed by, or responsible for those platforms.
           Your use of third-party services remains subject to their terms and
           policies.
@@ -155,7 +155,7 @@ export const termsSections: LegalSection[] = [
           before relying on or communicating them to any person.
         </LegalP>
         <LegalP>
-          Ghost does not provide legal, financial, tax, medical, compliance,
+          Replii does not provide legal, financial, tax, medical, compliance,
           investment, or other professional advice. AI outputs are informational
           tools only. You bear full responsibility for statements made during
           sales calls, negotiations, contracts, disclosures, and regulatory
@@ -187,7 +187,7 @@ export const termsSections: LegalSection[] = [
         <LegalP>
           Before using {LEGAL.productName} during any call or meeting, you must
           obtain all required consents and provide all required notices to
-          participants. Ghost does not obtain consent on your behalf.
+          participants. Replii does not obtain consent on your behalf.
         </LegalP>
         <LegalP>
           You agree not to use the Service to covertly record, transcribe, or
@@ -236,7 +236,7 @@ export const termsSections: LegalSection[] = [
           Your use of the Service must comply with our{" "}
           <a
             href={LEGAL_ROUTES.acceptableUse}
-            className="text-ghost-600 underline"
+            className="text-replii-600 underline"
           >
             Acceptable Use Policy
           </a>
@@ -282,7 +282,7 @@ export const termsSections: LegalSection[] = [
           configuration (&ldquo;<LegalStrong>User Content</LegalStrong>&rdquo;).
         </LegalP>
         <LegalP>
-          You grant Ghost a worldwide, non-exclusive, royalty-free license to
+          You grant Replii a worldwide, non-exclusive, royalty-free license to
           host, store, reproduce, process, transmit, and display User Content
           solely to operate, maintain, secure, and improve the Service, comply
           with law, and enforce these Terms. Where you configure third-party AI
@@ -298,12 +298,12 @@ export const termsSections: LegalSection[] = [
   },
   {
     id: "intellectual-property",
-    title: "Ghost Intellectual Property",
+    title: "Replii Intellectual Property",
     content: (
       <>
         <LegalP>
           The Service, including software, branding, design, documentation, and
-          all related intellectual property, is owned by Ghost or its licensors
+          all related intellectual property, is owned by Replii or its licensors
           and protected by applicable laws. Except for the limited license
           granted herein, no rights are transferred to you.
         </LegalP>
@@ -351,7 +351,7 @@ export const termsSections: LegalSection[] = [
           those services is subject to their terms and privacy policies.
         </LegalP>
         <LegalP>
-          Ghost is not responsible for third-party services, outages, data
+          Replii is not responsible for third-party services, outages, data
           handling practices, or changes to third-party terms. Availability of
           integrations may change without notice.
         </LegalP>
@@ -387,7 +387,7 @@ export const termsSections: LegalSection[] = [
             AVAILABLE&rdquo; WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS,
             IMPLIED, STATUTORY, OR OTHERWISE.
           </LegalStrong>{" "}
-          Ghost disclaims all warranties, including merchantability, fitness for
+          Replii disclaims all warranties, including merchantability, fitness for
           a particular purpose, title, non-infringement, accuracy, and quiet
           enjoyment.
         </LegalP>
@@ -410,7 +410,7 @@ export const termsSections: LegalSection[] = [
       <>
         <LegalP>
           <LegalStrong>
-            TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE GHOST OPERATOR AND ITS
+            TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE REPLII OPERATOR AND ITS
             CONTRACTORS, AGENTS, AFFILIATES, AND LICENSORS WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL,
             EXEMPLARY, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUE,
             DATA, GOODWILL, BUSINESS OPPORTUNITY, OR REPUTATION, ARISING FROM OR
@@ -420,10 +420,10 @@ export const termsSections: LegalSection[] = [
         </LegalP>
         <LegalP>
           <LegalStrong>
-            TO THE MAXIMUM EXTENT PERMITTED BY LAW, GHOST&apos;S TOTAL
+            TO THE MAXIMUM EXTENT PERMITTED BY LAW, REPLII&apos;S TOTAL
             AGGREGATE LIABILITY FOR ALL CLAIMS ARISING OUT OF OR RELATING TO THE
             SERVICE OR THESE TERMS WILL NOT EXCEED THE GREATER OF (A) THE AMOUNT
-            YOU PAID TO GHOST FOR THE SERVICE IN THE TWELVE (12) MONTHS BEFORE
+            YOU PAID TO REPLII FOR THE SERVICE IN THE TWELVE (12) MONTHS BEFORE
             THE EVENT GIVING RISE TO LIABILITY, OR (B) ONE HUNDRED POUNDS
             STERLING (£100).
           </LegalStrong>
@@ -441,7 +441,7 @@ export const termsSections: LegalSection[] = [
     content: (
       <>
         <LegalP>
-          You will defend, indemnify, and hold harmless the Ghost operator and
+          You will defend, indemnify, and hold harmless the Replii operator and
           its contractors, agents, affiliates, and licensors from and against any claims, damages, losses, liabilities, costs, and expenses
           (including reasonable attorneys&apos; fees) arising out of or related
           to:
@@ -512,7 +512,7 @@ export const termsSections: LegalSection[] = [
         </LegalP>
         <LegalP>
           <LegalStrong>
-            CLASS ACTION WAIVER: YOU AND GHOST AGREE THAT EACH MAY BRING CLAIMS
+            CLASS ACTION WAIVER: YOU AND REPLII AGREE THAT EACH MAY BRING CLAIMS
             AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT
             AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS, COLLECTIVE,
             REPRESENTATIVE, OR PRIVATE ATTORNEY GENERAL PROCEEDING.
@@ -582,7 +582,7 @@ export const termsSections: LegalSection[] = [
         <LegalP>
           These Terms, together with the Privacy Policy, Acceptable Use Policy,
           and any order forms or supplemental terms, constitute the entire
-          agreement between you and Ghost regarding the Service.
+          agreement between you and Replii regarding the Service.
         </LegalP>
         <LegalP>
           If any provision is unenforceable, the remainder remains in effect.

@@ -36209,33 +36209,33 @@ function salesModeShortLabel(mode) {
 const SALES_MODES = [
   {
     id: "sales",
-    name: "Ghost for Sales",
+    name: "Replii for Sales",
     description: "General sales call coaching — objections, discovery, closing.",
-    systemPrompt: "You are Ghost, an elite sales coach on a live call. Use LAARC for objections (Listen, Acknowledge, Ask, Respond, Confirm). Answer direct questions factually first, then tie back to value. Give concise lines the rep can say verbatim."
+    systemPrompt: "You are Replii, an elite sales coach on a live call. Use LAARC for objections (Listen, Acknowledge, Ask, Respond, Confirm). Answer direct questions factually first, then tie back to value. Give concise lines the rep can say verbatim."
   },
   {
     id: "discovery",
     name: "Discovery Calls",
     description: "Qualify pain, budget, authority, and timeline.",
-    systemPrompt: "You are Ghost coaching discovery. Ask open questions, quantify pain and impact, map authority and timeline (BANT/MEDDIC). Never pitch before the problem is clear. One sharp question at a time."
+    systemPrompt: "You are Replii coaching discovery. Ask open questions, quantify pain and impact, map authority and timeline (BANT/MEDDIC). Never pitch before the problem is clear. One sharp question at a time."
   },
   {
     id: "demo",
     name: "Demo & Pitch",
     description: "Tailor the demo to stated pain and buying signals.",
-    systemPrompt: "You are Ghost coaching a demo. Tie every feature to pain from discovery. Handle 'show me X' with relevance, not a feature tour. Close with a concrete next step."
+    systemPrompt: "You are Replii coaching a demo. Tie every feature to pain from discovery. Handle 'show me X' with relevance, not a feature tour. Close with a concrete next step."
   },
   {
     id: "negotiation",
     name: "Negotiation & Closing",
     description: "Pricing, contracts, and final objections.",
-    systemPrompt: "You are Ghost coaching negotiation. Anchor on value vs cost of inaction. Handle price with curiosity, not defence. Propose fair trade-offs and ask for the decision."
+    systemPrompt: "You are Replii coaching negotiation. Anchor on value vs cost of inaction. Handle price with curiosity, not defence. Propose fair trade-offs and ask for the decision."
   },
   {
     id: "enterprise",
     name: "Enterprise Deals",
     description: "Multi-stakeholder, security, and procurement cycles.",
-    systemPrompt: "You are Ghost coaching enterprise sales. Map stakeholders and champions, address security/procurement calmly, multi-thread the deal, and advance with mutual action plans."
+    systemPrompt: "You are Replii coaching enterprise sales. Map stakeholders and champions, address security/procurement calmly, multi-thread the deal, and advance with mutual action plans."
   }
 ];
 const DEFAULT_UPCOMING = [];
@@ -36654,12 +36654,13 @@ const persistImpl = (config, baseOptions) => (set, get2, api) => {
 const persist = persistImpl;
 const FAKE_SUMMARY_MARKERS = [
   "mid-market SaaS prospect",
+  "approximately 42 minutes",
   "Review key points discussed and confirm next steps with the prospect",
   "Send a follow-up summary email within 24 hours",
   "Schedule the next meeting while momentum is high",
   "Review the transcript and follow up on open items"
 ];
-const EMPTY_SUMMARY_MESSAGE = "No transcript was captured for this session, so Ghost could not generate a summary. Start a new session with your microphone enabled to record the conversation.";
+const EMPTY_SUMMARY_MESSAGE = "No transcript was captured for this session, so Replii could not generate a summary. Start a new session with your microphone enabled to record the conversation.";
 const SUMMARY_UNAVAILABLE_MESSAGE = "Add your OpenAI API key to generate an AI summary.";
 function meetingContainsFakeSummary(meeting) {
   const text = [
@@ -36985,6 +36986,17 @@ const useAppStore = create()(
         );
         notifyAppStoreChanged();
       },
+      refundFreeOverlaySeconds: (seconds) => {
+        const { plan } = get2();
+        if (isPaidPlan(plan) || seconds <= 0) return;
+        set(
+          (s) => withAccountProfile(s, {
+            freeOverlaySecondsUsed: Math.max(0, s.freeOverlaySecondsUsed - seconds)
+          })
+        );
+        notifyAppStoreChanged();
+        void syncPlanLimitsToMain();
+      },
       requestSettingsOpen: (section) => {
         set({ pendingSettingsSection: section });
       },
@@ -37079,13 +37091,13 @@ const useAppStore = create()(
         }
       },
       getActiveModeConfig: () => {
-        const { activeMode: activeMode2 } = get2();
-        return SALES_MODES.find((m) => m.id === activeMode2) ?? SALES_MODES[0];
+        const { activeMode } = get2();
+        return SALES_MODES.find((m) => m.id === activeMode) ?? SALES_MODES[0];
       }
     }),
     {
-      name: "ghost-app-storage",
-      version: 14,
+      name: "replii-app-storage",
+      version: 15,
       migrate: (persisted, version2) => {
         const state = persisted;
         if (version2 < 5) {
@@ -37226,6 +37238,19 @@ const useAppStore = create()(
           }
           state.accountProfiles = profiles;
         }
+        if (version2 < 15) {
+          if (Array.isArray(state.meetings)) {
+            state.meetings = stripFakeDemoData(state.meetings);
+          }
+          const profiles = state.accountProfiles ?? {};
+          for (const id of Object.keys(profiles)) {
+            profiles[id] = {
+              ...profiles[id],
+              meetings: stripFakeDemoData(profiles[id].meetings)
+            };
+          }
+          state.accountProfiles = profiles;
+        }
         return state;
       },
       partialize: (state) => {
@@ -37301,17 +37326,17 @@ async function rehydrateAppStoreFromStorage() {
   syncPlanLimitsToMain();
 }
 function notifyAppStoreChanged() {
-  void window.ghost?.notifyStoreChanged?.();
+  void window.replii?.notifyStoreChanged?.();
   syncPlanLimitsToMain();
 }
 async function syncPlanLimitsToMain() {
-  if (typeof window === "undefined" || !window.ghost?.syncPlanLimits) return;
+  if (typeof window === "undefined" || !window.replii?.syncPlanLimits) return;
   const { plan, freeOverlaySecondsUsed } = useAppStore.getState();
-  await window.ghost.syncPlanLimits({ plan, freeOverlaySecondsUsed });
+  await window.replii.syncPlanLimits({ plan, freeOverlaySecondsUsed });
 }
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (event) => {
-    if (event.key !== "ghost-app-storage") return;
+    if (event.key !== "replii-app-storage") return;
     void rehydrateAppStoreFromStorage();
   });
 }
@@ -37578,7 +37603,7 @@ function billingPortalReturnWebUrl(apiBase, returnTo = "billing") {
 }
 function parseBillingCallbackUrl(url) {
   try {
-    const parsed = new URL(url.replace(/^ghost:/, "https:"));
+    const parsed = new URL(url.replace(/^replii:/, "https:"));
     return {
       plan: parsed.searchParams.get("plan"),
       returnTo: parsed.searchParams.get("to") === "billing" ? "billing" : "dashboard"
@@ -37611,7 +37636,7 @@ async function resolveApiBase() {
     return cachedApiBase;
   }
   if (!bootstrapPromise$1) {
-    bootstrapPromise$1 = window.ghost?.getApiBaseUrl?.().then((url) => {
+    bootstrapPromise$1 = window.replii?.getApiBaseUrl?.().then((url) => {
       const trimmed = url?.trim().replace(/\/$/, "");
       cachedApiBase = trimmed || DEFAULT_API_BASE;
       return cachedApiBase;
@@ -37658,7 +37683,7 @@ const PRO_CARD_FEATURES = [
   { icon: "check", label: "Priority support" },
   { icon: "check", label: "Undetectable on screen share" }
 ];
-const ENTERPRISE_SALES_MAILTO = "mailto:sales@ghost.app?subject=Ghost%20Enterprise";
+const ENTERPRISE_SALES_MAILTO = "mailto:sales@replii.app?subject=Replii%20Enterprise";
 const ENTERPRISE_TAGLINE = "Custom knowledge for teams.";
 const ENTERPRISE_INCLUDES_LABEL = "Everything in Pro, plus...";
 const ENTERPRISE_FEATURES = [
@@ -37706,9 +37731,24 @@ function pricingTierToPlan(id) {
   return id;
 }
 const PAID = ["pro", "solo", "undetectable"];
+async function parseBillingJsonResponse(res) {
+  const raw = await res.text();
+  let data = {};
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    if (raw.includes("DEPLOYMENT_NOT_FOUND") || res.status === 404) {
+      return {
+        data: {},
+        error: "Billing server unavailable. Update VITE_API_BASE_URL in desktop/.env and restart the app."
+      };
+    }
+  }
+  return { data };
+}
 async function openCheckoutUrl(url) {
-  if (window.ghost?.openExternal) {
-    await window.ghost.openExternal(url);
+  if (window.replii?.openExternal) {
+    await window.replii.openExternal(url);
     return;
   }
   window.open(url, "_blank", "noopener,noreferrer");
@@ -37739,7 +37779,11 @@ async function startStripeCheckout(plan, userId, email, interval = "monthly", re
       error: `Billing server unreachable.${hint}`
     };
   }
-  const data = await res.json().catch(() => ({}));
+  const parsed = await parseBillingJsonResponse(res);
+  if (parsed.error) {
+    return { ok: false, error: parsed.error };
+  }
+  const { data } = parsed;
   if (!res.ok) {
     return {
       ok: false,
@@ -37762,7 +37806,11 @@ async function openStripeBillingPortal(userId) {
       returnUrl: billingPortalReturnWebUrl(base, "billing")
     })
   });
-  const data = await res.json().catch(() => ({}));
+  const parsed = await parseBillingJsonResponse(res);
+  if (parsed.error) {
+    return { ok: false, error: parsed.error };
+  }
+  const { data } = parsed;
   if (!res.ok) {
     return {
       ok: false,
@@ -37880,7 +37928,7 @@ async function recordTermsAcceptance(userId) {
     updated_at: meta.terms_accepted_at
   }).eq("id", userId);
   if (error) {
-    console.warn("[ghost] Could not record terms acceptance:", error.message);
+    console.warn("[replii] Could not record terms acceptance:", error.message);
   }
 }
 function hasDashboardAccess(plan, paywallComplete) {
@@ -38002,7 +38050,7 @@ function useAuthCallback() {
     [navigate]
   );
   reactExports.useEffect(() => {
-    return window.ghost?.onAuthCallback?.((url) => {
+    return window.replii?.onAuthCallback?.((url) => {
       void handleAuthCallback(url);
     });
   }, [handleAuthCallback]);
@@ -38019,7 +38067,7 @@ function useBillingReturn() {
     [userId, navigate]
   );
   reactExports.useEffect(() => {
-    return window.ghost?.onBillingCallback?.((url) => {
+    return window.replii?.onBillingCallback?.((url) => {
       void handleBillingReturn(url);
     });
   }, [handleBillingReturn]);
@@ -38165,7 +38213,7 @@ async function bootstrapOpenAIKey() {
     return cachedKey;
   }
   if (!bootstrapPromise) {
-    bootstrapPromise = window.ghost?.getOpenAIKey?.().then((key) => {
+    bootstrapPromise = window.replii?.getOpenAIKey?.().then((key) => {
       const trimmed = key?.trim();
       cachedKey = trimmed || void 0;
       return cachedKey;
@@ -38198,7 +38246,7 @@ async function transcribeAudioChunk(blob, meetingLanguage, mimeType = "audio/web
       body: formData
     });
     if (!res.ok) {
-      console.warn("[ghost] Whisper failed:", res.status, await res.text().catch(() => ""));
+      console.warn("[replii] Whisper failed:", res.status, await res.text().catch(() => ""));
       return null;
     }
     const data = await res.json();
@@ -38206,7 +38254,7 @@ async function transcribeAudioChunk(blob, meetingLanguage, mimeType = "audio/web
     if (!text || isLikelyWhisperHallucination(text, data.segments)) return null;
     return text;
   } catch (err) {
-    console.warn("[ghost] Whisper error:", err);
+    console.warn("[replii] Whisper error:", err);
     return null;
   }
 }
@@ -38258,9 +38306,9 @@ async function listAudioInputDevices() {
   const devices = await navigator.mediaDevices.enumerateDevices();
   return devices.filter((d) => d.kind === "audioinput");
 }
-async function detectGhostAudioSetup() {
+async function detectRepliiAudioSetup() {
   const [status, inputs] = await Promise.all([
-    window.ghost?.getPermissionStatus?.(),
+    window.replii?.getPermissionStatus?.(),
     listAudioInputDevices()
   ]);
   return {
@@ -38270,7 +38318,7 @@ async function detectGhostAudioSetup() {
   };
 }
 async function confirmMicrophoneAccess() {
-  const status = await window.ghost?.getPermissionStatus?.();
+  const status = await window.replii?.getPermissionStatus?.();
   if (status?.microphone) return true;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -38301,17 +38349,17 @@ async function captureCallAudio() {
     }
     return { stream, source: "desktop-capture" };
   } catch (err) {
-    console.warn("[ghost] getDisplayMedia failed:", err);
+    console.warn("[replii] getDisplayMedia failed:", err);
   }
   try {
-    const sources = await window.ghost?.getDesktopAudioSources?.();
+    const sources = await window.replii?.getDesktopAudioSources?.();
     if (!sources?.length) return null;
     for (const source of sources) {
       const stream = await streamFromDesktopSource(source.id);
       if (stream) return { stream, source: "desktop-capture" };
     }
   } catch (err) {
-    console.warn("[ghost] Desktop audio fallback failed:", err);
+    console.warn("[replii] Desktop audio fallback failed:", err);
   }
   return null;
 }
@@ -38508,7 +38556,7 @@ function useSpeechRecognition(active, meetingLanguage = "English", defaultSpeake
     recognition.onerror = (event) => {
       if (event.error === "no-speech" || event.error === "aborted") return;
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        void window.ghost?.getPermissionStatus?.().then((status) => {
+        void window.replii?.getPermissionStatus?.().then((status) => {
           if (status?.microphone) {
             setError(null);
             if (!activeRef.current || !recognitionRef.current) return;
@@ -38652,12 +38700,12 @@ class StreamTranscriber {
       }) : new MediaRecorder(this.stream);
       this.mimeType = this.recorder.mimeType || preferredMime || "audio/webm";
     } catch (err) {
-      console.warn("[ghost] MediaRecorder init failed:", err);
+      console.warn("[replii] MediaRecorder init failed:", err);
       try {
         this.recorder = new MediaRecorder(this.stream);
         this.mimeType = this.recorder.mimeType || "audio/webm";
       } catch (fallbackErr) {
-        console.warn("[ghost] MediaRecorder fallback failed:", fallbackErr);
+        console.warn("[replii] MediaRecorder fallback failed:", fallbackErr);
         return;
       }
     }
@@ -38693,11 +38741,11 @@ class StreamTranscriber {
           this.recorder.requestData();
           this.recorder.stop();
         } catch (err) {
-          console.warn("[ghost] MediaRecorder segment stop failed:", err);
+          console.warn("[replii] MediaRecorder segment stop failed:", err);
         }
       }, CHUNK_MS);
     } catch (err) {
-      console.warn("[ghost] MediaRecorder start failed:", err);
+      console.warn("[replii] MediaRecorder start failed:", err);
     }
   }
   async enqueue(blob) {
@@ -38818,7 +38866,7 @@ function useMeetingTranscription(active, meetingLanguage = "English", audioCaptu
     });
   }, []);
   reactExports.useEffect(() => {
-    return window.ghost?.onMicGranted?.(() => {
+    return window.replii?.onMicGranted?.(() => {
       setMicAccessGranted(true);
       setCaptureError(null);
       setCaptureRetry((n) => n + 1);
@@ -38857,7 +38905,7 @@ function useMeetingTranscription(active, meetingLanguage = "English", audioCaptu
     let cancelled = false;
     void (async () => {
       setCaptureError(null);
-      void detectGhostAudioSetup().then((setup) => {
+      void detectRepliiAudioSetup().then((setup) => {
         if (!cancelled) setAudioSetup(setup);
       });
       if (useMicPath) {
@@ -38908,7 +38956,7 @@ function useMeetingTranscription(active, meetingLanguage = "English", audioCaptu
   reactExports.useEffect(() => {
     if (!active || !captureError) return;
     const id = window.setInterval(async () => {
-      const status = await window.ghost?.getPermissionStatus?.();
+      const status = await window.replii?.getPermissionStatus?.();
       if (!status) return;
       if (captureError === "not-allowed" && status.microphone) {
         setMicAccessGranted(true);
@@ -38962,7 +39010,7 @@ function SessionMicBridge() {
   transcriptionRef.current = transcription;
   const pushNow = () => {
     const t = transcriptionRef.current;
-    window.ghost?.pushLiveTranscript?.({
+    window.replii?.pushLiveTranscript?.({
       lines: t.lines,
       interim: t.interim,
       error: t.error,
@@ -38983,9 +39031,9 @@ function SessionMicBridge() {
       window.setTimeout(pushNow, 1500);
     };
     const onStopped = () => setSessionActive(false);
-    const offStarted = window.ghost?.onSessionStarted?.(onStarted);
-    const offStopped = window.ghost?.onSessionStopped?.(onStopped);
-    void window.ghost?.getSettings?.().then((s) => {
+    const offStarted = window.replii?.onSessionStarted?.(onStarted);
+    const offStopped = window.replii?.onSessionStopped?.(onStopped);
+    void window.replii?.getSettings?.().then((s) => {
       if (s.sessionActive) onStarted();
     });
     return () => {
@@ -38994,13 +39042,13 @@ function SessionMicBridge() {
     };
   }, [setSessionActive]);
   reactExports.useEffect(() => {
-    return window.ghost?.onSessionListening?.((active) => setListening(active));
+    return window.replii?.onSessionListening?.((active) => setListening(active));
   }, []);
   reactExports.useEffect(() => {
-    return window.ghost?.onRequestLiveTranscript?.(() => pushNow());
+    return window.replii?.onRequestLiveTranscript?.(() => pushNow());
   }, []);
   reactExports.useEffect(() => {
-    return window.ghost?.onClearLiveTranscript?.(() => transcriptionRef.current.clear());
+    return window.replii?.onClearLiveTranscript?.(() => transcriptionRef.current.clear());
   }, []);
   reactExports.useEffect(() => {
     if (!sessionActive) return;
@@ -39022,7 +39070,7 @@ function SessionMicBridge() {
   reactExports.useEffect(() => {
     if (!sessionActive || !transcription.error) return;
     const retry = window.setInterval(() => {
-      void window.ghost?.ensureMicrophone?.().then((granted) => {
+      void window.replii?.ensureMicrophone?.().then((granted) => {
         if (granted) pushNow();
       });
     }, 2e3);
@@ -39038,7 +39086,7 @@ function MicHelperPermissionUI() {
     setVisible(true);
     setMessage("Requesting microphone…");
     try {
-      const permitted = await window.ghost?.ensureMicrophone?.();
+      const permitted = await window.replii?.ensureMicrophone?.();
       if (!permitted) {
         setStatus("denied");
         setMessage("Microphone access denied.");
@@ -39057,7 +39105,7 @@ function MicHelperPermissionUI() {
       setMessage("Microphone ready.");
       window.setTimeout(() => {
         setVisible(false);
-        window.ghost?.hideMicHelper?.();
+        window.replii?.hideMicHelper?.();
       }, 600);
     } catch {
       setStatus("denied");
@@ -39065,11 +39113,11 @@ function MicHelperPermissionUI() {
     }
   }, []);
   reactExports.useEffect(() => {
-    return window.ghost?.onRequestMicPermission?.(() => void requestMic());
+    return window.replii?.onRequestMicPermission?.(() => void requestMic());
   }, [requestMic]);
   if (!visible) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-8 text-white", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-lg font-semibold", children: "Ghost microphone" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-lg font-semibold", children: "Replii microphone" }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-6 max-w-sm text-center text-sm text-zinc-400", children: message }),
     status === "denied" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col gap-3", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -39085,7 +39133,7 @@ function MicHelperPermissionUI() {
         "button",
         {
           type: "button",
-          onClick: () => void window.ghost?.openPermissionSettings?.("microphone"),
+          onClick: () => void window.replii?.openPermissionSettings?.("microphone"),
           className: "rounded-full border border-white/20 px-5 py-2.5 text-sm text-white",
           children: "Open System Settings"
         }
@@ -39115,7 +39163,7 @@ function WelcomePreview() {
       "img",
       {
         src: klavioPreview,
-        alt: "Ghost providing live coaching during a sales call",
+        alt: "Replii providing live coaching during a sales call",
         className: "h-full w-auto max-w-none select-none object-contain object-right-bottom",
         draggable: false
       }
@@ -39135,7 +39183,7 @@ function SplitScreenShell({
   rightVariant = "default"
 }) {
   reactExports.useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("onboarding");
+    void window.replii?.setDashboardLayout?.("onboarding");
   }, []);
   const isDark = variant === "dark";
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -39155,14 +39203,14 @@ function SplitScreenShell({
     }
   );
 }
-const baseUrl = "https://ghost.ai".replace(/\/$/, "");
+const baseUrl = "https://replii.ai".replace(/\/$/, "");
 const legalLinks = {
   terms: `${baseUrl}/legal/terms`,
   privacy: `${baseUrl}/legal/privacy`,
   acceptableUse: `${baseUrl}/legal/acceptable-use`
 };
 function openLegalLink(url) {
-  void window.ghost?.openExternal?.(url);
+  void window.replii?.openExternal?.(url);
 }
 function WelcomePage() {
   const navigate = useNavigate();
@@ -39186,7 +39234,7 @@ function WelcomePage() {
               draggable: false
             }
           ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "min-w-0 break-words text-[34px] font-semibold leading-[1.15] tracking-[-0.025em] text-zinc-900", children: "Welcome to Ghost" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "min-w-0 break-words text-[34px] font-semibold leading-[1.15] tracking-[-0.025em] text-zinc-900", children: "Welcome to Replii" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500", children: "The real-time AI sales co-pilot" }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "button",
@@ -39259,11 +39307,9 @@ function BackButton({
     }
   );
 }
-const ghostIcon = "" + new URL("ghost-icon-Z9MDw6sh.png", import.meta.url).href;
-const ghostLogo = "" + new URL("ghost-logo-BmNAc-L_.png", import.meta.url).href;
-const ghostMark = "" + new URL("ghost-mark-BidzVwiF.png", import.meta.url).href;
-const ghostWordmark = "" + new URL("ghost-wordmark-96RQ-B_g.png", import.meta.url).href;
-const ghostWordmarkLight = "" + new URL("ghost-wordmark-light-CIlXn5WV.png", import.meta.url).href;
+const repliiIcon = "" + new URL("replii-icon-Z9MDw6sh.png", import.meta.url).href;
+const repliiLogo = "" + new URL("replii-logo-BmNAc-L_.png", import.meta.url).href;
+const repliiMark = "" + new URL("replii-mark-BidzVwiF.png", import.meta.url).href;
 function PillButton({
   children,
   className = "",
@@ -39279,18 +39325,27 @@ function PillButton({
     }
   );
 }
-function GhostLogo({
+function RepliiLogo({
   className = "",
   variant = "icon",
   tone = "dark"
 }) {
-  const src = variant === "wordmark" ? tone === "light" ? ghostWordmarkLight : ghostWordmark : variant === "mark" ? tone === "light" ? ghostMark : ghostLogo : ghostIcon;
+  if (variant === "wordmark") {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "span",
+      {
+        className: `inline-block shrink-0 font-semibold tracking-[-0.04em] ${tone === "light" ? "text-white" : "text-zinc-900"} ${className || "text-[28px] leading-none"}`,
+        children: "Replii"
+      }
+    );
+  }
+  const src = variant === "mark" ? tone === "light" ? repliiMark : repliiLogo : repliiIcon;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "img",
     {
       src,
-      alt: variant === "wordmark" ? "Ghost" : "",
-      "aria-hidden": variant !== "wordmark",
+      alt: "",
+      "aria-hidden": true,
       draggable: false,
       className: `inline-block shrink-0 object-contain ${className || "h-8 w-8"}`
     }
@@ -39300,7 +39355,7 @@ function Switch({
   checked,
   disabled = false,
   size = "md",
-  checkedClassName = "bg-ghost-500",
+  checkedClassName = "bg-replii-500",
   uncheckedClassName = "bg-zinc-200",
   className = "",
   ...props
@@ -39420,7 +39475,7 @@ function AuthPage() {
   const [acceptedTerms, setAcceptedTerms] = reactExports.useState(false);
   const configured = isSupabaseConfigured();
   reactExports.useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("onboarding");
+    void window.replii?.setDashboardLayout?.("onboarding");
     if (!welcomeComplete) navigate("/welcome", { replace: true });
   }, [welcomeComplete, navigate]);
   const afterAuth = reactExports.useCallback(
@@ -39500,7 +39555,7 @@ function AuthPage() {
     [afterAuth]
   );
   reactExports.useEffect(() => {
-    return window.ghost?.onAuthCallback?.((url) => {
+    return window.replii?.onAuthCallback?.((url) => {
       void handleOAuthCallback(url);
     });
   }, [handleOAuthCallback]);
@@ -39541,7 +39596,7 @@ function AuthPage() {
       });
       if (error2) throw error2;
       if (data.url) {
-        await window.ghost?.openExternal?.(data.url);
+        await window.replii?.openExternal?.(data.url);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Google sign-in failed");
@@ -39627,7 +39682,7 @@ function AuthPage() {
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(AuthShell, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-[28px] font-semibold leading-tight tracking-[-0.025em] text-zinc-900", children: mode === "signup" ? "Create your account" : "Welcome back" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 text-[14px] text-zinc-500", children: mode === "signup" ? "Start closing more deals with Ghost" : "Sign in to your Ghost account" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 text-[14px] text-zinc-500", children: mode === "signup" ? "Start closing more deals with Replii" : "Sign in to your Replii account" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "button",
       {
@@ -39763,7 +39818,7 @@ function PermissionPreview() {
     "img",
     {
       src: permissionPreview,
-      alt: "macOS accessibility permission prompts for Ghost",
+      alt: "macOS accessibility permission prompts for Replii",
       className: "h-auto w-full select-none",
       draggable: false
     }
@@ -39789,23 +39844,23 @@ const PERMISSIONS = [
     key: "accessibility",
     icon: /* @__PURE__ */ jsxRuntimeExports.jsx(BulbIcon, {}),
     step: 1,
-    title: "Enable Ghost shortcuts",
-    description: "Ghost needs accessibility access so it can appear on any call with one hotkey."
+    title: "Enable Replii shortcuts",
+    description: "Replii needs accessibility access so it can appear on any call with one hotkey."
   },
   {
     key: "microphone",
     icon: /* @__PURE__ */ jsxRuntimeExports.jsx(MicIcon, {}),
     step: 2,
-    title: "Let Ghost hear your calls",
-    description: "Your mic lets Ghost coach you in real time. Audio stays on your device.",
-    reassurance: "Choose Ghost in System Settings → Privacy → Microphone."
+    title: "Let Replii hear your calls",
+    description: "Your mic lets Replii coach you in real time. Audio stays on your device.",
+    reassurance: "Choose Replii in System Settings → Privacy → Microphone."
   },
   {
     key: "screen",
     icon: /* @__PURE__ */ jsxRuntimeExports.jsx(CallAudioIcon, {}),
     step: null,
     title: "Hear Zoom / Meet / Teams audio",
-    description: "Optional — macOS uses Screen Recording for call audio only. Ghost never views your screen.",
+    description: "Optional — macOS uses Screen Recording for call audio only. Replii never views your screen.",
     reassurance: "Skip for now if you only use your mic — you can add this later."
   }
 ];
@@ -39825,7 +39880,7 @@ function OnboardingPage() {
   const finishingRef = reactExports.useRef(false);
   const prevGrantedRef = reactExports.useRef(granted);
   const refreshStatus = reactExports.useCallback(async () => {
-    const status = await window.ghost?.getPermissionStatus?.();
+    const status = await window.replii?.getPermissionStatus?.();
     if (!status) return;
     setGranted((prev) => {
       const next = {
@@ -39848,7 +39903,7 @@ function OnboardingPage() {
     navigate("/");
   }, [completeOnboarding, completeShortcutTutorial, navigate]);
   reactExports.useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("onboarding");
+    void window.replii?.setDashboardLayout?.("onboarding");
   }, []);
   reactExports.useEffect(() => {
     void refreshStatus();
@@ -39871,9 +39926,9 @@ function OnboardingPage() {
   }, [refreshStatus]);
   const openSettings = async (key) => {
     setActiveKey(key);
-    await window.ghost?.openPermissionSettings?.(key);
+    await window.replii?.openPermissionSettings?.(key);
     if (key === "microphone" || key === "screen" && !granted.microphone) {
-      await window.ghost?.ensureMicrophone?.();
+      await window.replii?.ensureMicrophone?.();
     }
     void refreshStatus();
     const delays = key === "accessibility" ? [400, 1e3, 2e3, 4e3, 8e3, 12e3] : [400, 1e3, 2e3, 4e3];
@@ -39957,7 +40012,7 @@ function OnboardingPage() {
               REQUIRED_KEYS.length
             ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[13px] font-medium text-zinc-400", children: "Optional" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "mt-2 min-w-0 break-words text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900", children: requiredGranted ? "You're ready to start" : focusPerm.title }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500", children: requiredGranted ? "Start your first session now — Ghost will coach you live on your next call." : focusPerm.description }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500", children: requiredGranted ? "Start your first session now — Replii will coach you live on your next call." : focusPerm.description }),
             !requiredGranted && focusPerm.reassurance ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[13px] leading-relaxed text-blue-900/80", children: focusPerm.reassurance }) : null,
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-8 space-y-3", children: PERMISSIONS.filter((p) => p.step !== null || showOptionalScreen).map(
               (perm) => /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -40091,7 +40146,7 @@ function OnboardingGuard() {
   if (onboardingComplete) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true });
   return /* @__PURE__ */ jsxRuntimeExports.jsx(OnboardingPage, {});
 }
-function TryGhostPreview({
+function TryRepliiPreview({
   overlayVisible = true
 }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative h-full w-full overflow-hidden", children: [
@@ -40125,7 +40180,7 @@ function ListeningPillPreview() {
           background: "rgba(0,0,0,0.86)",
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 10px rgba(0,0,0,0.22)"
         },
-        children: /* @__PURE__ */ jsxRuntimeExports.jsx(GhostLogo, { className: "h-4 w-4" })
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RepliiLogo, { className: "h-4 w-4" })
       }
     ),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex min-w-0 flex-1 items-center gap-2", children: [
@@ -40138,7 +40193,7 @@ function ListeningPillPreview() {
     ] })
   ] });
 }
-function TryGhostPage() {
+function TryRepliiPage() {
   const navigate = useNavigate();
   const {
     isAuthenticated,
@@ -40158,10 +40213,10 @@ function TryGhostPage() {
     }
   }, [isAuthenticated, onboardingComplete, navigate]);
   reactExports.useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("onboarding");
+    void window.replii?.setDashboardLayout?.("onboarding");
   }, []);
   reactExports.useEffect(() => {
-    const unsubShortcut = window.ghost?.onShortcutToggle?.(() => {
+    const unsubShortcut = window.replii?.onShortcutToggle?.(() => {
       setOverlayVisible((visible) => !visible);
     });
     return () => {
@@ -40193,8 +40248,8 @@ function TryGhostPage() {
         rightVariant: "grid-preview",
         left: /* @__PURE__ */ jsxRuntimeExports.jsxs(SplitScreenLeft, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs(SplitScreenLeftBody, { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "min-w-0 break-words text-[32px] font-semibold leading-[1.12] tracking-[-0.025em] text-zinc-900", children: "Hide Ghost using the following hotkeys" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500", children: "You can open and hide Ghost anytime." }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "min-w-0 break-words text-[32px] font-semibold leading-[1.12] tracking-[-0.025em] text-zinc-900", children: "Hide Replii using the following hotkeys" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500", children: "You can open and hide Replii anytime." }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-10 flex items-center justify-center gap-4", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "button",
@@ -40248,7 +40303,7 @@ function TryGhostPage() {
             }
           )
         ] }),
-        right: /* @__PURE__ */ jsxRuntimeExports.jsx(TryGhostPreview, { overlayVisible })
+        right: /* @__PURE__ */ jsxRuntimeExports.jsx(TryRepliiPreview, { overlayVisible })
       }
     )
   ] });
@@ -40439,7 +40494,7 @@ function PaywallPricing({
       "h1",
       {
         className: `text-center font-bold tracking-[-0.03em] text-zinc-900 ${embedded ? "text-[20px] leading-snug" : "text-[34px] leading-[1.1]"}`,
-        children: headline ?? "Unlock all features with Ghost Pro"
+        children: headline ?? "Unlock all features with Replii Pro"
       }
     ),
     subheadline ? /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -40502,7 +40557,7 @@ function usePricingCheckout({
   const [loadingTier, setLoadingTier] = reactExports.useState(null);
   const [error, setError] = reactExports.useState(null);
   const handleContactSales = () => {
-    void window.ghost?.openExternal?.(ENTERPRISE_SALES_MAILTO);
+    void window.replii?.openExternal?.(ENTERPRISE_SALES_MAILTO);
   };
   const handleSelect = async (tierId, interval) => {
     setError(null);
@@ -40596,7 +40651,7 @@ function PaywallPage() {
   });
   useBillingSync();
   reactExports.useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("paywall");
+    void window.replii?.setDashboardLayout?.("paywall");
   }, []);
   reactExports.useEffect(() => {
     if (!isAuthenticated) {
@@ -40664,7 +40719,7 @@ function useLiveTranscriptFeed(active) {
       setFeed(EMPTY);
       return;
     }
-    const off = window.ghost?.onLiveTranscript?.((state) => {
+    const off = window.replii?.onLiveTranscript?.((state) => {
       setFeed({
         lines: state.lines,
         interim: state.interim,
@@ -40678,9 +40733,9 @@ function useLiveTranscriptFeed(active) {
         isDemo: false
       });
     });
-    window.ghost?.requestLiveTranscript?.();
+    window.replii?.requestLiveTranscript?.();
     const pollId = window.setInterval(() => {
-      window.ghost?.requestLiveTranscript?.();
+      window.replii?.requestLiveTranscript?.();
     }, 250);
     return () => {
       off?.();
@@ -40708,17 +40763,18 @@ const OVERLAY_PILL_THEME = {
 function useOverlayClickThrough(active, topPanelRef, controlBarRef, topPanelHidden) {
   reactExports.useEffect(() => {
     if (!active) {
-      void window.ghost?.setIgnoreMouseEvents?.(false);
+      void window.replii?.setIgnoreMouseEvents?.(false);
       return;
     }
-    void window.ghost?.setIgnoreMouseEvents?.(true, { forward: true });
+    void window.replii?.setIgnoreMouseEvents?.(true, { forward: true });
     const isOverZone = (x, y) => {
+      const padding = 16;
       const zones = topPanelHidden ? [controlBarRef] : [topPanelRef, controlBarRef];
       return zones.some((ref) => {
         const el = ref.current;
         if (!el) return false;
         const rect = el.getBoundingClientRect();
-        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        return x >= rect.left - padding && x <= rect.right + padding && y >= rect.top - padding && y <= rect.bottom + padding;
       });
     };
     let overZone = false;
@@ -40726,19 +40782,19 @@ function useOverlayClickThrough(active, topPanelRef, controlBarRef, topPanelHidd
       const next = isOverZone(x, y);
       if (next === overZone) return;
       overZone = next;
-      void window.ghost?.setIgnoreMouseEvents?.(!next, { forward: true });
+      void window.replii?.setIgnoreMouseEvents?.(!next, { forward: true });
     };
     const onMove = (e) => update(e.clientX, e.clientY);
     const onLeave = () => {
       overZone = false;
-      void window.ghost?.setIgnoreMouseEvents?.(true, { forward: true });
+      void window.replii?.setIgnoreMouseEvents?.(true, { forward: true });
     };
     window.addEventListener("mousemove", onMove);
     document.addEventListener("mouseleave", onLeave);
     return () => {
       window.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseleave", onLeave);
-      void window.ghost?.setIgnoreMouseEvents?.(false);
+      void window.replii?.setIgnoreMouseEvents?.(false);
     };
   }, [active, topPanelHidden, topPanelRef, controlBarRef]);
 }
@@ -40782,19 +40838,19 @@ async function ocrScreenshot(base64Jpeg) {
       })
     });
     if (!res.ok) {
-      console.warn("[ghost] Screen OCR failed:", res.status);
+      console.warn("[replii] Screen OCR failed:", res.status);
       return cachedText;
     }
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content?.trim() ?? "";
     return text.slice(0, OCR_MAX_CHARS);
   } catch (err) {
-    console.warn("[ghost] Screen OCR error:", err);
+    console.warn("[replii] Screen OCR error:", err);
     return cachedText;
   }
 }
 async function captureAndOcr() {
-  const base64 = await window.ghost?.captureScreen?.();
+  const base64 = await window.replii?.captureScreen?.();
   if (!base64) return cachedText;
   return ocrScreenshot(base64);
 }
@@ -40907,10 +40963,10 @@ ${speakerLabel}: "${prospectText}"
 
 TASK: Suggest what the user should say next. Under 20 words. Give exact words they can say verbatim. No preamble.`;
 }
-async function streamGhostSuggestion(prospectText, transcript, options = {}) {
+async function streamRepliiSuggestion(prospectText, transcript, options = {}) {
   const apiKey = await getOpenAIKey();
   if (!apiKey) {
-    console.error("[ghost] OpenAI API key is missing — cannot fetch suggestions.");
+    console.error("[replii] OpenAI API key is missing — cannot fetch suggestions.");
     return null;
   }
   const product = options.product ?? DEFAULT_PRODUCT;
@@ -40951,7 +41007,7 @@ What should the rep say next?` : buildPipelineUserPrompt(prospectText, transcrip
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      console.error("[ghost] Stream suggest failed:", res.status, detail);
+      console.error("[replii] Stream suggest failed:", res.status, detail);
       return null;
     }
     if (!res.body) return null;
@@ -40988,7 +41044,7 @@ What should the rep say next?` : buildPipelineUserPrompt(prospectText, transcrip
     };
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") throw err;
-    console.error("[ghost] Stream suggest error:", err);
+    console.error("[replii] Stream suggest error:", err);
     return null;
   }
 }
@@ -41040,9 +41096,9 @@ function parseStreamChunk(line) {
     return null;
   }
 }
-async function askGhost(action, transcript, options = {}) {
+async function askReplii(action, transcript, options = {}) {
   const apiKey = await getOpenAIKey();
-  const system = options.systemPrompt ?? "You are Ghost, a fast AI meeting assistant. Be extremely concise. Give words the user can say or do immediately. No preamble.";
+  const system = options.systemPrompt ?? "You are Replii, a fast AI meeting assistant. Be extremely concise. Give words the user can say or do immediately. No preamble.";
   if (apiKey) {
     try {
       const needsScreen = action === "assist" || action === "custom" || action === "recap";
@@ -41070,7 +41126,7 @@ async function askGhost(action, transcript, options = {}) {
         })
       });
       if (!res.ok) {
-        console.warn("[ghost] OpenAI request failed:", res.status, await res.text().catch(() => ""));
+        console.warn("[replii] OpenAI request failed:", res.status, await res.text().catch(() => ""));
       } else if (options.onChunk && res.body) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -41100,16 +41156,16 @@ async function askGhost(action, transcript, options = {}) {
       if (err instanceof DOMException && err.name === "AbortError") {
         throw err;
       }
-      console.warn("[ghost] OpenAI request error:", err);
+      console.warn("[replii] OpenAI request error:", err);
     }
   } else {
-    console.error("[ghost] VITE_OPENAI_API_KEY is missing.");
+    console.error("[replii] VITE_OPENAI_API_KEY is missing.");
     return "Add VITE_OPENAI_API_KEY to desktop/.env and restart the app.";
   }
   if (action === "custom" && options.customPrompt) {
     return `Re: "${options.customPrompt}" — clarify their goals, summarize what you've heard, and suggest a concrete next step.`;
   }
-  return "Ghost couldn't reach OpenAI. Check your API key and try again.";
+  return "Replii couldn't reach OpenAI. Check your API key and try again.";
 }
 const EMPTY_SESSION_PLACEHOLDER = {
   title: "Live session",
@@ -41119,40 +41175,13 @@ const EMPTY_SESSION_PLACEHOLDER = {
       heading: "Summary",
       format: "paragraphs",
       items: [
-        "This session ran for approximately 42 minutes and covered an initial discovery conversation with a mid-market SaaS prospect evaluating sales coaching tools for their 18-person revenue team. The prospect described ongoing challenges with new rep ramp time, inconsistent discovery quality across the team, and limited visibility into live deal conversations without relying on post-call recordings.",
-        "The discussion opened with context on their current stack — they use Gong for call recording and Salesforce for CRM, but reps rarely review recordings and managers lack bandwidth for live coaching. The prospect expressed strong interest in **real-time assistance during calls** rather than retrospective analysis, particularly for handling pricing objections and competitive comparisons against incumbents in their space.",
-        "Key pain points surfaced around quota attainment: three of their eight new hires from the last quarter are still below 60% of target after 90 days. They estimated the cost of slow ramp at roughly **$180K per underperforming rep annually** when factoring in salary, lost pipeline, and manager time spent on remediation. Leadership has flagged rep productivity as a Q3 priority.",
-        "On objections, the prospect raised concerns about **rep adoption** (whether sellers would actually use an in-call tool), **data security** (SOC 2 and GDPR requirements), and **overlap with Gong** (whether Ghost replaces or complements their existing investment). These were acknowledged and partially addressed during the call, though a technical deep-dive with RevOps was deferred.",
-        "The conversation ended on a positive note — the prospect agreed that live coaching during calls addresses a gap their current tools do not fill. They requested a follow-up demo focused on the manager review workflow and asked for customer references from similar-sized B2B SaaS teams."
-      ]
-    },
-    {
-      heading: "Action Items",
-      items: [
-        "Send security one-pager and SOC 2 summary to prospect's RevOps contact by Thursday",
-        "Schedule 45-minute product demo with Head of Revenue Ops and two senior AEs",
-        "Prepare Gong differentiation doc highlighting live coaching vs post-call review",
-        "Share two customer case studies from 15–25 rep SaaS teams"
-      ]
-    },
-    {
-      heading: "Key Discussion Points",
-      items: [
-        "18-rep team using Gong + Salesforce; low adoption of post-call review workflows",
-        "New rep ramp averaging 3+ months to quota; 3 of 8 recent hires under 60% attainment",
-        "Strong interest in live coaching and real-time objection handling during calls",
-        "Budget cycle aligns with Q3 planning — decision timeline estimated at 4–6 weeks",
-        "Competitive evaluation includes Gong (incumbent) and one unnamed startup alternative"
+        "No transcript was captured for this session, so Replii could not generate a summary. Start a new session with your microphone enabled to record the conversation."
       ]
     }
   ],
-  nextSteps: [
-    "Send security one-pager before end of week",
-    "Schedule demo with RevOps stakeholder",
-    "Follow up on Gong comparison with differentiation doc"
-  ],
-  objections: ["Rep adoption", "Data security / SOC 2", "Overlap with Gong"],
-  dealScore: 58
+  nextSteps: [],
+  objections: [],
+  dealScore: 0
 };
 function mockMeetingSummary(transcript) {
   if (transcript.length === 0) {
@@ -41179,11 +41208,11 @@ async function generateMeetingSummary(transcript, systemPrompt, outputLanguage) 
   const fullTranscript = truncateTranscriptForPrompt(transcript);
   if (!apiKey || transcript.length === 0) {
     if (!apiKey) {
-      console.error("[ghost] OpenAI API key is missing — cannot generate summary.");
+      console.error("[replii] OpenAI API key is missing — cannot generate summary.");
     }
     return mockMeetingSummary(transcript);
   }
-  const system = systemPrompt ?? "You are Ghost, an AI meeting assistant. Produce clean, structured post-meeting summaries.";
+  const system = systemPrompt ?? "You are Replii, an AI meeting assistant. Produce clean, structured post-meeting summaries.";
   const userPrompt = `Analyze this meeting transcript and return a structured summary.
 
 Return ONLY valid JSON with this exact shape:
@@ -41247,7 +41276,7 @@ ${fullTranscript || "(empty)"}`;
       }
     }
   } catch (err) {
-    console.error("[ghost] Meeting summary API error:", err);
+    console.error("[replii] Meeting summary API error:", err);
   }
   return {
     title: "Live session",
@@ -41255,7 +41284,7 @@ ${fullTranscript || "(empty)"}`;
     sections: [
       {
         heading: "Summary unavailable",
-        items: ["Ghost couldn't generate a summary. Check your OpenAI API key and try again."]
+        items: ["Replii couldn't generate a summary. Check your OpenAI API key and try again."]
       }
     ],
     nextSteps: []
@@ -41269,12 +41298,12 @@ ${body}`;
   }).join("\n\n");
 }
 async function applyContentProtection(plan, invisible) {
-  if (typeof window === "undefined" || !window.ghost?.setContentProtection) {
+  if (typeof window === "undefined" || !window.replii?.setContentProtection) {
     return false;
   }
   await syncPlanLimitsToMain();
   const enabled = effectiveContentProtection(plan, invisible);
-  return window.ghost.setContentProtection(enabled, plan);
+  return window.replii.setContentProtection(enabled, plan);
 }
 function useContentProtectionSync(rehydrateOnMount = false) {
   const plan = useAppStore((s) => s.plan);
@@ -41341,13 +41370,56 @@ const SUGGESTION_TAG_LABELS = {
   question: "Question",
   general: "General"
 };
+async function endRepliiSession({
+  duration,
+  transcript,
+  activeMode,
+  suggestionUses,
+  suggestions
+}) {
+  let meetingId = null;
+  try {
+    const meeting = useAppStore.getState().saveMeetingFromSession({
+      title: "Live session",
+      company: "Meeting",
+      mode: activeMode,
+      duration,
+      transcript,
+      summary: "Generating summary…",
+      status: "processing",
+      nextSteps: [],
+      dealScore: 0,
+      objections: [],
+      suggestionUses,
+      suggestions
+    });
+    meetingId = meeting.id;
+    if (transcript.length === 0) {
+      useAppStore.getState().refundFreeOverlaySeconds(duration);
+    }
+    notifyAppStoreChanged();
+    void window.replii?.requestMeetingSummary?.({
+      meetingId: meeting.id,
+      transcript
+    });
+  } catch (err) {
+    console.error("[replii] Failed to save session:", err);
+  } finally {
+    await window.replii?.stopSession();
+    useAppStore.getState().setSessionActive(false);
+    if (meetingId) {
+      void window.replii?.focusDashboard(`/meetings/${meetingId}`);
+    }
+  }
+  return meetingId;
+}
 const AI_DISCLAIMER_SHORT = "AI can make mistakes. Always review suggestions before you use or repeat them.";
 const AI_DISCLAIMER_OVERLAY = "AI can make mistakes — verify before you speak.";
-function GhostMark({ className = "h-5 w-5" }) {
+function RepliiMark({ className = "h-5 w-5" }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "img",
     {
-      src: ghostMark,
+      src: repliiMark,
       alt: "",
       "aria-hidden": true,
       draggable: false,
@@ -41389,7 +41461,7 @@ function ListeningPill({
 }) {
   const [micAppName, setMicAppName] = reactExports.useState("Electron");
   reactExports.useEffect(() => {
-    void window.ghost?.getMicAppName?.().then((name) => {
+    void window.replii?.getMicAppName?.().then((name) => {
       if (name) setMicAppName(name);
     });
   }, []);
@@ -41411,7 +41483,7 @@ function ListeningPill({
             background: error && error !== "mic-optional" ? "rgba(220,38,38,0.9)" : "rgba(0,0,0,0.86)",
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 10px rgba(0,0,0,0.22)"
           },
-          children: /* @__PURE__ */ jsxRuntimeExports.jsx(GhostMark, { className: "h-4 w-4" })
+          children: /* @__PURE__ */ jsxRuntimeExports.jsx(RepliiMark, { className: "h-4 w-4" })
         }
       ),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "overlay-pill-text flex min-w-0 flex-1 items-center gap-2", children: [
@@ -41447,7 +41519,7 @@ function ListeningPill({
         "button",
         {
           type: "button",
-          onClick: () => void window.ghost?.showMicHelper?.(),
+          onClick: () => void window.replii?.showMicHelper?.(),
           className: "shrink-0 rounded-full border border-amber-400 px-2.5 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-50",
           children: "Enable mic"
         }
@@ -41456,9 +41528,9 @@ function ListeningPill({
     error && error !== "mic-optional" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "no-drag flex flex-col gap-2 px-4 pb-2.5", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] leading-snug text-red-600", children: error === "screen-blocked" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
         "Enable ",
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold", children: "Ghost" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold", children: "Replii" }),
         " under System Settings → Privacy & Security → Screen Recording (macOS uses this for call audio only), then restart your session."
-      ] }) : error === "no-api-key" ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: "Ghost needs an OpenAI API key to transcribe speech. Add it in desktop/.env and restart." }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      ] }) : error === "no-api-key" ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: "Replii needs an OpenAI API key to transcribe speech. Add it in desktop/.env and restart." }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
         "System Settings → Privacy & Security → Microphone → turn on",
         " ",
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold", children: micAppName }),
@@ -41469,7 +41541,7 @@ function ListeningPill({
           "button",
           {
             type: "button",
-            onClick: () => void window.ghost?.openPermissionSettings?.(
+            onClick: () => void window.replii?.openPermissionSettings?.(
               error === "screen-blocked" ? "screen" : "microphone"
             ),
             className: "shrink-0 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-red-700",
@@ -41482,12 +41554,12 @@ function ListeningPill({
             type: "button",
             onClick: () => {
               void (async () => {
-                await window.ghost?.ensureMicrophone?.();
+                await window.replii?.ensureMicrophone?.();
                 try {
                   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                   stream.getTracks().forEach((t) => t.stop());
                 } catch {
-                  void window.ghost?.showMicHelper?.();
+                  void window.replii?.showMicHelper?.();
                 }
               })();
             },
@@ -41620,14 +41692,14 @@ function ControlButtons({
                   background: "rgba(0,0,0,0.86)",
                   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 14px rgba(0,0,0,0.30)"
                 },
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(GhostMark, { className: "h-5 w-5" })
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(RepliiMark, { className: "h-5 w-5" })
               }
             )
           }
         ),
         /* @__PURE__ */ jsxRuntimeExports.jsx(SideIconButton, { title: "End session", onClick: onEndSession, bg: sideBg, border: sideBorder, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { className: `h-[18px] w-[18px] ${iconClass}`, viewBox: "0 0 24 24", fill: "currentColor", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "6", y: "5", width: "4.5", height: "14", rx: "1" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "13.5", y: "5", width: "4.5", height: "14", rx: "1" })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "6", y: "4", width: "4", height: "16", rx: "1" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "14", y: "4", width: "4", height: "16", rx: "1" })
         ] }) })
       ] })
     }
@@ -41644,7 +41716,12 @@ function OverlayApp() {
   const [activeSuggestion, setActiveSuggestion] = reactExports.useState("");
   const [dealHealth, setDealHealth] = reactExports.useState(null);
   const [topPanelHidden, setTopPanelHidden] = reactExports.useState(false);
-  const { companyInfo, knowledgeContext, settings, saveMeetingFromSession } = useAppStore();
+  const {
+    activeMode,
+    companyInfo,
+    knowledgeContext,
+    settings
+  } = useAppStore();
   const liveCoachingContext = getLiveKnowledgeContext(knowledgeContext);
   const assistCoachingContext = knowledgeContext;
   const aiProduct = getEffectiveProduct(companyInfo);
@@ -41674,7 +41751,7 @@ function OverlayApp() {
     hasSystemAudio
   } = useLiveTranscriptFeed(feedActive);
   const clearTranscript = reactExports.useCallback(() => {
-    window.ghost?.clearLiveTranscript?.();
+    window.replii?.clearLiveTranscript?.();
   }, []);
   linesRef.current = lines;
   interimRef.current = interim;
@@ -41700,7 +41777,7 @@ function OverlayApp() {
     sessionStartRef.current = null;
     suggestionUsesRef.current = 0;
     suggestionsRef.current = [];
-    void window.ghost?.setOverlayMode("pill");
+    void window.replii?.setOverlayMode("pill");
     document.documentElement.classList.remove("active-mode");
     document.body.classList.remove("active-mode");
   }, [clearTranscript]);
@@ -41714,28 +41791,28 @@ function OverlayApp() {
     suggestionUsesRef.current = 0;
     suggestionsRef.current = [];
     await bootstrapOpenAIKey();
-    const permissions = await window.ghost?.getPermissionStatus?.();
+    const permissions = await window.replii?.getPermissionStatus?.();
     if (permissions && !permissions.microphone) {
-      await window.ghost?.showMicHelper?.();
-      await window.ghost?.ensureMicrophone?.();
+      await window.replii?.showMicHelper?.();
+      await window.replii?.ensureMicrophone?.();
     }
     document.documentElement.classList.add("active-mode");
     document.body.classList.add("active-mode");
-    await window.ghost?.setOverlayMode("active");
+    await window.replii?.setOverlayMode("active");
     setPhase("active");
     setListening(true);
-    window.ghost?.setSessionListening?.(true);
-    window.ghost?.requestLiveTranscript?.();
+    window.replii?.setSessionListening?.(true);
+    window.replii?.requestLiveTranscript?.();
   }, []);
   reactExports.useEffect(() => {
-    return window.ghost?.onStoreChanged?.(() => {
+    return window.replii?.onStoreChanged?.(() => {
       void rehydrateAppStoreFromStorage();
     });
   }, []);
   reactExports.useEffect(() => {
     document.documentElement.classList.add("overlay");
     document.body.classList.add("overlay");
-    void window.ghost?.getSettings?.().then((s) => {
+    void window.replii?.getSettings?.().then((s) => {
       if (s.sessionActive) void activateListening();
     });
     return () => {
@@ -41745,13 +41822,13 @@ function OverlayApp() {
   }, [activateListening]);
   useContentProtectionSync(true);
   reactExports.useEffect(() => {
-    return window.ghost?.onSessionStarted?.(() => void activateListening());
+    return window.replii?.onSessionStarted?.(() => void activateListening());
   }, [activateListening]);
   reactExports.useEffect(() => {
-    return window.ghost?.onSessionStopped?.(() => resetSessionState());
+    return window.replii?.onSessionStopped?.(() => resetSessionState());
   }, [resetSessionState]);
   reactExports.useEffect(() => {
-    return window.ghost?.onShortcutToggle?.(() => {
+    return window.replii?.onShortcutToggle?.(() => {
       setTopPanelHidden((hidden) => !hidden);
     });
   }, []);
@@ -41804,7 +41881,7 @@ function OverlayApp() {
       setDealHealth(null);
       setLoading(true);
       setStreamingText("");
-      void streamGhostSuggestion(text, linesRef.current, {
+      void streamRepliiSuggestion(text, linesRef.current, {
         product: aiProduct,
         objections: aiObjections,
         coachingContext: liveCoachingContext,
@@ -41835,7 +41912,7 @@ function OverlayApp() {
         scheduleHideSuggestion(result.suggestion);
       }).catch((err) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        console.error("[ghost] Auto suggestion failed:", err);
+        console.error("[replii] Auto suggestion failed:", err);
         setLoading(false);
       }).finally(() => {
         if (assistAbortRef.current === controller) {
@@ -41860,7 +41937,7 @@ function OverlayApp() {
       let accumulated = "";
       let final = "";
       try {
-        const response = await askGhost(action, snapshotLines, {
+        const response = await askReplii(action, snapshotLines, {
           customPrompt,
           systemPrompt: assistCoachingContext,
           smartMode,
@@ -41903,10 +41980,10 @@ function OverlayApp() {
   );
   runAssistRef.current = runAssist;
   reactExports.useEffect(() => {
-    return window.ghost?.onAssist(() => void runAssist("assist"));
+    return window.replii?.onAssist(() => void runAssist("assist"));
   }, [runAssist]);
   reactExports.useEffect(() => {
-    return window.ghost?.onClearSession(() => {
+    return window.replii?.onClearSession(() => {
       clearTranscript();
       setStreamingText("");
       setActiveSuggestion("");
@@ -41977,35 +42054,20 @@ function OverlayApp() {
       if (suggestDebounceRef.current) window.clearTimeout(suggestDebounceRef.current);
     };
   }, []);
-  const stopSession = async () => {
+  const stopSession = reactExports.useCallback(async () => {
     const duration = sessionStartRef.current ? Math.floor((Date.now() - sessionStartRef.current) / 1e3) : 0;
     setListening(false);
-    const meeting = saveMeetingFromSession({
-      title: "Live session",
-      company: "Meeting",
-      mode: activeMode,
+    await endRepliiSession({
       duration,
       transcript: linesRef.current,
-      summary: "Generating summary…",
-      status: "processing",
-      nextSteps: [],
-      dealScore: 0,
-      objections: [],
+      activeMode,
       suggestionUses: suggestionUsesRef.current,
       suggestions: suggestionsRef.current
     });
-    if (linesRef.current.length === 0) {
-      useAppStore.getState().refundFreeSessionUsage();
-    }
-    notifyAppStoreChanged();
-    void window.ghost?.requestMeetingSummary?.({
-      meetingId: meeting.id,
-      transcript: linesRef.current
-    });
-    await window.ghost?.stopSession();
-    useAppStore.getState().setSessionActive(false);
-    void window.ghost?.focusDashboard(`/meetings/${meeting.id}`);
-  };
+  }, [activeMode]);
+  reactExports.useEffect(() => {
+    return window.replii?.onRequestEndSession?.(() => void stopSession());
+  }, [stopSession]);
   if (phase === "idle") return null;
   const liveText = buildLiveDisplayText(lines, interim) || (isSpeaking && listening ? "…" : "");
   const isStreaming = (!!interim.trim() || isSpeaking) && listening;
@@ -42017,6 +42079,8 @@ function OverlayApp() {
       {
         ref: topPanelRef,
         className: "pointer-events-auto absolute left-4 top-4 flex w-[min(520px,calc(100vw-32px))] flex-col gap-2",
+        onMouseEnter: () => void window.replii?.setIgnoreMouseEvents?.(false),
+        onMouseLeave: () => void window.replii?.setIgnoreMouseEvents?.(true, { forward: true }),
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             ListeningPill,
@@ -42048,15 +42112,17 @@ function OverlayApp() {
       {
         ref: controlBarRef,
         className: "pointer-events-auto absolute bottom-6 left-1/2 w-max max-w-[calc(100vw-32px)] -translate-x-1/2",
+        onMouseEnter: () => void window.replii?.setIgnoreMouseEvents?.(false),
+        onMouseLeave: () => void window.replii?.setIgnoreMouseEvents?.(true, { forward: true }),
         children: /* @__PURE__ */ jsxRuntimeExports.jsx(
           ControlButtons,
           {
-            onToggleDashboard: () => void window.ghost?.toggleDashboard?.(),
+            onToggleDashboard: () => void window.replii?.toggleDashboard?.(),
             listening,
             onToggleListening: () => {
               const next = !listening;
               setListening(next);
-              window.ghost?.setSessionListening?.(next);
+              window.replii?.setSessionListening?.(next);
             },
             onEndSession: () => void stopSession(),
             pillTheme
@@ -42072,7 +42138,7 @@ function MicPermissionBanner() {
   const [setup, setSetup] = reactExports.useState(null);
   const [busy, setBusy] = reactExports.useState(false);
   const refresh = reactExports.useCallback(async () => {
-    setSetup(await detectGhostAudioSetup());
+    setSetup(await detectRepliiAudioSetup());
   }, []);
   reactExports.useEffect(() => {
     void refresh();
@@ -42083,13 +42149,13 @@ function MicPermissionBanner() {
   const enableMic = async () => {
     setBusy(true);
     setAudioCaptureMode("mic");
-    await window.ghost?.ensureMicrophone?.();
+    await window.replii?.ensureMicrophone?.();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       stream.getTracks().forEach((t) => t.stop());
-      await window.ghost?.hideMicHelper?.();
+      await window.replii?.hideMicHelper?.();
     } catch {
-      await window.ghost?.showMicHelper?.();
+      await window.replii?.showMicHelper?.();
     }
     setBusy(false);
     void refresh();
@@ -42098,7 +42164,7 @@ function MicPermissionBanner() {
     /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[13px] font-medium text-amber-950", children: "Turn on your microphone" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-0.5 text-[12px] text-amber-900", children: [
       "System Settings → Privacy & Security → Microphone → enable ",
-      /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: "Ghost" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: "Replii" }),
       ", then click below."
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -42146,11 +42212,11 @@ function finalizeMeeting(meetingId, transcript, coachingContext, outputLanguage,
         });
       } else {
         updateMeeting(meetingId, {
-          summary: "Ghost couldn't generate a summary. Check your OpenAI API key and try again.",
+          summary: "Replii couldn't generate a summary. Check your OpenAI API key and try again.",
           summarySections: [
             {
               heading: "Summary unavailable",
-              items: ["Ghost couldn't generate a summary. Check your OpenAI API key and try again."]
+              items: ["Replii couldn't generate a summary. Check your OpenAI API key and try again."]
             }
           ],
           status: "ready"
@@ -42167,7 +42233,7 @@ function MeetingSummaryWorker() {
   const meetings = useAppStore((s) => s.meetings);
   const recoveredRef = reactExports.useRef(/* @__PURE__ */ new Set());
   reactExports.useEffect(() => {
-    return window.ghost?.onGenerateMeetingSummary?.((payload) => {
+    return window.replii?.onGenerateMeetingSummary?.((payload) => {
       finalizeMeeting(
         payload.meetingId,
         payload.transcript,
@@ -63825,7 +63891,7 @@ function CompanyPanel() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-6 border-b border-zinc-100 pb-5", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-[15px] font-semibold text-zinc-900", children: "Personalise" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-[12px] text-zinc-500", children: "Upload playbooks or battlecards. Ghost reads each file once, stores it locally, and uses it throughout your calls." })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-[12px] text-zinc-500", children: "Upload playbooks or battlecards. Replii reads each file once, stores it locally, and uses it throughout your calls." })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       "input",
@@ -63871,7 +63937,7 @@ function CompanyPanel() {
           type: "button",
           onClick: openFilePicker,
           disabled: !canUpload,
-          className: `flex w-full flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${isDragging && canUpload ? "border-ghost-400 bg-ghost-50 text-ghost-700 ring-2 ring-ghost-200" : "border-zinc-300 bg-zinc-50/80 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-100"}`,
+          className: `flex w-full flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${isDragging && canUpload ? "border-replii-400 bg-replii-50 text-replii-700 ring-2 ring-replii-200" : "border-zinc-300 bg-zinc-50/80 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-100"}`,
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: uploading ? "Reading file…" : isDragging && canUpload ? "Drop file here" : "Upload file" }),
             !uploading && canUpload && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mt-1 text-[11px] font-normal text-zinc-400", children: "or drag and drop" })
@@ -63890,7 +63956,7 @@ function CompanyPanel() {
       MAX_KNOWLEDGE_DOC_CHARS.toLocaleString(),
       " characters each"
     ] }),
-    knowledgeContext.trim() && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 text-[11px] font-medium text-emerald-600", children: "Knowledge indexed — Ghost will reference your docs in live calls." }),
+    knowledgeContext.trim() && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 text-[11px] font-medium text-emerald-600", children: "Knowledge indexed — Replii will reference your docs in live calls." }),
     uploadError && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 text-[11px] text-red-600", children: uploadError })
   ] });
 }
@@ -64004,16 +64070,16 @@ const LANGUAGES = [
 ];
 const FAQ = [
   {
-    q: "How do I start Ghost on a sales call?",
-    a: "Click Start Ghost from the dashboard. The overlay appears on your screen and begins listening automatically."
+    q: "How do I start Replii on a sales call?",
+    a: "Click Start Replii from the dashboard. The overlay appears on your screen and begins listening automatically."
   },
   {
     q: "Is my call history saved?",
     a: "Every call is saved with transcripts, coaching suggestions, and deal scores. Review past sessions in your dashboard to see what worked."
   },
   {
-    q: "Does Ghost join my calls?",
-    a: "Never. Ghost runs locally on your machine. No bots, no extra participants."
+    q: "Does Replii join my calls?",
+    a: "Never. Replii runs locally on your machine. No bots, no extra participants."
   }
 ];
 function NavIcon({ name }) {
@@ -64098,14 +64164,14 @@ function GeneralPanel({ onRequestUpgrade }) {
     void applyContentProtection(plan, value);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "General", subtitle: "Customize how Ghost works for you" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "General", subtitle: "Customize how Replii works for you" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "divide-y divide-zinc-100", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         SettingsRow,
         {
           icon: /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { className: "h-4 w-4", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 1.75, children: /* @__PURE__ */ jsxRuntimeExports.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" }) }),
-          title: "Ghost Version",
-          description: "You are currently using Ghost version 0.1.0",
+          title: "Replii Version",
+          description: "You are currently using Replii version 0.1.0",
           action: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-1.5 text-[12px] font-medium text-zinc-500", children: "v0.1.0" })
         }
       ),
@@ -64134,7 +64200,7 @@ function BillingSettingsPanel() {
 function KeybindsPanel() {
   const mod = shortcutModLabel();
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "Keybinds", subtitle: "Keyboard shortcuts for Ghost overlay" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "Keybinds", subtitle: "Keyboard shortcuts for Replii overlay" }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "overflow-hidden rounded-xl border border-zinc-200", children: OVERLAY_KEYBINDS.map((bind, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "div",
       {
@@ -64183,7 +64249,7 @@ function ProfilePanel() {
     }
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "Profile", subtitle: "Your Ghost account details" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "Profile", subtitle: "Your Replii account details" }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-5", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-4", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative shrink-0", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -64269,7 +64335,7 @@ function LanguagePanel() {
 }
 function ReleaseNotesPanel() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "Release Notes", subtitle: "What's new in Ghost" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "Release Notes", subtitle: "What's new in Replii" }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-zinc-200 p-4", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[12px] font-semibold text-zinc-900", children: "v0.1.0" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-[12px] text-zinc-500", children: "Initial release — live AI coaching, overlay, and meeting summaries." })
@@ -64290,12 +64356,12 @@ function ContactPanel() {
     /* @__PURE__ */ jsxRuntimeExports.jsx(PanelHeader, { title: "Contact Support", subtitle: "We're here to help" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-center", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[13px] font-medium text-zinc-800", children: "Email us anytime" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-[12px] text-zinc-500", children: "support@ghost.app — we respond within 24 hours." }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-[12px] text-zinc-500", children: "support@replii.app — we respond within 24 hours." }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "button",
         {
           type: "button",
-          onClick: () => void window.ghost?.openExternal?.("mailto:support@ghost.app"),
+          onClick: () => void window.replii?.openExternal?.("mailto:support@replii.app"),
           className: "mt-4 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50",
           children: "Send email"
         }
@@ -64370,7 +64436,7 @@ function SettingsModal({
     navigate("/auth");
   };
   const handleQuit = () => {
-    void window.ghost?.quit();
+    void window.replii?.quit();
   };
   const handleOpenAdmin = () => {
     onClose();
@@ -64442,7 +64508,7 @@ function SettingsModal({
                   className: "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(NavIcon, { name: "quit" }),
-                    "Quit Ghost"
+                    "Quit Replii"
                   ]
                 }
               ),
@@ -64482,6 +64548,7 @@ function DashboardTopBar({
   const [settingsOpen, setSettingsOpen] = reactExports.useState(false);
   const [settingsSection, setSettingsSection] = reactExports.useState("general");
   const user = useAppStore((s) => s.user);
+  const sessionActive = useAppStore((s) => s.sessionActive);
   const pendingSettingsSection = useAppStore((s) => s.pendingSettingsSection);
   const clearPendingSettingsOpen = useAppStore((s) => s.clearPendingSettingsOpen);
   const isAdminRoute = location2.pathname.startsWith("/admin");
@@ -64613,6 +64680,15 @@ function DashboardTopBar({
             }
           )
         ] }),
+        sessionActive ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => void window.replii?.requestEndSession?.(),
+            className: "shrink-0 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-[12px] font-medium text-red-700 transition-colors hover:bg-red-100",
+            children: "End session"
+          }
+        ) : null,
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative shrink-0", children: [
           avatarButton,
           settingsOpen ? /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -64645,7 +64721,7 @@ function CalendarLinkPrompt({
   ] });
 }
 function ModeDropdown({
-  activeMode: activeMode2,
+  activeMode,
   onSelect
 }) {
   const [open, setOpen] = reactExports.useState(false);
@@ -64670,7 +64746,7 @@ function ModeDropdown({
         "aria-expanded": open,
         className: "flex h-8 min-w-[108px] items-center justify-between gap-6 rounded-lg border border-zinc-200 bg-white px-3 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50",
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: salesModeShortLabel(activeMode2) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: salesModeShortLabel(activeMode) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "svg",
             {
@@ -64694,7 +64770,7 @@ function ModeDropdown({
           onSelect(mode.id);
           setOpen(false);
         },
-        className: `flex w-full flex-col px-3.5 py-2.5 text-left transition-colors hover:bg-zinc-50 ${activeMode2 === mode.id ? "bg-blue-50/60" : ""}`,
+        className: `flex w-full flex-col px-3.5 py-2.5 text-left transition-colors hover:bg-zinc-50 ${activeMode === mode.id ? "bg-blue-50/60" : ""}`,
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[13px] font-medium text-zinc-900", children: salesModeShortLabel(mode.id) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mt-0.5 text-[11px] leading-snug text-zinc-500", children: mode.description })
@@ -64706,6 +64782,7 @@ function ModeDropdown({
 }
 function DashboardHeader({
   onStartSession,
+  onEndSession,
   onRequestUpgrade,
   canStartSession: canStartSession2 = true,
   sessionActive = false,
@@ -64713,17 +64790,26 @@ function DashboardHeader({
   isPaid = false,
   showCalendarPrompt = false
 }) {
-  const { activeMode: activeMode2, setActiveMode } = useAppStore();
+  const { activeMode, setActiveMode } = useAppStore();
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "no-drag shrink-0 border-b border-zinc-100 bg-white px-8 py-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mx-auto flex max-w-5xl items-center justify-between gap-4", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex min-w-0 flex-col gap-1.5", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "shrink-0 text-[20px] font-semibold tracking-tight text-zinc-900", children: "Ghost" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(ModeDropdown, { activeMode: activeMode2, onSelect: setActiveMode })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "shrink-0 text-[20px] font-semibold tracking-tight text-zinc-900", children: "Replii" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(ModeDropdown, { activeMode, onSelect: setActiveMode })
       ] }),
       !isPaid && showCalendarPrompt ? /* @__PURE__ */ jsxRuntimeExports.jsx(CalendarLinkPrompt, { onRequestUpgrade }) : null
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex shrink-0 items-center gap-3", children: [
       !isPaid && overlayTimeRemainingLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden text-[12px] text-zinc-500 sm:inline", children: canStartSession2 ? overlayTimeRemainingLabel : "Free overlay time used up" }) : null,
+      sessionActive && onEndSession ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          type: "button",
+          onClick: onEndSession,
+          className: "flex h-9 items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50",
+          children: "End session"
+        }
+      ) : null,
       /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
         {
@@ -64739,7 +64825,7 @@ function DashboardHeader({
             }
             onStartSession();
           },
-          title: sessionActive ? "Session active — click to show overlay" : canStartSession2 ? "Start Ghost" : "Upgrade for unlimited overlay time on the free plan",
+          title: sessionActive ? "Session active — click to show overlay" : canStartSession2 ? "Start Replii" : "Upgrade for unlimited overlay time on the free plan",
           className: "flex h-9 items-center gap-2 rounded-full bg-gradient-to-b from-[#4d9cf8] to-[#3b82f6] px-4 text-[13px] font-medium text-white shadow-[0_2px_8px_rgba(59,130,246,0.3)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40",
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -64752,14 +64838,14 @@ function DashboardHeader({
                 children: /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" })
               }
             ),
-            sessionActive ? "Session active" : "Start Ghost"
+            sessionActive ? "Session active" : "Start Replii"
           ]
         }
       )
     ] })
   ] }) });
 }
-function useStartGhostSession() {
+function useStartRepliiSession() {
   const plan = useAppStore((s) => s.plan);
   const freeOverlaySecondsUsed = useAppStore((s) => s.freeOverlaySecondsUsed);
   const sessionActive = useAppStore((s) => s.sessionActive);
@@ -64773,30 +64859,30 @@ function useStartGhostSession() {
   const startSession = reactExports.useCallback(async () => {
     const state = useAppStore.getState();
     if (state.sessionActive) {
-      void window.ghost?.show?.();
+      void window.replii?.show?.();
       return true;
     }
     const { plan: currentPlan, freeOverlaySecondsUsed: used } = state;
     if (!canStartSession(currentPlan, used)) {
-      console.warn("[ghost] Cannot start — free overlay time limit reached.");
+      console.warn("[replii] Cannot start — free overlay time limit reached.");
       return false;
     }
     await syncPlanLimitsToMain();
-    const permissions = await window.ghost?.getPermissionStatus?.();
+    const permissions = await window.replii?.getPermissionStatus?.();
     if (permissions && !permissions.microphone) {
-      const granted = await window.ghost?.ensureMicrophone?.();
+      const granted = await window.replii?.ensureMicrophone?.();
       if (!granted) {
-        await window.ghost?.showMicHelper?.();
+        await window.replii?.showMicHelper?.();
         return false;
       }
     }
-    if (!window.ghost?.startSession) {
-      console.error("[ghost] startSession unavailable — run inside the Electron app.");
+    if (!window.replii?.startSession) {
+      console.error("[replii] startSession unavailable — run inside the Electron app.");
       return false;
     }
-    const started = await window.ghost.startSession();
+    const started = await window.replii.startSession();
     if (!started) {
-      console.warn("[ghost] Session start blocked — check free overlay time limit.");
+      console.warn("[replii] Session start blocked — check free overlay time limit.");
       return false;
     }
     setSessionActive(true);
@@ -64821,7 +64907,7 @@ function DashboardLayout() {
   const [upgradeOpen, setUpgradeOpen] = reactExports.useState(false);
   const [upgradeContext, setUpgradeContext] = reactExports.useState();
   const { setSessionActive } = useAppStore();
-  const { startSession, canStart, sessionActive, overlayTimeRemainingLabel, isPaid } = useStartGhostSession();
+  const { startSession, canStart, sessionActive, overlayTimeRemainingLabel, isPaid } = useStartRepliiSession();
   const isSubPage = SUB_PAGE_PATHS.some((p) => location2.pathname.startsWith(p));
   const isCalendarPage = CALENDAR_PATHS.some((p) => location2.pathname.startsWith(p));
   const isAdminPage = ADMIN_PATHS.some((p) => location2.pathname.startsWith(p));
@@ -64830,40 +64916,40 @@ function DashboardLayout() {
   useContentProtectionSync();
   useBillingSync();
   reactExports.useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("dashboard");
+    void window.replii?.setDashboardLayout?.("dashboard");
     void rehydrateAppStoreFromStorage().then(() => {
       syncPlanLimitsToMain();
     });
-    void window.ghost?.getSettings?.().then((settings) => {
+    void window.replii?.getSettings?.().then((settings) => {
       if (settings.useCallAudio) {
         useAppStore.getState().setAudioCaptureMode("auto");
       }
     });
   }, []);
   reactExports.useEffect(() => {
-    return window.ghost?.onNavigate?.((path) => {
+    return window.replii?.onNavigate?.((path) => {
       void rehydrateAppStoreFromStorage().then(() => {
         navigate(path.startsWith("/") ? path : `/${path}`);
       });
     });
   }, [navigate]);
   reactExports.useEffect(() => {
-    return window.ghost?.onStoreChanged?.(() => {
+    return window.replii?.onStoreChanged?.(() => {
       void rehydrateAppStoreFromStorage();
     });
   }, []);
   reactExports.useEffect(() => {
-    return window.ghost?.onSessionStarted?.(() => setSessionActive(true));
+    return window.replii?.onSessionStarted?.(() => setSessionActive(true));
   }, [setSessionActive]);
   reactExports.useEffect(() => {
-    return window.ghost?.onSessionStopped?.(() => {
+    return window.replii?.onSessionStopped?.(() => {
       void rehydrateAppStoreFromStorage().then(() => {
         setSessionActive(false);
       });
     });
   }, [setSessionActive]);
   reactExports.useEffect(() => {
-    void window.ghost?.getSettings?.().then((s) => {
+    void window.replii?.getSettings?.().then((s) => {
       if (!s.sessionActive) setSessionActive(false);
     });
   }, [setSessionActive]);
@@ -64889,6 +64975,7 @@ function DashboardLayout() {
       DashboardHeader,
       {
         onStartSession: () => void startSession(),
+        onEndSession: () => void window.replii?.requestEndSession?.(),
         onRequestUpgrade: () => openUpgrade(),
         canStartSession: canStart,
         sessionActive,
@@ -64919,14 +65006,14 @@ function DashboardLayout() {
 function SessionEmptyState({ onStart }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex min-h-[360px] flex-col items-center justify-center px-8 py-16", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[15px] font-medium text-zinc-800", children: "Ready for your first call?" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 max-w-sm text-center text-[14px] text-zinc-500", children: "Start Ghost on your next meeting — you'll see live suggestions within minutes." }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 max-w-sm text-center text-[14px] text-zinc-500", children: "Start Replii on your next meeting — you'll see live suggestions within minutes." }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       "button",
       {
         type: "button",
         onClick: onStart,
         className: "mt-6 rounded-full bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] px-6 py-2.5 text-[14px] font-medium text-white shadow-[0_2px_12px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-90",
-        children: "Start Ghost"
+        children: "Start Replii"
       }
     )
   ] });
@@ -65032,7 +65119,7 @@ function ActivityPage() {
   const { searchQuery, onRequestUpgrade } = useOutletContext();
   const meetings = useAppStore((s) => s.meetings);
   const deleteMeeting = useAppStore((s) => s.deleteMeeting);
-  const { startSession, canStart, sessionActive } = useStartGhostSession();
+  const { startSession, canStart, sessionActive } = useStartRepliiSession();
   const handleStart = async () => {
     if (sessionActive) {
       void startSession();
@@ -65096,7 +65183,7 @@ function getWarmUpgradeMessage(meeting) {
   if ((meeting.dealScore ?? 0) >= 60) {
     return `Deal score ${meeting.dealScore} — Pro adds deeper coaching analytics and unlimited sessions.`;
   }
-  return "Ghost is working on your calls — Pro unlocks unlimited sessions and full coaching.";
+  return "Replii is working on your calls — Pro unlocks unlimited sessions and full coaching.";
 }
 function shouldShowWarmUpgrade(meeting, plan, dismissedIds) {
   if (isPaidPlan(plan)) return false;
@@ -65104,7 +65191,7 @@ function shouldShowWarmUpgrade(meeting, plan, dismissedIds) {
   if (meeting.status === "processing") return false;
   return isStrongSession(meeting);
 }
-const DISMISS_KEY = "ghost-warm-upgrade-dismissed";
+const DISMISS_KEY = "replii-warm-upgrade-dismissed";
 function loadDismissed() {
   try {
     const raw = localStorage.getItem(DISMISS_KEY);
@@ -65493,7 +65580,7 @@ function UpcomingPage() {
   const upcoming = useAppStore((s) => s.upcoming);
   const plan = useAppStore((s) => s.plan);
   const paid = isPaidPlan(plan);
-  const { startSession, canStart } = useStartGhostSession();
+  const { startSession, canStart } = useStartRepliiSession();
   const filtered = upcoming.filter((call) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -65544,7 +65631,7 @@ function UpcomingPage() {
                 onClick: () => void startSession(),
                 disabled: !canStart,
                 className: "rounded-full bg-gradient-to-b from-[#4d9cf8] to-[#3b82f6] px-4 py-2 text-[12px] font-medium text-white shadow-[0_2px_8px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40",
-                children: "Start Ghost"
+                children: "Start Replii"
               }
             )
           ] }),
@@ -65781,7 +65868,7 @@ function formatDateRange(start, end) {
   return `${startFmt} – ${endFmt}`;
 }
 function openStripeDashboard(path) {
-  void window.ghost?.openExternal?.(`https://dashboard.stripe.com/${path}`);
+  void window.replii?.openExternal?.(`https://dashboard.stripe.com/${path}`);
 }
 function formatValueOrDash(value, currency, showDash, isCurrency = true) {
   if (showDash && value === 0) return "—";
@@ -65921,7 +66008,7 @@ function MetricCard({
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[12px] font-medium text-zinc-500 underline decoration-dotted decoration-zinc-300 underline-offset-2", children: title }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-[24px] font-semibold leading-none tracking-tight text-zinc-900", children: displayValue })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-zinc-900", children: /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: ghostIcon, alt: "Ghost", className: "h-4 w-4 object-contain" }) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-zinc-900", children: /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: repliiIcon, alt: "Replii", className: "h-4 w-4 object-contain" }) })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(MiniLineChart, { data, isCurrency })
   ] });
@@ -65942,7 +66029,7 @@ function PaymentsBreakdownCard({
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[12px] font-medium text-zinc-500 underline decoration-dotted decoration-zinc-300 underline-offset-2", children: "Payments breakdown" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-[24px] font-semibold leading-none tracking-tight text-zinc-900", children: total.toLocaleString() })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-zinc-900", children: /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: ghostIcon, alt: "Ghost", className: "h-4 w-4 object-contain" }) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-zinc-900", children: /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: repliiIcon, alt: "Replii", className: "h-4 w-4 object-contain" }) })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 flex h-2 overflow-hidden rounded-full bg-zinc-100", children: total > 0 ? rows.map(
       (row) => row.value > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -66232,7 +66319,7 @@ function AppRoutes() {
     /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/welcome", element: /* @__PURE__ */ jsxRuntimeExports.jsx(WelcomePage, {}) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/auth", element: /* @__PURE__ */ jsxRuntimeExports.jsx(AuthPage, {}) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/onboarding", element: /* @__PURE__ */ jsxRuntimeExports.jsx(OnboardingGuard, {}) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/try", element: /* @__PURE__ */ jsxRuntimeExports.jsx(TryGhostPage, {}) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/try", element: /* @__PURE__ */ jsxRuntimeExports.jsx(TryRepliiPage, {}) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/paywall", element: /* @__PURE__ */ jsxRuntimeExports.jsx(PaywallPage, {}) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(Route, { element: /* @__PURE__ */ jsxRuntimeExports.jsx(DashboardGuard, {}), children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/", element: /* @__PURE__ */ jsxRuntimeExports.jsx(ActivityPage, {}) }),

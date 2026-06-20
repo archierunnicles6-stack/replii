@@ -65,7 +65,7 @@ export function PaywallPricing({
           embedded ? "text-[20px] leading-snug" : "text-[34px] leading-[1.1]"
         }`}
       >
-        {headline ?? "Unlock all features with Ghost Pro"}
+        {headline ?? "Unlock all features with Replii Pro"}
       </h1>
 
       {subheadline ? (

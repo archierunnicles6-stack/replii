@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * One-shot BlackHole + Ghost Audio setup for macOS.
+ * One-shot BlackHole + Replii Audio setup for macOS.
  * Opens the BlackHole installer (requires your password in the GUI),
- * then creates Ghost Audio / Ghost Input devices and switches system output.
+ * then creates Replii Audio / Replii Input devices and switches system output.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const desktopRoot = path.join(__dirname, "..");
 const pkgPath = "/tmp/BlackHole2ch.pkg";
 const pkgUrl = "https://existential.audio/downloads/BlackHole2ch.v0.6.0.pkg";
-const swiftScript = path.join(__dirname, "setup-ghost-audio.swift");
+const swiftScript = path.join(__dirname, "setup-replii-audio.swift");
 
 function run(cmd, args, opts = {}) {
   const result = spawnSync(cmd, args, { stdio: "inherit", ...opts });
@@ -34,17 +34,17 @@ function downloadPkg() {
   return run("curl", ["-fsSL", "-o", pkgPath, pkgUrl]) === 0;
 }
 
-function setGhostCallAudioMode() {
+function setRepliiCallAudioMode() {
   const flagPath = path.join(
     process.env.HOME ?? "",
-    "Library/Application Support/ghost-desktop/use-call-audio.flag",
+    "Library/Application Support/replii-desktop/use-call-audio.flag",
   );
   mkdirSync(path.dirname(flagPath), { recursive: true });
   writeFileSync(flagPath, "auto\n");
-  console.log("Ghost will use auto audio mode (mic + call) on next launch.");
+  console.log("Replii will use auto audio mode (mic + call) on next launch.");
 }
 
-console.log("\n=== Ghost BlackHole setup ===\n");
+console.log("\n=== Replii BlackHole setup ===\n");
 
 if (!hasBlackHole()) {
   if (!downloadPkg()) {
@@ -58,7 +58,7 @@ if (!hasBlackHole()) {
   process.exit(0);
 }
 
-console.log("BlackHole 2ch detected.\nCreating Ghost Audio + Ghost Input devices…\n");
+console.log("BlackHole 2ch detected.\nCreating Replii Audio + Replii Input devices…\n");
 const status = run("swift", [swiftScript]);
 if (status !== 0) {
   console.error("\nDevice setup failed. Open Audio MIDI Setup manually if needed.");
@@ -66,9 +66,9 @@ if (status !== 0) {
   process.exit(status);
 }
 
-setGhostCallAudioMode();
+setRepliiCallAudioMode();
 
-console.log("\nOpening Sound settings — confirm output is Ghost Audio.\n");
+console.log("\nOpening Sound settings — confirm output is Replii Audio.\n");
 run("open", ["x-apple.systempreferences:com.apple.Sound-Settings.extension"]);
 
-console.log("Setup complete. Restart Ghost (npm run dev) and start a session.\n");
+console.log("Setup complete. Restart Replii (npm run dev) and start a session.\n");

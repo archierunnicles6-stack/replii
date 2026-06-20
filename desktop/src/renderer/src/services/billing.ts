@@ -12,9 +12,28 @@ import { syncPlanLimitsToMain, useAppStore } from "../store/useAppStore";
 
 const PAID: Plan[] = ["pro", "solo", "undetectable"];
 
+async function parseBillingJsonResponse(
+  res: Response,
+): Promise<{ data: { url?: string; error?: string }; error?: string }> {
+  const raw = await res.text();
+  let data: { url?: string; error?: string } = {};
+  try {
+    data = JSON.parse(raw) as { url?: string; error?: string };
+  } catch {
+    if (raw.includes("DEPLOYMENT_NOT_FOUND") || res.status === 404) {
+      return {
+        data: {},
+        error:
+          "Billing server unavailable. Update VITE_API_BASE_URL in desktop/.env and restart the app.",
+      };
+    }
+  }
+  return { data };
+}
+
 async function openCheckoutUrl(url: string): Promise<void> {
-  if (window.ghost?.openExternal) {
-    await window.ghost.openExternal(url);
+  if (window.replii?.openExternal) {
+    await window.replii.openExternal(url);
     return;
   }
   window.open(url, "_blank", "noopener,noreferrer");
@@ -62,7 +81,11 @@ export async function startStripeCheckout(
     };
   }
 
-  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+  const parsed = await parseBillingJsonResponse(res);
+  if (parsed.error) {
+    return { ok: false, error: parsed.error };
+  }
+  const { data } = parsed;
   if (!res.ok) {
     return {
       ok: false,
@@ -93,7 +116,11 @@ export async function openStripeBillingPortal(userId: string): Promise<PortalRes
     }),
   });
 
-  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+  const parsed = await parseBillingJsonResponse(res);
+  if (parsed.error) {
+    return { ok: false, error: parsed.error };
+  }
+  const { data } = parsed;
   if (!res.ok) {
     return {
       ok: false,

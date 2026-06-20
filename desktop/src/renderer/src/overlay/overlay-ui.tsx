@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
-import ghostMark from "../assets/ghost-mark.png";
+import repliiMark from "../assets/replii-mark.png";
 import { AI_DISCLAIMER_OVERLAY } from "../lib/ai-disclaimer";
 import type { QuickAction } from "../services/ai";
 import type { PillThemeStyles } from "../hooks/usePillBackdrop";
@@ -49,10 +49,10 @@ export function ActionIcon({ type }: { type: (typeof QUICK_ACTIONS)[number]["ico
   );
 }
 
-export function GhostMark({ className = "h-5 w-5" }: { className?: string }) {
+export function RepliiMark({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <img
-      src={ghostMark}
+      src={repliiMark}
       alt=""
       aria-hidden
       draggable={false}
@@ -120,7 +120,7 @@ export function ListeningPill({
   const [micAppName, setMicAppName] = useState("Electron");
 
   useEffect(() => {
-    void window.ghost?.getMicAppName?.().then((name) => {
+    void window.replii?.getMicAppName?.().then((name) => {
       if (name) setMicAppName(name);
     });
   }, []);
@@ -155,7 +155,7 @@ export function ListeningPill({
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 10px rgba(0,0,0,0.22)",
           }}
         >
-          <GhostMark className="h-4 w-4" />
+          <RepliiMark className="h-4 w-4" />
         </div>
 
         <div className="overlay-pill-text flex min-w-0 flex-1 items-center gap-2">
@@ -189,7 +189,7 @@ export function ListeningPill({
           </p>
           <button
             type="button"
-            onClick={() => void window.ghost?.showMicHelper?.()}
+            onClick={() => void window.replii?.showMicHelper?.()}
             className="shrink-0 rounded-full border border-amber-400 px-2.5 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-50"
           >
             Enable mic
@@ -202,11 +202,11 @@ export function ListeningPill({
           <p className="text-[11px] leading-snug text-red-600">
             {error === "screen-blocked" ? (
               <>
-                Enable <span className="font-semibold">Ghost</span> under System Settings → Privacy &amp;
+                Enable <span className="font-semibold">Replii</span> under System Settings → Privacy &amp;
                 Security → Screen Recording (macOS uses this for call audio only), then restart your session.
               </>
             ) : error === "no-api-key" ? (
-              <>Ghost needs an OpenAI API key to transcribe speech. Add it in desktop/.env and restart.</>
+              <>Replii needs an OpenAI API key to transcribe speech. Add it in desktop/.env and restart.</>
             ) : (
               <>
                 System Settings → Privacy &amp; Security → Microphone → turn on{" "}
@@ -218,7 +218,7 @@ export function ListeningPill({
             <button
               type="button"
               onClick={() =>
-                void window.ghost?.openPermissionSettings?.(
+                void window.replii?.openPermissionSettings?.(
                   error === "screen-blocked" ? "screen" : "microphone",
                 )
               }
@@ -230,12 +230,12 @@ export function ListeningPill({
               type="button"
               onClick={() => {
                 void (async () => {
-                  await window.ghost?.ensureMicrophone?.();
+                  await window.replii?.ensureMicrophone?.();
                   try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     stream.getTracks().forEach((t) => t.stop());
                   } catch {
-                    void window.ghost?.showMicHelper?.();
+                    void window.replii?.showMicHelper?.();
                   }
                 })();
               }}
@@ -307,7 +307,7 @@ export function SuggestionPill({
   );
 }
 
-// ─── Bottom control bar — mic | Ghost logo | play/pause ─────────────────────
+// ─── Bottom control bar — mic | Replii logo | play/pause ─────────────────────
 
 function SideIconButton({
   title,
@@ -408,14 +408,14 @@ export function ControlButtons({
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 14px rgba(0,0,0,0.30)",
             }}
           >
-            <GhostMark className="h-5 w-5" />
+            <RepliiMark className="h-5 w-5" />
           </button>
         </div>
 
         <SideIconButton title="End session" onClick={onEndSession} bg={sideBg} border={sideBorder}>
           <svg className={`h-[18px] w-[18px] ${iconClass}`} viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="5" width="4.5" height="14" rx="1" />
-            <rect x="13.5" y="5" width="4.5" height="14" rx="1" />
+            <rect x="6" y="4" width="4" height="16" rx="1" />
+            <rect x="14" y="4" width="4" height="16" rx="1" />
           </svg>
         </SideIconButton>
       </div>

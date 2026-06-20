@@ -5,10 +5,10 @@ import type { CSSProperties, ReactNode } from "react";
 import { useStreamingDisplayText } from "@/hooks/useStreamingDisplayText";
 import type { PillThemeStyles } from "@/lib/pill-theme";
 
-export function GhostMark({ className = "h-5 w-5" }: { className?: string }) {
+export function RepliiMark({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <Image
-      src="/ghost-mark.png"
+      src="/replii-mark.png"
       alt=""
       width={20}
       height={20}
@@ -99,7 +99,7 @@ export function ListeningPill({
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 10px rgba(0,0,0,0.22)",
           }}
         >
-          <GhostMark className="h-4 w-4" />
+          <RepliiMark className="h-4 w-4" />
         </div>
         <span className={`shrink-0 text-[15px] font-semibold tracking-tight ${theme.status}`}>
           {statusText}
@@ -176,7 +176,7 @@ export function SuggestionPill({
           <div className="mt-3">
             <div className="h-1 rounded-full bg-black/10">
               <div
-                className="h-full rounded-full bg-ghost-500 transition-all duration-500"
+                className="h-full rounded-full bg-replii-500 transition-all duration-500"
                 style={{ width: `${dealHealth}%` }}
               />
             </div>
@@ -264,7 +264,7 @@ export function ControlButtons({
                 boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 14px rgba(0,0,0,0.30)",
               }}
             >
-              <GhostMark className="h-5 w-5" />
+              <RepliiMark className="h-5 w-5" />
             </button>
           </div>
 
@@ -345,7 +345,7 @@ export function TabSharePrompt({
   return (
     <div className="w-[340px] max-w-[520px] rounded-2xl px-4 py-3" style={theme.glass}>
       <p className={`text-[13px] leading-snug ${theme.body}`}>
-        Share your Zoom or Meet tab with audio so Ghost can hear the prospect.
+        Share your Zoom or Meet tab with audio so Replii can hear the prospect.
       </p>
       {error === "no-audio" ? (
         <p className="mt-2 text-[12px] text-amber-700">
@@ -382,7 +382,7 @@ export function MeetingBackground({ mode = "live" }: { mode?: "live" | "demo" })
       </div>
       <div className="absolute bottom-6 left-6 flex items-center gap-2 rounded-lg bg-black/40 px-3 py-1.5 text-[11px] text-white/50">
         <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-        {mode === "demo" ? "Demo call" : "Live sales call"} · Ghost overlay
+        {mode === "demo" ? "Demo call" : "Live sales call"} · Replii overlay
       </div>
     </div>
   );

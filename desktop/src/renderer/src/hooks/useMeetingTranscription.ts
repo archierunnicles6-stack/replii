@@ -4,11 +4,11 @@ import {
   captureCallAudio,
   captureMicrophone,
   confirmMicrophoneAccess,
-  detectGhostAudioSetup,
+  detectRepliiAudioSetup,
   getSupportedRecorderMime,
   isCallAudioSource,
-  type GhostAudioSetup,
-  type GhostAudioSource,
+  type RepliiAudioSetup,
+  type RepliiAudioSource,
 } from "../services/audio-capture";
 import {
   createSpeechDetector,
@@ -147,12 +147,12 @@ class StreamTranscriber {
         : new MediaRecorder(this.stream);
       this.mimeType = this.recorder.mimeType || preferredMime || "audio/webm";
     } catch (err) {
-      console.warn("[ghost] MediaRecorder init failed:", err);
+      console.warn("[replii] MediaRecorder init failed:", err);
       try {
         this.recorder = new MediaRecorder(this.stream);
         this.mimeType = this.recorder.mimeType || "audio/webm";
       } catch (fallbackErr) {
-        console.warn("[ghost] MediaRecorder fallback failed:", fallbackErr);
+        console.warn("[replii] MediaRecorder fallback failed:", fallbackErr);
         return;
       }
     }
@@ -198,11 +198,11 @@ class StreamTranscriber {
           this.recorder.requestData();
           this.recorder.stop();
         } catch (err) {
-          console.warn("[ghost] MediaRecorder segment stop failed:", err);
+          console.warn("[replii] MediaRecorder segment stop failed:", err);
         }
       }, CHUNK_MS);
     } catch (err) {
-      console.warn("[ghost] MediaRecorder start failed:", err);
+      console.warn("[replii] MediaRecorder start failed:", err);
     }
   }
 
@@ -265,8 +265,8 @@ export interface MeetingTranscriptionState {
   hearingAudio: boolean;
   isSpeaking: boolean;
   audioCaptureMode: AudioCaptureMode;
-  audioSource: GhostAudioSource;
-  audioSetup: GhostAudioSetup | null;
+  audioSource: RepliiAudioSource;
+  audioSetup: RepliiAudioSetup | null;
 }
 
 export function useMeetingTranscription(
@@ -275,8 +275,8 @@ export function useMeetingTranscription(
   audioCaptureMode: AudioCaptureMode = "auto",
 ): MeetingTranscriptionState & { clear: () => void } {
   const [whisperLines, setWhisperLines] = useState<TranscriptLine[]>([]);
-  const [audioSource, setAudioSource] = useState<GhostAudioSource>(null);
-  const [audioSetup, setAudioSetup] = useState<GhostAudioSetup | null>(null);
+  const [audioSource, setAudioSource] = useState<RepliiAudioSource>(null);
+  const [audioSetup, setAudioSetup] = useState<RepliiAudioSetup | null>(null);
   const [hasMicCapture, setHasMicCapture] = useState(false);
   const [hasCallCapture, setHasCallCapture] = useState(false);
   const [captureError, setCaptureError] = useState<string | null>(null);
@@ -360,7 +360,7 @@ export function useMeetingTranscription(
   }, []);
 
   useEffect(() => {
-    return window.ghost?.onMicGranted?.(() => {
+    return window.replii?.onMicGranted?.(() => {
       setMicAccessGranted(true);
       setCaptureError(null);
       setCaptureRetry((n) => n + 1);
@@ -405,7 +405,7 @@ export function useMeetingTranscription(
 
     void (async () => {
       setCaptureError(null);
-      void detectGhostAudioSetup().then((setup) => {
+      void detectRepliiAudioSetup().then((setup) => {
         if (!cancelled) setAudioSetup(setup);
       });
 
@@ -462,7 +462,7 @@ export function useMeetingTranscription(
   useEffect(() => {
     if (!active || !captureError) return;
     const id = window.setInterval(async () => {
-      const status = await window.ghost?.getPermissionStatus?.();
+      const status = await window.replii?.getPermissionStatus?.();
       if (!status) return;
       if (captureError === "not-allowed" && status.microphone) {
         setMicAccessGranted(true);

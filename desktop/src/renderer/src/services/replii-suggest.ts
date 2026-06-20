@@ -11,7 +11,7 @@ import {
 import { getOpenAIKey } from "./whisper";
 import { isDirectQuestion } from "./transcript";
 
-export interface GhostSuggestion {
+export interface RepliiSuggestion {
   suggestion: string;
   health: number;
   talkRatio: number;
@@ -79,10 +79,10 @@ function estimateDealHealth(transcript: SuggestTranscriptLine[]): number {
   return Math.round(Math.max(35, Math.min(92, 50 + balance * 40)));
 }
 
-function parseSuggestionJson(raw: string): GhostSuggestion | null {
+function parseSuggestionJson(raw: string): RepliiSuggestion | null {
   try {
     const clean = raw.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean) as Partial<GhostSuggestion>;
+    const parsed = JSON.parse(clean) as Partial<RepliiSuggestion>;
     if (!parsed.suggestion?.trim()) return null;
     return {
       suggestion: parsed.suggestion.trim(),
@@ -186,7 +186,7 @@ ${speakerLabel}: "${prospectText}"
 TASK: Suggest what the user should say next. Under 20 words. Give exact words they can say verbatim. No preamble.`;
 }
 
-export async function getGhostSuggestion(
+export async function getRepliiSuggestion(
   prospectText: string,
   transcript: SuggestTranscriptLine[],
   options: {
@@ -197,10 +197,10 @@ export async function getGhostSuggestion(
     micOnly?: boolean;
     signal?: AbortSignal;
   } = {},
-): Promise<GhostSuggestion | null> {
+): Promise<RepliiSuggestion | null> {
   const apiKey = await getOpenAIKey();
   if (!apiKey) {
-    console.error("[ghost] OpenAI API key is missing — cannot fetch suggestions.");
+    console.error("[replii] OpenAI API key is missing — cannot fetch suggestions.");
     return null;
   }
 
@@ -242,20 +242,20 @@ export async function getGhostSuggestion(
 
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      console.error("[ghost] Suggest API failed:", res.status, detail);
+      console.error("[replii] Suggest API failed:", res.status, detail);
       return null;
     }
 
     const data = await res.json();
     const raw = data.choices?.[0]?.message?.content?.trim();
     if (!raw) {
-      console.error("[ghost] Suggest API returned empty content.");
+      console.error("[replii] Suggest API returned empty content.");
       return null;
     }
 
     const parsed = parseSuggestionJson(raw);
     if (!parsed) {
-      console.error("[ghost] Suggest API returned invalid JSON:", raw);
+      console.error("[replii] Suggest API returned invalid JSON:", raw);
       return null;
     }
 
@@ -266,13 +266,13 @@ export async function getGhostSuggestion(
     return parsed;
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") throw err;
-    console.error("[ghost] Suggest API error:", err);
+    console.error("[replii] Suggest API error:", err);
     return null;
   }
 }
 
 /** Streaming GPT-4o suggestion for live overlay display. */
-export async function streamGhostSuggestion(
+export async function streamRepliiSuggestion(
   prospectText: string,
   transcript: SuggestTranscriptLine[],
   options: {
@@ -286,10 +286,10 @@ export async function streamGhostSuggestion(
     isQuestion?: boolean;
     signal?: AbortSignal;
   } = {},
-): Promise<GhostSuggestion | null> {
+): Promise<RepliiSuggestion | null> {
   const apiKey = await getOpenAIKey();
   if (!apiKey) {
-    console.error("[ghost] OpenAI API key is missing — cannot fetch suggestions.");
+    console.error("[replii] OpenAI API key is missing — cannot fetch suggestions.");
     return null;
   }
 
@@ -339,7 +339,7 @@ export async function streamGhostSuggestion(
 
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      console.error("[ghost] Stream suggest failed:", res.status, detail);
+      console.error("[replii] Stream suggest failed:", res.status, detail);
       return null;
     }
 
@@ -381,7 +381,7 @@ export async function streamGhostSuggestion(
     };
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") throw err;
-    console.error("[ghost] Stream suggest error:", err);
+    console.error("[replii] Stream suggest error:", err);
     return null;
   }
 }

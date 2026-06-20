@@ -3,7 +3,7 @@ import { OverlayMockupCompact } from "./OverlayMockup";
 const steps = [
   {
     number: "01",
-    title: "Ghost listens to the conversation",
+    title: "Replii listens to the conversation",
     description:
       "It picks up what your prospect says in real time — objections, questions, buying signals — so it can coach you when you need it.",
     visual: "listening",
@@ -12,7 +12,7 @@ const steps = [
     number: "02",
     title: "You get the exact words to say",
     description:
-      "When your prospect finishes speaking, Ghost surfaces one sharp response suggestion. No scripts. No rambling. Just what to say next.",
+      "When your prospect finishes speaking, Replii surfaces one sharp response suggestion. No scripts. No rambling. Just what to say next.",
     visual: "suggestion",
   },
   {
@@ -30,7 +30,7 @@ export function HowItWorks() {
       <div className="mx-auto max-w-6xl px-6 py-24 md:py-32">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-            How Ghost helps during a call
+            How Replii helps during a call
           </h2>
           <div className="mx-auto my-5 h-px w-12 bg-zinc-300" />
         </div>
@@ -44,7 +44,7 @@ export function HowItWorks() {
               }`}
             >
               <div>
-                <span className="text-[12px] font-semibold uppercase tracking-wider text-ghost-500">
+                <span className="text-[12px] font-semibold uppercase tracking-wider text-replii-500">
                   {step.number}
                 </span>
                 <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900">
@@ -88,7 +88,7 @@ function ListeningVisual() {
             key={i}
             className={`rounded-lg px-3 py-2 text-[13px] ${
               line.speaker === "Prospect"
-                ? "bg-ghost-50 text-ghost-800"
+                ? "bg-replii-50 text-replii-800"
                 : "bg-zinc-100 text-zinc-600"
             }`}
           >
@@ -108,8 +108,8 @@ function SuggestionVisual() {
     <div className="w-full max-w-sm">
       <OverlayMockupCompact />
       <div className="mt-3 rounded-[14px] border border-zinc-200 bg-white p-4 shadow-sm">
-        <div className="rounded-[10px] border border-ghost-200 bg-ghost-50 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-ghost-600">
+        <div className="rounded-[10px] border border-replii-200 bg-replii-50 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-replii-600">
             Say this
           </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-800">

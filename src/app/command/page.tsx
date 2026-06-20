@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { CommandKeysGraphic } from "@/components/CommandKeysGraphic";
 
 export const metadata: Metadata = {
-  title: "Ghost",
-  description: "Ghost keyboard shortcut",
+  title: "Replii",
+  description: "Replii keyboard shortcut",
 };
 
 export default function CommandPage() {

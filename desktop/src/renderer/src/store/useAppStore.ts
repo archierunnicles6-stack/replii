@@ -44,13 +44,14 @@ import {
 
 const FAKE_SUMMARY_MARKERS = [
   "mid-market SaaS prospect",
+  "approximately 42 minutes",
   "Review key points discussed and confirm next steps with the prospect",
   "Send a follow-up summary email within 24 hours",
   "Schedule the next meeting while momentum is high",
   "Review the transcript and follow up on open items",
 ];
 const EMPTY_SUMMARY_MESSAGE =
-  "No transcript was captured for this session, so Ghost could not generate a summary. Start a new session with your microphone enabled to record the conversation.";
+  "No transcript was captured for this session, so Replii could not generate a summary. Start a new session with your microphone enabled to record the conversation.";
 const SUMMARY_UNAVAILABLE_MESSAGE =
   "Add your OpenAI API key to generate an AI summary.";
 
@@ -247,6 +248,7 @@ interface AppState {
   setAudioCaptureMode: (mode: "auto" | "mic" | "system") => void;
   setCurrentMeetingId: (id: string | null) => void;
   addFreeOverlaySeconds: (seconds: number) => void;
+  refundFreeOverlaySeconds: (seconds: number) => void;
   requestSettingsOpen: (section: string) => void;
   clearPendingSettingsOpen: () => void;
   saveMeetingFromSession: (data: {
@@ -529,6 +531,18 @@ export const useAppStore = create<AppState>()(
         notifyAppStoreChanged();
       },
 
+      refundFreeOverlaySeconds: (seconds) => {
+        const { plan } = get();
+        if (isPaidPlan(plan) || seconds <= 0) return;
+        set((s) =>
+          withAccountProfile(s, {
+            freeOverlaySecondsUsed: Math.max(0, s.freeOverlaySecondsUsed - seconds),
+          }),
+        );
+        notifyAppStoreChanged();
+        void syncPlanLimitsToMain();
+      },
+
       requestSettingsOpen: (section) => {
         set({ pendingSettingsSection: section });
       },
@@ -625,8 +639,8 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
-      name: "ghost-app-storage",
-      version: 14,
+      name: "replii-app-storage",
+      version: 15,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
         if (version < 5) {
@@ -783,6 +797,20 @@ export const useAppStore = create<AppState>()(
           }
           state.accountProfiles = profiles;
         }
+        if (version < 15) {
+          if (Array.isArray(state.meetings)) {
+            state.meetings = stripFakeDemoData(state.meetings as MeetingRecord[]);
+          }
+          const profiles =
+            (state.accountProfiles as AccountProfiles | undefined) ?? {};
+          for (const id of Object.keys(profiles)) {
+            profiles[id] = {
+              ...profiles[id],
+              meetings: stripFakeDemoData(profiles[id].meetings),
+            };
+          }
+          state.accountProfiles = profiles;
+        }
         return state as AppState;
       },
       partialize: (state) => {
@@ -865,20 +893,20 @@ export async function rehydrateAppStoreFromStorage(): Promise<void> {
 
 /** Notify other Electron windows to rehydrate after a store write in this window. */
 export function notifyAppStoreChanged(): void {
-  void window.ghost?.notifyStoreChanged?.();
+  void window.replii?.notifyStoreChanged?.();
   syncPlanLimitsToMain();
 }
 
 /** Sync plan limits to the main process for hard enforcement at session start. */
 export async function syncPlanLimitsToMain(): Promise<void> {
-  if (typeof window === "undefined" || !window.ghost?.syncPlanLimits) return;
+  if (typeof window === "undefined" || !window.replii?.syncPlanLimits) return;
   const { plan, freeOverlaySecondsUsed } = useAppStore.getState();
-  await window.ghost.syncPlanLimits({ plan, freeOverlaySecondsUsed });
+  await window.replii.syncPlanLimits({ plan, freeOverlaySecondsUsed });
 }
 
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (event) => {
-    if (event.key !== "ghost-app-storage") return;
+    if (event.key !== "replii-app-storage") return;
     void rehydrateAppStoreFromStorage();
   });
 }

@@ -11,7 +11,7 @@ import {
   type Plan,
 } from "../../store/types";
 
-const DISMISS_KEY = "ghost-warm-upgrade-dismissed";
+const DISMISS_KEY = "replii-warm-upgrade-dismissed";
 
 function loadDismissed(): string[] {
   try {

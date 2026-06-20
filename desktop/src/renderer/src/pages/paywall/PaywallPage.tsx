@@ -33,7 +33,7 @@ export function PaywallPage() {
   useBillingSync();
 
   useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("paywall");
+    void window.replii?.setDashboardLayout?.("paywall");
   }, []);
 
   useEffect(() => {

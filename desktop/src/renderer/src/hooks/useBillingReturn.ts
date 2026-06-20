@@ -6,7 +6,7 @@ import {
 } from "../lib/billing-return";
 import { useAppStore } from "../store/useAppStore";
 
-/** Handle ghost://billing/* deep links after Stripe checkout or portal. */
+/** Handle replii://billing/* deep links after Stripe checkout or portal. */
 export function useBillingReturn() {
   const navigate = useNavigate();
   const userId = useAppStore((s) => s.user?.id);
@@ -21,7 +21,7 @@ export function useBillingReturn() {
   );
 
   useEffect(() => {
-    return window.ghost?.onBillingCallback?.((url) => {
+    return window.replii?.onBillingCallback?.((url) => {
       void handleBillingReturn(url);
     });
   }, [handleBillingReturn]);

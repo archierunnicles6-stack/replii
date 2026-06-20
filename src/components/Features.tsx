@@ -2,7 +2,7 @@ const features = [
   {
     title: "Doesn't join meetings",
     description:
-      "Ghost never joins your calls. No bots, no extra guests on the participant list.",
+      "Replii never joins your calls. No bots, no extra guests on the participant list.",
     icon: "👤",
   },
   {

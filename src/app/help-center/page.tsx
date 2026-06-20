@@ -5,7 +5,7 @@ import { HelpCenterContent } from "@/components/support/HelpCenterContent";
 import { LEGAL } from "@/content/legal/config";
 
 export const metadata: Metadata = {
-  title: "Help Center — Ghost",
+  title: "Help Center — Replii",
   description: `Get help with ${LEGAL.productName} — setup, live coaching, billing, and troubleshooting.`,
 };
 

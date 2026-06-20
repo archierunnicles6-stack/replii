@@ -1,4 +1,4 @@
-import type { Speaker, TranscriptLine } from "@/types/ghost";
+import type { Speaker, TranscriptLine } from "@/types/replii";
 
 export const MOCK_CONVERSATION: Array<{ speaker: Speaker; text: string }> = [
   { speaker: "Prospect", text: "We're already using Salesforce for this." },

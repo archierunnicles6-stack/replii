@@ -2,7 +2,7 @@ const features = [
   {
     title: "Listen",
     description:
-      "Ghost hears every word on your sales call — objections, questions, and buying signals — in real time.",
+      "Replii hears every word on your sales call — objections, questions, and buying signals — in real time.",
     icon: MicIcon,
   },
   {
@@ -30,7 +30,7 @@ export function InTheMoment() {
     <section id="product" className="bg-white">
       <div className="mx-auto max-w-[720px] px-6 py-24 md:py-32">
         <h2 className="text-center text-[2rem] font-semibold leading-[1.15] tracking-[-0.03em] text-[#0a0a0a] md:text-[2.5rem]">
-          Ghost helps in the moment — when it matters most.
+          Replii helps in the moment — when it matters most.
         </h2>
 
         <ul className="mt-16 space-y-10">

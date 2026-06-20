@@ -28,6 +28,6 @@ export async function recordTermsAcceptance(userId: string): Promise<void> {
     .eq("id", userId);
 
   if (error) {
-    console.warn("[ghost] Could not record terms acceptance:", error.message);
+    console.warn("[replii] Could not record terms acceptance:", error.message);
   }
 }

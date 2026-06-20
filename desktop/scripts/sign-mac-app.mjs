@@ -6,7 +6,7 @@ import { execSync } from "node:child_process";
 export function signMacApp(appPath) {
   if (process.platform !== "darwin" || !existsSync(appPath)) return;
 
-  console.log("[ghost] Signing", appPath);
+  console.log("[replii] Signing", appPath);
   execSync(`xattr -cr "${appPath}"`, { stdio: "ignore" });
 
   const frameworks = path.join(appPath, "Contents/Frameworks/Electron Framework.framework");
@@ -14,7 +14,7 @@ export function signMacApp(appPath) {
     execSync(`codesign --force --sign - "${frameworks}"`, { stdio: "ignore" });
   }
 
-  for (const name of ["Electron Helper.app", "Ghost Helper.app"]) {
+  for (const name of ["Electron Helper.app", "Replii Helper.app"]) {
     const helper = path.join(appPath, "Contents/Frameworks", name);
     if (existsSync(helper)) {
       execSync(`xattr -cr "${helper}"`, { stdio: "ignore" });

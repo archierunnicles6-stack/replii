@@ -75,6 +75,7 @@ function ModeDropdown({
 
 export function DashboardHeader({
   onStartSession,
+  onEndSession,
   onRequestUpgrade,
   canStartSession = true,
   sessionActive = false,
@@ -83,6 +84,7 @@ export function DashboardHeader({
   showCalendarPrompt = false,
 }: {
   onStartSession: () => void;
+  onEndSession?: () => void;
   onRequestUpgrade: () => void;
   canStartSession?: boolean;
   sessionActive?: boolean;
@@ -98,7 +100,7 @@ export function DashboardHeader({
         <div className="flex min-w-0 flex-col gap-1.5">
           <div className="flex items-center gap-2.5">
             <h1 className="shrink-0 text-[20px] font-semibold tracking-tight text-zinc-900">
-              Ghost
+              Replii
             </h1>
 
             <ModeDropdown activeMode={activeMode} onSelect={setActiveMode} />
@@ -117,6 +119,15 @@ export function DashboardHeader({
                 : "Free overlay time used up"}
             </span>
           ) : null}
+          {sessionActive && onEndSession ? (
+            <button
+              type="button"
+              onClick={onEndSession}
+              className="flex h-9 items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+            >
+              End session
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => {
@@ -134,7 +145,7 @@ export function DashboardHeader({
               sessionActive
                 ? "Session active — click to show overlay"
                 : canStartSession
-                  ? "Start Ghost"
+                  ? "Start Replii"
                   : "Upgrade for unlimited overlay time on the free plan"
             }
             className="flex h-9 items-center gap-2 rounded-full bg-gradient-to-b from-[#4d9cf8] to-[#3b82f6] px-4 text-[13px] font-medium text-white shadow-[0_2px_8px_rgba(59,130,246,0.3)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
@@ -147,7 +158,7 @@ export function DashboardHeader({
             >
               <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" />
             </svg>
-            {sessionActive ? "Session active" : "Start Ghost"}
+            {sessionActive ? "Session active" : "Start Replii"}
           </button>
         </div>
       </div>

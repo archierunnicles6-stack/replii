@@ -10,16 +10,16 @@ const categories = [
     title: "Getting Started",
     articles: [
       {
-        q: "How do I download and install Ghost?",
-        a: "Download Ghost for Mac or Windows from the homepage or visit our download page. On Mac, open the DMG and drag Ghost to Applications. On Windows, run Ghost-Setup.exe and follow the installer. Sign in with email or Google to get started.",
+        q: "How do I download and install Replii?",
+        a: "Download Replii for Mac or Windows from the homepage or visit our download page. On Mac, open the DMG and drag Replii to Applications. On Windows, run Replii-Setup.exe and follow the installer. Sign in with email or Google to get started.",
       },
       {
-        q: "Who is Ghost for?",
-        a: "Ghost is built for sales reps, account executives, and founders who run live calls and want sharper responses without sounding scripted.",
+        q: "Who is Replii for?",
+        a: "Replii is built for sales reps, account executives, and founders who run live calls and want sharper responses without sounding scripted.",
       },
       {
-        q: "Is Ghost free?",
-        a: "Ghost offers a free starter tier with limited AI responses. Pro unlocks unlimited coaching, custom playbooks, and priority support.",
+        q: "Is Replii free?",
+        a: "Replii offers a free starter tier with limited AI responses. Pro unlocks unlimited coaching, custom playbooks, and priority support.",
       },
     ],
   },
@@ -28,20 +28,20 @@ const categories = [
     title: "During a Call",
     articles: [
       {
-        q: "How do I start Ghost on a sales call?",
-        a: "Click Start Ghost from the dashboard or Upcoming tab. The overlay appears on your screen and begins listening automatically.",
+        q: "How do I start Replii on a sales call?",
+        a: "Click Start Replii from the dashboard or Upcoming tab. The overlay appears on your screen and begins listening automatically.",
       },
       {
         q: "Why real-time vs. a regular AI notetaker?",
-        a: "Most AI tools summarize calls after they end. Ghost coaches you during the call — when you actually need the words. It's the difference between a post-game recap and a coach in your ear.",
+        a: "Most AI tools summarize calls after they end. Replii coaches you during the call — when you actually need the words. It's the difference between a post-game recap and a coach in your ear.",
       },
       {
         q: "How do I get coaching suggestions?",
-        a: "Press Cmd/Ctrl + Enter during a call to ask Ghost for help. Suggestions appear in the overlay based on what was just said.",
+        a: "Press Cmd/Ctrl + Enter during a call to ask Replii for help. Suggestions appear in the overlay based on what was just said.",
       },
       {
-        q: "Does Ghost join my calls?",
-        a: "Never. Ghost runs locally on your machine. No bots, no extra participants.",
+        q: "Does Replii join my calls?",
+        a: "Never. Replii runs locally on your machine. No bots, no extra participants.",
       },
     ],
   },
@@ -54,8 +54,8 @@ const categories = [
         a: "Every call is saved with transcripts, coaching suggestions, and deal scores. Review past sessions in your dashboard to see what worked.",
       },
       {
-        q: "Does Ghost sell or train on my data?",
-        a: "No. Ghost does not sell your data or use your conversation content to train public third-party AI models.",
+        q: "Does Replii sell or train on my data?",
+        a: "No. Replii does not sell your data or use your conversation content to train public third-party AI models.",
       },
       {
         q: "Where is my data stored?",
@@ -83,15 +83,15 @@ const categories = [
     articles: [
       {
         q: "What languages and apps are supported?",
-        a: "Ghost works on macOS with Zoom, Google Meet, Microsoft Teams, Webex, and browser-based calling tools. Real-time transcription supports 12+ languages.",
+        a: "Replii works on macOS with Zoom, Google Meet, Microsoft Teams, Webex, and browser-based calling tools. Real-time transcription supports 12+ languages.",
       },
       {
-        q: "Ghost isn't hearing my call audio",
-        a: "Grant microphone and system audio permissions in macOS Settings → Privacy & Security. Restart Ghost after enabling permissions.",
+        q: "Replii isn't hearing my call audio",
+        a: "Grant microphone and system audio permissions in macOS Settings → Privacy & Security. Restart Replii after enabling permissions.",
       },
       {
         q: "The overlay isn't appearing",
-        a: "Make sure Ghost has screen recording permission on macOS. Check that no other overlay apps are blocking the window.",
+        a: "Make sure Replii has screen recording permission on macOS. Check that no other overlay apps are blocking the window.",
       },
     ],
   },

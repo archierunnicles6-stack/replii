@@ -1,5 +1,5 @@
 #!/bin/bash
-# Wrap the dev Electron binary so Finder launches start Ghost dev instead of default_app.asar.
+# Wrap the dev Electron binary so Finder launches start Replii dev instead of default_app.asar.
 set -euo pipefail
 
 APP_MACOS="$1"
@@ -22,17 +22,17 @@ fi
 
 DESKTOP_ROOT="$(cd "$APP_MACOS/../../../.." && pwd)"
 if [ ! -f "$DESKTOP_ROOT/package.json" ]; then
-  osascript -e 'display alert "Ghost dev app is misconfigured." message "Could not find desktop/package.json." as critical'
+  osascript -e 'display alert "Replii dev app is misconfigured." message "Could not find desktop/package.json." as critical'
   exit 1
 fi
 
 if lsof -i :5173 -sTCP:LISTEN >/dev/null 2>&1; then
-  osascript -e 'tell application id "com.ghost.app.dev" to activate' 2>/dev/null \
-    || osascript -e 'display notification "Ghost dev is already running." with title "Ghost"'
+  osascript -e 'tell application id "com.replii.app.dev" to activate' 2>/dev/null \
+    || osascript -e 'display notification "Replii dev is already running." with title "Replii"'
   exit 0
 fi
 
-osascript -e 'display notification "Starting Ghost dev server…" with title "Ghost"'
+osascript -e 'display notification "Starting Replii dev server…" with title "Replii"'
 cd "$DESKTOP_ROOT"
 exec npm run dev
 EOF

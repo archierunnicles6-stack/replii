@@ -45,7 +45,7 @@ async function ocrScreenshot(base64Jpeg: string): Promise<string> {
     });
 
     if (!res.ok) {
-      console.warn("[ghost] Screen OCR failed:", res.status);
+      console.warn("[replii] Screen OCR failed:", res.status);
       return cachedText;
     }
 
@@ -53,13 +53,13 @@ async function ocrScreenshot(base64Jpeg: string): Promise<string> {
     const text = (data.choices?.[0]?.message?.content as string | undefined)?.trim() ?? "";
     return text.slice(0, OCR_MAX_CHARS);
   } catch (err) {
-    console.warn("[ghost] Screen OCR error:", err);
+    console.warn("[replii] Screen OCR error:", err);
     return cachedText;
   }
 }
 
 async function captureAndOcr(): Promise<string> {
-  const base64 = await window.ghost?.captureScreen?.();
+  const base64 = await window.replii?.captureScreen?.();
   if (!base64) return cachedText;
   return ocrScreenshot(base64);
 }

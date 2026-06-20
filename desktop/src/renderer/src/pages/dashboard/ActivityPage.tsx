@@ -1,6 +1,6 @@
 import { Link, useOutletContext } from "react-router-dom";
 import { SessionEmptyState } from "../../components/dashboard/SessionEmptyState";
-import { useStartGhostSession } from "../../hooks/useStartGhostSession";
+import { useStartRepliiSession } from "../../hooks/useStartRepliiSession";
 import { useAppStore } from "../../store/useAppStore";
 import { isUserMeeting, type MeetingRecord } from "../../store/types";
 import type { DashboardOutletContext } from "./DashboardLayout";
@@ -125,7 +125,7 @@ export function ActivityPage() {
   const { searchQuery, onRequestUpgrade } = useOutletContext<DashboardOutletContext>();
   const meetings = useAppStore((s) => s.meetings);
   const deleteMeeting = useAppStore((s) => s.deleteMeeting);
-  const { startSession, canStart, sessionActive } = useStartGhostSession();
+  const { startSession, canStart, sessionActive } = useStartRepliiSession();
 
   const handleStart = async () => {
     if (sessionActive) {

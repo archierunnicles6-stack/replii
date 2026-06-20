@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-/** Forward Supabase OAuth params from the browser to the Ghost desktop app. */
+/** Forward Supabase OAuth params from the browser to the Replii desktop app. */
 export function AuthCallbackRedirect() {
   const [opened, setOpened] = useState(false);
   const [deepLink, setDeepLink] = useState<string | null>(null);
@@ -10,7 +10,7 @@ export function AuthCallbackRedirect() {
   useEffect(() => {
     const query = window.location.search;
     const hash = window.location.hash;
-    setDeepLink(`ghost://auth/callback${query}${hash}`);
+    setDeepLink(`replii://auth/callback${query}${hash}`);
   }, []);
 
   useEffect(() => {
@@ -30,12 +30,12 @@ export function AuthCallbackRedirect() {
         href={deepLink}
         className="inline-flex h-11 w-full items-center justify-center rounded-full bg-zinc-900 text-[15px] font-medium text-white transition-opacity hover:opacity-90"
       >
-        Open Ghost
+        Open Replii
       </a>
       {opened ? (
         <p className="mt-4 text-[13px] leading-relaxed text-zinc-500">
-          If Ghost did not open automatically, click the button above or switch back to the
-          Ghost app in your dock.
+          If Replii did not open automatically, click the button above or switch back to the
+          Replii app in your dock.
         </p>
       ) : null}
     </div>

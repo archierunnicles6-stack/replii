@@ -15,7 +15,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Ghost — Live AI Sales Coach",
+  title: "Replii — Live AI Sales Coach",
   description:
     "Real-time coaching during sales calls. Live suggestions, logged sessions, zero bots.",
   manifest: "/manifest.json",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Ghost",
+    title: "Replii",
   },
 };
 

@@ -1,4 +1,4 @@
-import { GhostLogo } from "../ui";
+import { RepliiLogo } from "../ui";
 
 export function CommandBarPreview({
   visible = true,
@@ -27,7 +27,7 @@ export function CommandBarPreview({
         <div className="border-t border-zinc-100" />
 
         <div className="flex items-center gap-3 px-4 py-3">
-          <GhostLogo className="h-6 w-6" />
+          <RepliiLogo className="h-6 w-6" />
 
           <div className="flex flex-1 items-center justify-center gap-5 text-zinc-400">
             <ToolbarIcon>

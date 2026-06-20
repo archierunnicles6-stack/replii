@@ -30,14 +30,14 @@ export function billingDeepLink(
   returnTo: PurchaseReturnTo = "dashboard",
 ): string {
   const params = new URLSearchParams({ plan, to: returnTo });
-  return `ghost://billing/success?${params}`;
+  return `replii://billing/success?${params}`;
 }
 
 export function billingPortalDeepLink(
   returnTo: PurchaseReturnTo = "billing",
 ): string {
   const params = new URLSearchParams({ to: returnTo });
-  return `ghost://billing/success?${params}`;
+  return `replii://billing/success?${params}`;
 }
 
 export function parseBillingCallbackUrl(url: string): {
@@ -45,7 +45,7 @@ export function parseBillingCallbackUrl(url: string): {
   returnTo: PurchaseReturnTo;
 } {
   try {
-    const parsed = new URL(url.replace(/^ghost:/, "https:"));
+    const parsed = new URL(url.replace(/^replii:/, "https:"));
     return {
       plan: parsed.searchParams.get("plan"),
       returnTo:

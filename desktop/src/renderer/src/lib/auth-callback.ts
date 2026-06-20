@@ -8,7 +8,7 @@ export type OAuthCallbackResult =
   | { ok: true; route: string }
   | { ok: false; error: string };
 
-/** Exchange a ghost://auth/callback deep link for a Supabase session and app login. */
+/** Exchange a replii://auth/callback deep link for a Supabase session and app login. */
 export async function completeOAuthCallback(url: string): Promise<OAuthCallbackResult> {
   const supabase = getSupabase();
   if (!supabase) {

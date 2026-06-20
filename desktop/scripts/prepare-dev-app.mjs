@@ -9,10 +9,10 @@ import { signMacApp } from "./sign-mac-app.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const desktopRoot = path.join(__dirname, "..");
-const outDir = path.join(desktopRoot, ".ghost-dev");
+const outDir = path.join(desktopRoot, ".replii-dev");
 const iconScript = path.join(desktopRoot, "scripts/generate-app-icon.py");
 const legacyDevApp = path.join(outDir, "Electron.app");
-const destApp = path.join(outDir, "Ghost.app");
+const destApp = path.join(outDir, "Replii.app");
 
 if (process.platform !== "darwin") {
   process.exit(0);
@@ -23,13 +23,13 @@ function tryGenerateIcons() {
   const iconPng = path.join(desktopRoot, "build/icon.png");
   if (!existsSync(iconScript)) return;
   if (!existsSync(iconSource) && !existsSync(iconPng)) {
-    console.warn("[ghost] Skipping icon generation — add desktop/build/icon-source.png");
+    console.warn("[replii] Skipping icon generation — add desktop/build/icon-source.png");
     return;
   }
   try {
     execSync(`python3 "${iconScript}"`, { stdio: "inherit" });
   } catch {
-    console.warn("[ghost] Icon generation skipped (install Xcode CLT + Pillow for icons)");
+    console.warn("[replii] Icon generation skipped (install Xcode CLT + Pillow for icons)");
   }
 }
 
@@ -77,7 +77,7 @@ if (existsSync(stampFile) && (existsSync(destApp) || existsSync(legacyDevApp))) 
   const stamp = readFileSync(stampFile, "utf8");
   if (stamp === electronVersion) {
     refreshDevAppBundle();
-    console.log("[ghost] Refreshed Ghost dev app at", destApp);
+    console.log("[replii] Refreshed Replii dev app at", destApp);
     process.exit(0);
   }
 }
@@ -103,19 +103,19 @@ const addPlist = (key, type, value) => {
   }
 };
 
-setPlist("CFBundleDisplayName", "Ghost");
-setPlist("CFBundleName", "Ghost");
-setPlist("CFBundleIdentifier", "com.ghost.app.dev");
+setPlist("CFBundleDisplayName", "Replii");
+setPlist("CFBundleName", "Replii");
+setPlist("CFBundleIdentifier", "com.replii.app.dev");
 setPlist("CFBundleIconFile", "electron");
 addPlist(
   "NSMicrophoneUsageDescription",
   "string",
-  "Ghost needs microphone access to transcribe your voice during sales calls.",
+  "Replii needs microphone access to transcribe your voice during sales calls.",
 );
 addPlist(
   "NSScreenCaptureDescription",
   "string",
-  "Ghost uses Screen Recording to capture call audio from Zoom, Meet, or Teams. Ghost does not view or record your screen.",
+  "Replii uses Screen Recording to capture call audio from Zoom, Meet, or Teams. Replii does not view or record your screen.",
 );
 
 signMacApp(destApp);
@@ -125,4 +125,4 @@ installDevElectronLauncher();
 writeFileSync(stampFile, electronVersion);
 writeFileSync(iconStampFile, iconSourceStamp());
 writeFileSync(path.join(outDir, "absolute-path.txt"), outDir);
-console.log("[ghost] Prepared Ghost dev app at", destApp);
+console.log("[replii] Prepared Replii dev app at", destApp);

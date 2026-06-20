@@ -27,7 +27,7 @@ export function CTA({
             Sales AI that helps during the call, not after.
           </h2>
           <p className="mt-4 text-[16px] text-[#6b7c93] md:text-[17px]">
-            Try Ghost on your next call today.
+            Try Replii on your next call today.
           </p>
           <div className="mt-8">
             <DownloadLink />

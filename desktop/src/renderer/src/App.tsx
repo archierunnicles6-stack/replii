@@ -10,7 +10,7 @@ import { useAppStore } from "./store/useAppStore";
 import { WelcomePage } from "./pages/welcome/WelcomePage";
 import { AuthPage } from "./pages/auth/AuthPage";
 import { OnboardingGuard } from "./pages/onboarding/OnboardingGuard";
-import { TryGhostPage } from "./pages/try-ghost/TryGhostPage";
+import { TryRepliiPage } from "./pages/try-replii/TryRepliiPage";
 import { PaywallPage } from "./pages/paywall/PaywallPage";
 import { OverlayApp } from "./overlay/OverlayApp";
 import { DashboardLayout } from "./pages/dashboard/DashboardLayout";
@@ -52,7 +52,7 @@ function AppRoutes() {
       <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/onboarding" element={<OnboardingGuard />} />
-      <Route path="/try" element={<TryGhostPage />} />
+      <Route path="/try" element={<TryRepliiPage />} />
       <Route path="/paywall" element={<PaywallPage />} />
       <Route element={<DashboardGuard />}>
         <Route path="/" element={<ActivityPage />} />

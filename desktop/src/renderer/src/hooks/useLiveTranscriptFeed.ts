@@ -36,7 +36,7 @@ export function useLiveTranscriptFeed(active: boolean): LiveTranscriptFeed {
       return;
     }
 
-    const off = window.ghost?.onLiveTranscript?.((state) => {
+    const off = window.replii?.onLiveTranscript?.((state) => {
       setFeed({
         lines: state.lines,
         interim: state.interim,
@@ -51,9 +51,9 @@ export function useLiveTranscriptFeed(active: boolean): LiveTranscriptFeed {
       });
     });
 
-    window.ghost?.requestLiveTranscript?.();
+    window.replii?.requestLiveTranscript?.();
     const pollId = window.setInterval(() => {
-      window.ghost?.requestLiveTranscript?.();
+      window.replii?.requestLiveTranscript?.();
     }, 250);
 
     return () => {

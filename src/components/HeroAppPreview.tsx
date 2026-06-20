@@ -16,7 +16,7 @@ function SparkleIcon() {
 const features = [
   {
     title: "Screen monitoring:",
-    body: "Ghost can see what's on your screen and understand the context",
+    body: "Replii can see what's on your screen and understand the context",
   },
   {
     title: "Audio listening:",
@@ -51,14 +51,14 @@ export function HeroAppPreview() {
           }}
         >
           <p>
-            I can see you&apos;re currently viewing the Ghost website homepage. The AI
+            I can see you&apos;re currently viewing the Replii website homepage. The AI
             assistant that monitors your screen and audio to provide contextual help before
             you even ask for it.
           </p>
-          <p className="font-semibold text-[#111827]">What is Ghost?</p>
+          <p className="font-semibold text-[#111827]">What is Replii?</p>
           <p>
-            Ghost is a proactive AI assistant. Unlike traditional AI chatbots where you need
-            to actively ask questions, Ghost runs in the background, continuously observing
+            Replii is a proactive AI assistant. Unlike traditional AI chatbots where you need
+            to actively ask questions, Replii runs in the background, continuously observing
             your screen content and listening to your audio to provide relevant assistance
             in real-time.
           </p>

@@ -10,9 +10,9 @@ const envExamplePath = path.join(desktopRoot, ".env.example");
 if (!existsSync(envPath)) {
   if (existsSync(envExamplePath)) {
     copyFileSync(envExamplePath, envPath);
-    console.log("[ghost] Copied .env.example → .env for packaging");
+    console.log("[replii] Copied .env.example → .env for packaging");
   } else {
     writeFileSync(envPath, "# CI packaging placeholder\n", "utf8");
-    console.log("[ghost] Created empty .env for packaging");
+    console.log("[replii] Created empty .env for packaging");
   }
 }

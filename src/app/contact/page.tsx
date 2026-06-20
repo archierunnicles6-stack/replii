@@ -5,7 +5,7 @@ import { ContactContent } from "@/components/support/ContactContent";
 import { LEGAL } from "@/content/legal/config";
 
 export const metadata: Metadata = {
-  title: "Contact Us — Ghost",
+  title: "Contact Us — Replii",
   description: `Contact the ${LEGAL.productName} team for support, privacy, legal, and security inquiries.`,
 };
 

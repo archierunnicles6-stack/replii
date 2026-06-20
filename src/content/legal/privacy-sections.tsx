@@ -28,7 +28,7 @@ export const privacySections: LegalSection[] = [
           Services.
         </LegalP>
         <LegalP>
-          Each of our Customers, not Ghost, controls what information about you
+          Each of our Customers, not Replii, controls what information about you
           is collected by the Services on behalf of such Customer. For detailed
           privacy information applicable to situations where a Customer who uses
           the Services is the controller, please reach out to the respective
@@ -80,7 +80,7 @@ export const privacySections: LegalSection[] = [
           <LegalLi>
             <LegalStrong>Recordings and Other Customer Data.</LegalStrong> In
             using our Services, our customers may submit or upload, or instruct
-            Ghost to collect, audio recordings, transcriptions, screen captures,
+            Replii to collect, audio recordings, transcriptions, screen captures,
             seek customer support, or provide other Customer Data (defined in
             our Terms of Service) to us. Our use of and processing of Customer
             Data is governed by our Terms of Service or other services agreement
@@ -218,7 +218,7 @@ export const privacySections: LegalSection[] = [
           <LegalLi>When required by law or to respond to legal process</LegalLi>
           <LegalLi>
             To protect our users, other individuals&apos; lives, and/or the rights
-            or property of Ghost
+            or property of Replii
           </LegalLi>
           <LegalLi>To maintain the security of the Services</LegalLi>
           <LegalLi>
@@ -406,7 +406,7 @@ export const privacySections: LegalSection[] = [
         </LegalP>
         <LegalP>
           We may use some of the information we collect for marketing purposes,
-          including to send you promotional communications about new Ghost
+          including to send you promotional communications about new Replii
           features, products, events, or other opportunities. If you wish to stop
           receiving these communications or to opt out of use of your information
           for these purposes, please follow the opt-out instructions, such as
@@ -483,7 +483,7 @@ export const privacySections: LegalSection[] = [
 
         <LegalH3>A Note to Users Outside the United States</LegalH3>
         <LegalP>
-          Ghost is based in the United States. The Services are controlled and
+          Replii is based in the United States. The Services are controlled and
           operated by us from the United States and are not intended to subject us
           to the laws or jurisdiction of any state, country or territory other
           than that of the laws of the country(ies) where the Services are

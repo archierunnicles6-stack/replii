@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { GhostSuggestion, RecapResponse, TranscriptLine } from "@/types/ghost";
+import type { RepliiSuggestion, RecapResponse, TranscriptLine } from "@/types/replii";
 
-export function useGhostAI() {
-  const [suggestion, setSuggestion] = useState<GhostSuggestion | null>(null);
+export function useRepliiAI() {
+  const [suggestion, setSuggestion] = useState<RepliiSuggestion | null>(null);
   const [followUps, setFollowUps] = useState<string[]>([]);
   const [recap, setRecap] = useState<RecapResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ export function useGhostAI() {
           throw new Error(detail.error ?? `Suggest failed (${res.status})`);
         }
 
-        const data = (await res.json()) as GhostSuggestion;
+        const data = (await res.json()) as RepliiSuggestion;
         setSuggestion(data);
         return data;
       } catch (err) {

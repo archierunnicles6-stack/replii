@@ -1,7 +1,7 @@
 export const COOKIE_CONSENT_VERSION = 1;
-export const COOKIE_CONSENT_STORAGE_KEY = "ghost-cookie-consent";
-export const COOKIE_CONSENT_EVENT = "ghost-cookie-consent-updated";
-export const COOKIE_CONSENT_OPEN_EVENT = "ghost-cookie-consent-open";
+export const COOKIE_CONSENT_STORAGE_KEY = "replii-cookie-consent";
+export const COOKIE_CONSENT_EVENT = "replii-cookie-consent-updated";
+export const COOKIE_CONSENT_OPEN_EVENT = "replii-cookie-consent-open";
 
 export type CookieCategory = "functional" | "analytics" | "marketing";
 

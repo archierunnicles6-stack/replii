@@ -1,16 +1,16 @@
 project_id = "epeitwkgbfabevxyznrh"
 
 [auth]
-site_url = "https://ghost.ai"
+site_url = "https://replii.ai"
 additional_redirect_urls = [
-  "ghost://auth/callback",
-  "ghost://**",
+  "replii://auth/callback",
+  "replii://**",
   "http://127.0.0.1:42817/auth/callback",
   "http://localhost:42817/auth/callback",
   "http://localhost:3000/auth/callback",
   "http://localhost:3000/**",
-  "https://ghost.ai/auth/callback",
-  "https://ghost.ai/**",
+  "https://replii.ai/auth/callback",
+  "https://replii.ai/**",
 ]
 
 [auth.email]

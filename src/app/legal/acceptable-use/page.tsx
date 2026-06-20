@@ -4,7 +4,7 @@ import { LEGAL, LEGAL_ROUTES } from "@/content/legal/config";
 import { acceptableUseSections } from "@/content/legal/other-sections";
 
 export const metadata: Metadata = {
-  title: "Acceptable Use Policy — Ghost",
+  title: "Acceptable Use Policy — Replii",
   description: `Rules for permitted use of ${LEGAL.productName}.`,
 };
 

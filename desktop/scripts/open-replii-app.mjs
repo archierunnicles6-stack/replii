@@ -6,9 +6,9 @@ import { signMacApp } from "./sign-mac-app.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const desktopRoot = path.join(__dirname, "..");
-const installedApp = "/Applications/Ghost.app";
-const devApp = path.join(desktopRoot, ".ghost-dev", "Ghost.app");
-const DEV_BUNDLE_ID = "com.ghost.app.dev";
+const installedApp = "/Applications/Replii.app";
+const devApp = path.join(desktopRoot, ".replii-dev", "Replii.app");
+const DEV_BUNDLE_ID = "com.replii.app.dev";
 
 const useDev = process.argv.includes("--dev");
 const appPath = useDev ? devApp : installedApp;
@@ -40,7 +40,7 @@ function activateDevApp() {
 function killDevElectron() {
   try {
     execSync(
-      'pkill -f "desktop/.ghost-dev/Ghost" 2>/dev/null || pkill -f "desktop/.ghost-dev/Electron" 2>/dev/null || true',
+      'pkill -f "desktop/.replii-dev/Replii" 2>/dev/null || pkill -f "desktop/.replii-dev/Electron" 2>/dev/null || true',
       { stdio: "ignore", shell: true },
     );
   } catch {
@@ -50,10 +50,10 @@ function killDevElectron() {
 
 if (!existsSync(appPath)) {
   if (useDev) {
-    console.error("[ghost] Run npm run dev first to build .ghost-dev/Ghost.app");
+    console.error("[replii] Run npm run dev first to build .replii-dev/Replii.app");
   } else {
     console.error(
-      "[ghost] Install Ghost first: npm run package && cp -R release/mac-arm64/Ghost.app /Applications/",
+      "[replii] Install Replii first: npm run package && cp -R release/mac-arm64/Replii.app /Applications/",
     );
   }
   process.exit(1);
@@ -62,12 +62,12 @@ if (!existsSync(appPath)) {
 if (useDev) {
   if (isDevServerRunning() && isDevElectronRunning()) {
     activateDevApp();
-    console.log("[ghost] Brought dev Ghost to front (dev server already running).");
+    console.log("[replii] Brought dev Replii to front (dev server already running).");
     process.exit(0);
   }
 
   if (!isDevServerRunning()) {
-    console.log("[ghost] Starting dev server…");
+    console.log("[replii] Starting dev server…");
     const env = { ...process.env };
     delete env.ELECTRON_RUN_AS_NODE;
     const child = spawn("npm", ["run", "dev"], {
@@ -82,7 +82,7 @@ if (useDev) {
   }
 
   console.error(
-    "[ghost] Dev server is running but the app window closed — restart with: npm run dev",
+    "[replii] Dev server is running but the app window closed — restart with: npm run dev",
   );
   process.exit(1);
 }
@@ -95,5 +95,5 @@ signMacApp(appPath);
 spawn("open", ["-a", appPath], { stdio: "inherit" });
 
 console.log(
-  "[ghost] Opened /Applications/Ghost.app — grant permissions to Ghost in System Settings.",
+  "[replii] Opened /Applications/Replii.app — grant permissions to Replii in System Settings.",
 );

@@ -16,7 +16,7 @@ const columns = [
   {
     title: "Custom playbooks",
     description:
-      "Train Ghost on your pitch, objection handlers, and discovery questions for your exact sales motion.",
+      "Train Replii on your pitch, objection handlers, and discovery questions for your exact sales motion.",
     icon: BookIcon,
   },
   {

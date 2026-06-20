@@ -6,7 +6,7 @@ import {
   OPENAI_MODELS,
   truncateTranscriptForPrompt,
 } from "@/lib/openai-config";
-import type { TranscriptLine } from "@/types/ghost";
+import type { TranscriptLine } from "@/types/replii";
 
 export async function POST(request: Request) {
   try {

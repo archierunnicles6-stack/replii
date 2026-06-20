@@ -4,19 +4,19 @@ import type { DownloadPlatform } from "./platform";
 export const DOWNLOAD_RELEASE_TAG = "v0.1.0";
 
 export const RELEASE_PAGE_URL =
-  "https://github.com/archierunnicles6-stack/ghost/releases/latest";
+  "https://github.com/archierunnicles6-stack/replii/releases/latest";
 
 export const MAC_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL?.trim() ||
-  "https://github.com/archierunnicles6-stack/ghost/releases/latest/download/Ghost.dmg";
+  "https://github.com/archierunnicles6-stack/replii/releases/latest/download/Replii.dmg";
 
 export const WINDOWS_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL?.trim() ||
-  "https://github.com/archierunnicles6-stack/ghost/releases/latest/download/Ghost-Setup.exe";
+  "https://github.com/archierunnicles6-stack/replii/releases/latest/download/Replii-Setup.exe";
 
-export const MAC_DOWNLOAD_FILENAME = "Ghost.dmg";
-/** Preferred Windows installer; API falls back to Ghost-Windows.zip until published. */
-export const WINDOWS_DOWNLOAD_FILENAME = "Ghost-Setup.exe";
+export const MAC_DOWNLOAD_FILENAME = "Replii.dmg";
+/** Preferred Windows installer; API falls back to Replii-Windows.zip until published. */
+export const WINDOWS_DOWNLOAD_FILENAME = "Replii-Setup.exe";
 
 /** @deprecated Use DOWNLOAD_RELEASE_TAG */
 export const MAC_DOWNLOAD_RELEASE_TAG = DOWNLOAD_RELEASE_TAG;
@@ -64,7 +64,7 @@ export function resolveDownloadHref(platform: DownloadPlatform): string {
     return getDownloadHref(platform);
   }
 
-  // ghost.ai is not on Vercel — direct GitHub links avoid 406 from legacy Apache host.
+  // replii.ai is not on Vercel — direct GitHub links avoid 406 from legacy Apache host.
   return getExternalDownloadUrl(platform);
 }
 
@@ -80,7 +80,7 @@ export function getDownloadInfo(platform: DownloadPlatform) {
       externalUrl,
       filename,
       label: "Get for Windows",
-      longLabel: "Download Ghost for Windows",
+      longLabel: "Download Replii for Windows",
     } as const;
   }
 
@@ -90,6 +90,6 @@ export function getDownloadInfo(platform: DownloadPlatform) {
     externalUrl,
     filename: MAC_DOWNLOAD_FILENAME,
     label: "Get for Mac",
-    longLabel: "Download Ghost for Mac",
+    longLabel: "Download Replii for Mac",
   } as const;
 }

@@ -10,9 +10,9 @@ type ChromeMediaTrackConstraints = MediaTrackConstraints & {
   };
 };
 
-export type GhostAudioSource = "desktop-capture" | "microphone" | null;
+export type RepliiAudioSource = "desktop-capture" | "microphone" | null;
 
-export interface GhostAudioSetup {
+export interface RepliiAudioSetup {
   microphoneGranted: boolean;
   screenGranted: boolean;
   inputLabels: string[];
@@ -76,9 +76,9 @@ export async function listAudioInputDevices(): Promise<MediaDeviceInfo[]> {
   return devices.filter((d) => d.kind === "audioinput");
 }
 
-export async function detectGhostAudioSetup(): Promise<GhostAudioSetup> {
+export async function detectRepliiAudioSetup(): Promise<RepliiAudioSetup> {
   const [status, inputs] = await Promise.all([
-    window.ghost?.getPermissionStatus?.(),
+    window.replii?.getPermissionStatus?.(),
     listAudioInputDevices(),
   ]);
 
@@ -91,7 +91,7 @@ export async function detectGhostAudioSetup(): Promise<GhostAudioSetup> {
 
 /** True when macOS reports mic access or getUserMedia succeeds (ignores Web Speech false positives). */
 export async function confirmMicrophoneAccess(): Promise<boolean> {
-  const status = await window.ghost?.getPermissionStatus?.();
+  const status = await window.replii?.getPermissionStatus?.();
   if (status?.microphone) return true;
 
   try {
@@ -106,7 +106,7 @@ export async function confirmMicrophoneAccess(): Promise<boolean> {
 /** Native macOS screen share + system audio loopback (no virtual drivers). */
 export async function captureCallAudio(): Promise<{
   stream: MediaStream;
-  source: GhostAudioSource;
+  source: RepliiAudioSource;
 } | null> {
   try {
     const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -131,11 +131,11 @@ export async function captureCallAudio(): Promise<{
 
     return { stream, source: "desktop-capture" };
   } catch (err) {
-    console.warn("[ghost] getDisplayMedia failed:", err);
+    console.warn("[replii] getDisplayMedia failed:", err);
   }
 
   try {
-    const sources = await window.ghost?.getDesktopAudioSources?.();
+    const sources = await window.replii?.getDesktopAudioSources?.();
     if (!sources?.length) return null;
 
     for (const source of sources) {
@@ -143,7 +143,7 @@ export async function captureCallAudio(): Promise<{
       if (stream) return { stream, source: "desktop-capture" };
     }
   } catch (err) {
-    console.warn("[ghost] Desktop audio fallback failed:", err);
+    console.warn("[replii] Desktop audio fallback failed:", err);
   }
 
   return null;
@@ -180,6 +180,6 @@ export function getSupportedRecorderMime(): string | undefined {
   return undefined;
 }
 
-export function isCallAudioSource(source: GhostAudioSource): boolean {
+export function isCallAudioSource(source: RepliiAudioSource): boolean {
   return source === "desktop-capture";
 }

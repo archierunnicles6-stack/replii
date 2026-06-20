@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { GhostLogo } from "./GhostLogo";
+import { RepliiLogo } from "./RepliiLogo";
 import { DownloadLink } from "./DownloadLink";
 import { PRICING_PAGE_BG_CLASS } from "@/lib/brand";
 
-const LANDING_LOGO = { width: 1746, height: 458 } as const;
+const LANDING_LOGO = { width: 1652, height: 460 } as const;
 
 export function Navbar({
   variant = "solid",
@@ -28,8 +28,8 @@ export function Navbar({
         <Link href="/" className="flex shrink-0 items-center">
           {isLanding ? (
             <Image
-              src="/ghost-landing-logo.png"
-              alt="Ghost"
+              src="/replii-landing-logo.png"
+              alt="Replii"
               width={LANDING_LOGO.width}
               height={LANDING_LOGO.height}
               priority
@@ -37,7 +37,7 @@ export function Navbar({
               className="h-8 w-auto"
             />
           ) : (
-            <GhostLogo variant="wordmark" className="h-7 w-auto" />
+            <RepliiLogo variant="wordmark" className="h-7 w-auto" />
           )}
         </Link>
 

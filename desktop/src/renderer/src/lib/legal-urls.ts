@@ -1,5 +1,5 @@
 const baseUrl = (
-  import.meta.env.VITE_LEGAL_BASE_URL ?? "https://ghost.ai"
+  import.meta.env.VITE_LEGAL_BASE_URL ?? "https://replii.ai"
 ).replace(/\/$/, "");
 
 export const legalLinks = {
@@ -10,5 +10,5 @@ export const legalLinks = {
 } as const;
 
 export function openLegalLink(url: string) {
-  void window.ghost?.openExternal?.(url);
+  void window.replii?.openExternal?.(url);
 }

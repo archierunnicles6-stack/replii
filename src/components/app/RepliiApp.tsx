@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getDownloadInfo } from "@/lib/download";
 import { useDownloadPlatform } from "@/hooks/useDownloadPlatform";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GhostLogo } from "@/components/GhostLogo";
+import { RepliiLogo } from "@/components/RepliiLogo";
 import { RecapScreen } from "@/components/app/RecapScreen";
 import {
   ControlButtons,
@@ -17,10 +17,10 @@ import {
   TabSharePrompt,
 } from "@/components/app/overlay-ui";
 import { useCallTimer } from "@/hooks/useCallTimer";
-import { useGhostAI } from "@/hooks/useGhostAI";
-import { useGhostSession, type SessionMode } from "@/hooks/useGhostSession";
+import { useRepliiAI } from "@/hooks/useRepliiAI";
+import { useRepliiSession, type SessionMode } from "@/hooks/useRepliiSession";
 import { lightPillTheme } from "@/lib/pill-theme";
-import type { TranscriptLine } from "@/types/ghost";
+import type { TranscriptLine } from "@/types/replii";
 
 type AppPhase = "welcome" | "active" | "recap";
 
@@ -36,7 +36,7 @@ function lastProspectLine(lines: TranscriptLine[]): TranscriptLine | null {
   return null;
 }
 
-export function GhostApp() {
+export function RepliiApp() {
   const platform = useDownloadPlatform();
   const { filename } = getDownloadInfo(platform);
   const [phase, setPhase] = useState<AppPhase>("welcome");
@@ -50,7 +50,7 @@ export function GhostApp() {
   const [sessionLines, setSessionLines] = useState<TranscriptLine[]>([]);
 
   const audioActive = phase === "active" && listening;
-  const session = useGhostSession(audioActive, sessionMode);
+  const session = useRepliiSession(audioActive, sessionMode);
   const {
     suggestion,
     followUps,
@@ -63,7 +63,7 @@ export function GhostApp() {
     fetchFollowUps,
     fetchRecap,
     clearSuggestion,
-  } = useGhostAI();
+  } = useRepliiAI();
   const { formatted: callTime } = useCallTimer(phase === "active");
 
   const lastProspectRef = useRef<string | null>(null);
@@ -174,7 +174,7 @@ export function GhostApp() {
         <div className="relative z-10 flex min-h-screen flex-col">
           <header className="flex items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center">
-              <GhostLogo variant="wordmark" tone="light" className="h-7 w-auto" />
+              <RepliiLogo variant="wordmark" tone="light" className="h-7 w-auto" />
             </Link>
             <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white/50 backdrop-blur-sm">
               Real mic · tab audio · GPT
@@ -188,10 +188,10 @@ export function GhostApp() {
               className="w-full max-w-md rounded-2xl border border-white/10 bg-black/40 p-8 backdrop-blur-xl"
             >
               <h1 className="text-center text-2xl font-semibold tracking-tight text-white md:text-3xl">
-                Ghost sales co-pilot
+                Replii sales co-pilot
               </h1>
               <p className="mt-3 text-center text-[14px] leading-relaxed text-white/55">
-                Use your mic plus share your Zoom or Meet tab — Ghost transcribes the prospect and
+                Use your mic plus share your Zoom or Meet tab — Replii transcribes the prospect and
                 tells you exactly what to say.
               </p>
 
@@ -213,7 +213,7 @@ export function GhostApp() {
 
               <p className="mt-6 text-center text-[12px] text-white/40">
                 Native desktop app →{" "}
-                <Link href="/download" className="text-ghost-300 hover:text-ghost-200">
+                <Link href="/download" className="text-replii-300 hover:text-replii-200">
                   Download {filename}
                 </Link>
               </p>

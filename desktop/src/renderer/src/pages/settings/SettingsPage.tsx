@@ -27,14 +27,14 @@ export function SettingsPage() {
   >([]);
 
   useEffect(() => {
-    window.ghost?.getDisplays().then(setDisplays);
+    window.replii?.getDisplays().then(setDisplays);
   }, []);
 
   useContentProtectionSync();
 
   useEffect(() => {
     if (settings.displayId != null) {
-      window.ghost?.moveToDisplay(settings.displayId);
+      window.replii?.moveToDisplay(settings.displayId);
     }
   }, [settings.displayId]);
 
@@ -42,7 +42,7 @@ export function SettingsPage() {
     <div className="max-w-xl">
       <PageHeader
         title="Settings"
-        description="Configure Ghost for your sales workflow — shortcuts, languages, and overlay display."
+        description="Configure Replii for your sales workflow — shortcuts, languages, and overlay display."
       />
 
       <section className="space-y-3">
@@ -146,14 +146,14 @@ export function SettingsPage() {
           App
         </h2>
         <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px] text-zinc-600">
-          Ghost v0.1.0
+          Replii v0.1.0
         </div>
         <button
           type="button"
-          onClick={() => window.ghost?.quit()}
+          onClick={() => window.replii?.quit()}
           className="w-full rounded-xl border border-zinc-200 py-3 text-[13px] font-medium text-zinc-700 hover:bg-zinc-50"
         >
-          Quit Ghost
+          Quit Replii
         </button>
       </section>
     </div>

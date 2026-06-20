@@ -3,7 +3,7 @@ export function MeetingHelp() {
     <section id="product" className="border-t border-[#f0f0f2] bg-white">
       <div className="mx-auto max-w-[1080px] px-6 pb-20 pt-14 md:pb-28 md:pt-20">
         <h2 className="text-[1.85rem] font-semibold leading-[1.15] tracking-[-0.03em] text-[#0a0a0a] md:text-[2.25rem]">
-          How Ghost helps during a call
+          How Replii helps during a call
         </h2>
 
         <div className="mt-10 grid gap-4 lg:grid-cols-2">
@@ -20,7 +20,7 @@ function ListeningCard() {
     <div className="relative flex min-h-[360px] flex-col overflow-hidden rounded-[22px] bg-[#4b8bf5] px-5 pb-7 pt-7 md:min-h-[380px] md:px-7 md:pt-8">
       <div>
         <h3 className="text-[1.1rem] font-medium leading-[1.35] tracking-[-0.02em] text-white md:text-[1.2rem]">
-          Ghost{" "}
+          Replii{" "}
           <span className="mx-1 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 align-middle text-[0.9rem] font-medium backdrop-blur-sm md:text-[0.95rem]">
             <WaveformIcon className="h-3 w-3 text-white" />
             listens
@@ -52,7 +52,7 @@ function AssistingCard() {
     <div className="relative flex min-h-[360px] flex-col overflow-hidden rounded-[22px] border border-[#ececef] bg-[#f7f8fa] px-5 pb-7 pt-7 md:min-h-[380px] md:px-7 md:pt-8">
       <div>
         <h3 className="text-[1.1rem] font-medium leading-[1.35] tracking-[-0.02em] text-[#0a0a0a] md:text-[1.2rem]">
-          When you need help, Ghost{" "}
+          When you need help, Replii{" "}
           <span className="mx-1 inline-flex items-center gap-1.5 rounded-full border border-[#e4e4e7] bg-white px-2.5 py-0.5 align-middle text-[0.9rem] font-medium text-[#0a0a0a] shadow-sm md:text-[0.95rem]">
             <PlusIcon className="h-3 w-3 text-[#4b8bf5]" />
             assists
@@ -60,7 +60,7 @@ function AssistingCard() {
           you instantly
         </h3>
         <p className="mt-2.5 max-w-[340px] text-[13px] leading-[1.55] text-[#71717a]">
-          Hit Cmd/Ctrl + Enter and Ghost helps you with AI in the moment.
+          Hit Cmd/Ctrl + Enter and Replii helps you with AI in the moment.
         </p>
       </div>
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CookieSettingsLink } from "./CookieSettingsLink";
-import { GhostLogo } from "./GhostLogo";
+import { RepliiLogo } from "./RepliiLogo";
 import { LEGAL_ROUTES, SUPPORT_ROUTES, LEGAL } from "@/content/legal/config";
 
 type FooterLink = {
@@ -55,7 +55,7 @@ export function Footer({ className = "bg-[#f7f8fa]" }: { className?: string }) {
     <footer className={className}>
       <div className="mx-auto flex max-w-[1200px] flex-col gap-12 px-6 py-14 md:flex-row md:items-start md:justify-between md:py-16">
         <Link href="/" className="flex items-center">
-          <GhostLogo variant="wordmark" className="h-6 w-auto" />
+          <RepliiLogo variant="wordmark" className="h-6 w-auto" />
         </Link>
 
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 sm:gap-16">
@@ -124,7 +124,7 @@ export function Footer({ className = "bg-[#f7f8fa]" }: { className?: string }) {
         </div>
         <div className="mx-auto flex max-w-[1200px] flex-col gap-2 border-t border-[#e8ebf0] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13px] text-[#8b95a5]">
-            © {new Date().getFullYear()} Ghost. All rights reserved.
+            © {new Date().getFullYear()} Replii. All rights reserved.
           </p>
           <CookieSettingsLink className="text-left text-[13px] text-[#5f6b7a] transition-colors hover:text-[#0a0a0a] sm:text-right" />
         </div>

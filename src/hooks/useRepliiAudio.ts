@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { startMockConversation } from "@/lib/mock-audio";
-import type { TranscriptLine } from "@/types/ghost";
+import type { TranscriptLine } from "@/types/replii";
 
-export function useGhostAudio(active: boolean) {
+export function useRepliiAudio(active: boolean) {
   const [lines, setLines] = useState<TranscriptLine[]>([]);
   const [interim, setInterim] = useState("");
   const sessionStartRef = useRef(Date.now());

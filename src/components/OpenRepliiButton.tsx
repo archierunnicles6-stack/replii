@@ -4,9 +4,9 @@ import { useCallback, useState } from "react";
 import { RELEASE_PAGE_URL } from "@/lib/download";
 import type { DownloadPlatform } from "@/lib/platform";
 
-const OPEN_URL = "ghost://open";
+const OPEN_URL = "replii://open";
 
-export function OpenGhostButton({
+export function OpenRepliiButton({
   platform,
   className,
 }: {
@@ -19,7 +19,7 @@ export function OpenGhostButton({
     setHint(null);
 
     if (platform === "windows") {
-      setHint("Open Ghost from the Start menu or desktop shortcut after installing.");
+      setHint("Open Replii from the Start menu or desktop shortcut after installing.");
       return;
     }
 
@@ -27,7 +27,7 @@ export function OpenGhostButton({
 
     window.setTimeout(() => {
       setHint(
-        "If Ghost did not open, run Install Ghost.command from the DMG (or npm run local:app), then try again.",
+        "If Replii did not open, run Install Replii.command from the DMG (or npm run local:app), then try again.",
       );
     }, 1500);
   }, [platform]);
@@ -42,7 +42,7 @@ export function OpenGhostButton({
           "inline-flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-6 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
         }
       >
-        Open Ghost app
+        Open Replii app
       </button>
       {hint ? (
         <p className="text-[13px] leading-relaxed text-zinc-500">

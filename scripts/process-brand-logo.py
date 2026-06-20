@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract Ghost brand assets from the source wordmark (black-on-black PNG)."""
+"""Extract Replii brand assets from the source wordmark (black-on-black PNG)."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ WHITE_LUMINANCE = 180
 
 
 def default_source() -> Path:
-    env = os.environ.get("GHOST_LOGO_SOURCE")
+    env = os.environ.get("REPLII_LOGO_SOURCE")
     if env:
         return Path(env)
     return ROOT / "desktop" / "build" / "logo-source.png"
@@ -43,7 +43,7 @@ def extract_mask_white_on_black(src: Image.Image) -> Image.Image:
 
 
 def default_landing_source() -> Path:
-    env = os.environ.get("GHOST_LANDING_LOGO_SOURCE")
+    env = os.environ.get("REPLII_LANDING_LOGO_SOURCE")
     if env:
         return Path(env)
     return LANDING_SOURCE
@@ -115,29 +115,27 @@ def process(source: Path) -> None:
     icon_light = tint(square_mask(icon_mask), (255, 255, 255))
 
     outputs = {
-        PUBLIC / "ghost-wordmark.png": wordmark_dark,
-        PUBLIC / "ghost-wordmark-light.png": wordmark_light,
-        PUBLIC / "ghost-logo.png": icon_dark,
-        PUBLIC / "ghost-mark.png": icon_light,
-        DESKTOP_ASSETS / "ghost-wordmark.png": wordmark_dark,
-        DESKTOP_ASSETS / "ghost-wordmark-light.png": wordmark_light,
-        DESKTOP_ASSETS / "ghost-logo.png": icon_dark,
-        DESKTOP_ASSETS / "ghost-mark.png": icon_light,
+        PUBLIC / "replii-wordmark.png": wordmark_dark,
+        PUBLIC / "replii-wordmark-light.png": wordmark_light,
+        PUBLIC / "replii-logo.png": icon_dark,
+        PUBLIC / "replii-mark.png": icon_light,
+        DESKTOP_ASSETS / "replii-wordmark.png": wordmark_dark,
+        DESKTOP_ASSETS / "replii-wordmark-light.png": wordmark_light,
+        DESKTOP_ASSETS / "replii-logo.png": icon_dark,
+        DESKTOP_ASSETS / "replii-mark.png": icon_light,
     }
 
-    print(f"[ghost] Processing brand logo from {source}")
+    print(f"[replii] Processing brand logo from {source}")
     for path, image in outputs.items():
         save_png(image, path)
-
-    icon_source = tint(square_mask(icon_mask), (255, 255, 255)).resize(
-        (1024, 1024), Image.Resampling.LANCZOS
-    )
-    save_png(icon_source, ICON_SOURCE)
+    print("[replii] Skipped icon-source.png — app icon is managed separately")
 
 
 def process_landing(source: Path) -> Image.Image:
     src = Image.open(source).convert("RGBA")
-    mask = trim(extract_mask(src))
+    mask = trim(extract_mask_white_on_black(src))
+    if mask.getbbox() is None:
+        mask = trim(extract_mask(src))
     return tint(mask, (0, 0, 0))
 
 
@@ -150,10 +148,10 @@ def main() -> None:
     landing_source = default_landing_source()
     if landing_source.exists():
         landing = process_landing(landing_source)
-        print(f"[ghost] Processing landing logo from {landing_source}")
-        save_png(landing, PUBLIC / "ghost-landing-logo.png")
+        print(f"[replii] Processing landing logo from {landing_source}")
+        save_png(landing, PUBLIC / "replii-landing-logo.png")
     else:
-        print(f"[ghost] Skipping landing logo — source not found: {landing_source}")
+        print(f"[replii] Skipping landing logo — source not found: {landing_source}")
 
 
 if __name__ == "__main__":

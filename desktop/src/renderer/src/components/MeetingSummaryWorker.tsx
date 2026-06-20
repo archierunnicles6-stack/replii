@@ -46,11 +46,11 @@ function finalizeMeeting(
         });
       } else {
         updateMeeting(meetingId, {
-          summary: "Ghost couldn't generate a summary. Check your OpenAI API key and try again.",
+          summary: "Replii couldn't generate a summary. Check your OpenAI API key and try again.",
           summarySections: [
             {
               heading: "Summary unavailable",
-              items: ["Ghost couldn't generate a summary. Check your OpenAI API key and try again."],
+              items: ["Replii couldn't generate a summary. Check your OpenAI API key and try again."],
             },
           ],
           status: "ready",
@@ -71,7 +71,7 @@ export function MeetingSummaryWorker() {
   const recoveredRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    return window.ghost?.onGenerateMeetingSummary?.((payload) => {
+    return window.replii?.onGenerateMeetingSummary?.((payload) => {
       finalizeMeeting(
         payload.meetingId,
         payload.transcript,

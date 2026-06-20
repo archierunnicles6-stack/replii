@@ -1,22 +1,22 @@
 export const TERMS_VERSION = "2026-06-18" as const;
 
 export const LEGAL = {
-  productName: "Ghost",
+  productName: "Replii",
   /** Trading name — not a limited company. */
-  legalEntity: "Ghost",
+  legalEntity: "Replii",
   businessStructure:
-    "Ghost is operated by its founder as a sole trader. Ghost is not a limited company (Ltd), partnership, or corporation.",
-  website: "https://ghost.ai",
+    "Replii is operated by its founder as a sole trader. Replii is not a limited company (Ltd), partnership, or corporation.",
+  website: "https://replii.ai",
   effectiveDate: "June 18, 2026",
   lastUpdated: "June 18, 2026",
   termsVersion: TERMS_VERSION,
   aiDisclaimerShort:
     "AI can make mistakes. Always review suggestions before you use or repeat them.",
   contact: {
-    legal: "legal@ghost.ai",
-    privacy: "privacy@ghost.ai",
-    support: "support@ghost.ai",
-    dpo: "privacy@ghost.ai",
+    legal: "legal@replii.ai",
+    privacy: "privacy@replii.ai",
+    support: "support@replii.ai",
+    dpo: "privacy@replii.ai",
   },
   jurisdiction: {
     region: "England and Wales",

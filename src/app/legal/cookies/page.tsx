@@ -4,7 +4,7 @@ import { LEGAL, LEGAL_ROUTES } from "@/content/legal/config";
 import { cookieSections } from "@/content/legal/other-sections";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy — Ghost",
+  title: "Cookie Policy — Replii",
   description: `How ${LEGAL.productName} uses cookies and similar technologies.`,
 };
 

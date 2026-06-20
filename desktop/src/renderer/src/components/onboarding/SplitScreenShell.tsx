@@ -12,7 +12,7 @@ export function SplitScreenShell({
   rightVariant?: "default" | "grid" | "grid-preview" | "edge-image";
 }) {
   useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("onboarding");
+    void window.replii?.setDashboardLayout?.("onboarding");
   }, []);
 
   const isDark = variant === "dark";

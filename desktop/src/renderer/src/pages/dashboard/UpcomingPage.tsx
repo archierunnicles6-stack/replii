@@ -1,5 +1,5 @@
 import { useOutletContext } from "react-router-dom";
-import { useStartGhostSession } from "../../hooks/useStartGhostSession";
+import { useStartRepliiSession } from "../../hooks/useStartRepliiSession";
 import { isPaidPlan } from "../../store/types";
 import { useAppStore } from "../../store/useAppStore";
 import type { DashboardOutletContext } from "./DashboardLayout";
@@ -9,7 +9,7 @@ export function UpcomingPage() {
   const upcoming = useAppStore((s) => s.upcoming);
   const plan = useAppStore((s) => s.plan);
   const paid = isPaidPlan(plan);
-  const { startSession, canStart } = useStartGhostSession();
+  const { startSession, canStart } = useStartRepliiSession();
 
   const filtered = upcoming.filter((call) => {
     if (!searchQuery.trim()) return true;
@@ -88,7 +88,7 @@ export function UpcomingPage() {
                   disabled={!canStart}
                   className="rounded-full bg-gradient-to-b from-[#4d9cf8] to-[#3b82f6] px-4 py-2 text-[12px] font-medium text-white shadow-[0_2px_8px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Start Ghost
+                  Start Replii
                 </button>
               </div>
 

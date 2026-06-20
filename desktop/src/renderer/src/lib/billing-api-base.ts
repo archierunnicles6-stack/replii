@@ -24,7 +24,7 @@ export async function resolveApiBase(): Promise<string> {
   }
 
   if (!bootstrapPromise) {
-    bootstrapPromise = window.ghost
+    bootstrapPromise = window.replii
       ?.getApiBaseUrl?.()
       .then((url) => {
         const trimmed = url?.trim().replace(/\/$/, "");

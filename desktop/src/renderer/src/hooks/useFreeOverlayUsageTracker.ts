@@ -77,7 +77,7 @@ export function useFreeOverlayUsageTracker(
   }, [active, clearTicker, plan, tick]);
 
   useEffect(() => {
-    return window.ghost?.onVisibility?.((visible) => {
+    return window.replii?.onVisibility?.((visible) => {
       overlayVisibleRef.current = visible;
       updateTicker();
     });

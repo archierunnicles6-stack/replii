@@ -5,7 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ghost: {
+        replii: {
           50: "#f5f3ff",
           100: "#ede9fe",
           200: "#ddd6fe",

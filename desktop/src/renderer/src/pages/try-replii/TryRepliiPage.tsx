@@ -5,11 +5,11 @@ import {
   SplitScreenLeft,
   SplitScreenLeftBody,
 } from "../../components/onboarding/SplitScreenLeft";
-import { TryGhostPreview } from "../../components/onboarding/TryGhostPreview";
+import { TryRepliiPreview } from "../../components/onboarding/TryRepliiPreview";
 import { BackButton } from "../../components/ui";
 import { notifyAppStoreChanged, useAppStore } from "../../store/useAppStore";
 
-export function TryGhostPage() {
+export function TryRepliiPage() {
   const navigate = useNavigate();
   const {
     isAuthenticated,
@@ -32,11 +32,11 @@ export function TryGhostPage() {
   }, [isAuthenticated, onboardingComplete, navigate]);
 
   useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("onboarding");
+    void window.replii?.setDashboardLayout?.("onboarding");
   }, []);
 
   useEffect(() => {
-    const unsubShortcut = window.ghost?.onShortcutToggle?.(() => {
+    const unsubShortcut = window.replii?.onShortcutToggle?.(() => {
       setOverlayVisible((visible) => !visible);
     });
 
@@ -74,10 +74,10 @@ export function TryGhostPage() {
           <SplitScreenLeft>
             <SplitScreenLeftBody>
               <h1 className="min-w-0 break-words text-[32px] font-semibold leading-[1.12] tracking-[-0.025em] text-zinc-900">
-                Hide Ghost using the following hotkeys
+                Hide Replii using the following hotkeys
               </h1>
               <p className="mt-3 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500">
-                You can open and hide Ghost anytime.
+                You can open and hide Replii anytime.
               </p>
 
               <div className="mt-10 flex items-center justify-center gap-4">
@@ -123,7 +123,7 @@ export function TryGhostPage() {
             </button>
           </SplitScreenLeft>
         }
-        right={<TryGhostPreview overlayVisible={overlayVisible} />}
+        right={<TryRepliiPreview overlayVisible={overlayVisible} />}
       />
     </div>
   );

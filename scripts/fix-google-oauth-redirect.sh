@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Fix Google OAuth "Error 400: redirect_uri_mismatch" for Ghost desktop sign-in.
+# Fix Google OAuth "Error 400: redirect_uri_mismatch" for Replii desktop sign-in.
 #
-# Supabase always sends this redirect_uri to Google (not ghost://auth/callback):
+# Supabase always sends this redirect_uri to Google (not replii://auth/callback):
 #   https://<project-ref>.supabase.co/auth/v1/callback
 #
 # Add that exact URL in Google Cloud → APIs & Services → Credentials → your
@@ -29,7 +29,7 @@ for arg in "$@"; do
   esac
 done
 
-echo "Ghost Google OAuth redirect fix"
+echo "Replii Google OAuth redirect fix"
 echo "================================"
 echo ""
 echo "Client ID:"
@@ -44,7 +44,7 @@ echo "  2. Edit OAuth 2.0 Client ID (type must be Web application, not Desktop)"
 echo "  3. Under Authorized redirect URIs, add the URL above"
 echo "  4. Save"
 echo ""
-echo "Do NOT add ghost://auth/callback to Google — that URI is only for Supabase"
+echo "Do NOT add replii://auth/callback to Google — that URI is only for Supabase"
 echo "(Auth → URL Configuration → Redirect URLs)."
 echo ""
 
@@ -77,7 +77,7 @@ if [[ -n "$SUPABASE" ]]; then
   fi
 fi
 
-echo "After saving in Google Cloud, retry sign-in in the Ghost app."
+echo "After saving in Google Cloud, retry sign-in in the Replii app."
 echo ""
 
 if [[ "$OPEN_CONSOLE" == true ]]; then

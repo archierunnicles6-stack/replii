@@ -54,16 +54,16 @@ const LANGUAGES = [
 
 const FAQ = [
   {
-    q: "How do I start Ghost on a sales call?",
-    a: "Click Start Ghost from the dashboard. The overlay appears on your screen and begins listening automatically.",
+    q: "How do I start Replii on a sales call?",
+    a: "Click Start Replii from the dashboard. The overlay appears on your screen and begins listening automatically.",
   },
   {
     q: "Is my call history saved?",
     a: "Every call is saved with transcripts, coaching suggestions, and deal scores. Review past sessions in your dashboard to see what worked.",
   },
   {
-    q: "Does Ghost join my calls?",
-    a: "Never. Ghost runs locally on your machine. No bots, no extra participants.",
+    q: "Does Replii join my calls?",
+    a: "Never. Replii runs locally on your machine. No bots, no extra participants.",
   },
 ];
 
@@ -217,7 +217,7 @@ function GeneralPanel({ onRequestUpgrade }: { onRequestUpgrade: () => void }) {
 
   return (
     <div>
-      <PanelHeader title="General" subtitle="Customize how Ghost works for you" />
+      <PanelHeader title="General" subtitle="Customize how Replii works for you" />
 
       <div className="divide-y divide-zinc-100">
         <SettingsRow
@@ -226,8 +226,8 @@ function GeneralPanel({ onRequestUpgrade }: { onRequestUpgrade: () => void }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
           }
-          title="Ghost Version"
-          description="You are currently using Ghost version 0.1.0"
+          title="Replii Version"
+          description="You are currently using Replii version 0.1.0"
           action={
             <span className="rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-1.5 text-[12px] font-medium text-zinc-500">
               v0.1.0
@@ -270,7 +270,7 @@ function KeybindsPanel() {
   const mod = shortcutModLabel();
   return (
     <div>
-      <PanelHeader title="Keybinds" subtitle="Keyboard shortcuts for Ghost overlay" />
+      <PanelHeader title="Keybinds" subtitle="Keyboard shortcuts for Replii overlay" />
       <div className="overflow-hidden rounded-xl border border-zinc-200">
         {OVERLAY_KEYBINDS.map((bind, i) => (
           <div
@@ -327,7 +327,7 @@ function ProfilePanel() {
 
   return (
     <div>
-      <PanelHeader title="Profile" subtitle="Your Ghost account details" />
+      <PanelHeader title="Profile" subtitle="Your Replii account details" />
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5">
         <div className="flex items-start gap-4">
           <div className="relative shrink-0">
@@ -419,7 +419,7 @@ function LanguagePanel() {
 function ReleaseNotesPanel() {
   return (
     <div>
-      <PanelHeader title="Release Notes" subtitle="What's new in Ghost" />
+      <PanelHeader title="Release Notes" subtitle="What's new in Replii" />
       <div className="space-y-4">
         <div className="rounded-xl border border-zinc-200 p-4">
           <p className="text-[12px] font-semibold text-zinc-900">v0.1.0</p>
@@ -456,10 +456,10 @@ function ContactPanel() {
       <PanelHeader title="Contact Support" subtitle="We're here to help" />
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-center">
         <p className="text-[13px] font-medium text-zinc-800">Email us anytime</p>
-        <p className="mt-1 text-[12px] text-zinc-500">support@ghost.app — we respond within 24 hours.</p>
+        <p className="mt-1 text-[12px] text-zinc-500">support@replii.app — we respond within 24 hours.</p>
         <button
           type="button"
-          onClick={() => void window.ghost?.openExternal?.("mailto:support@ghost.app")}
+          onClick={() => void window.replii?.openExternal?.("mailto:support@replii.app")}
           className="mt-4 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50"
         >
           Send email
@@ -553,7 +553,7 @@ export function SettingsModal({
   };
 
   const handleQuit = () => {
-    void window.ghost?.quit();
+    void window.replii?.quit();
   };
 
   const handleOpenAdmin = () => {
@@ -628,7 +628,7 @@ export function SettingsModal({
               className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
             >
               <NavIcon name="quit" />
-              Quit Ghost
+              Quit Replii
             </button>
             {isAdmin ? (
               <button

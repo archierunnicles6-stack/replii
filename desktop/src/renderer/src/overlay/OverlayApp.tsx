@@ -3,11 +3,11 @@ import { useLiveTranscriptFeed } from "../hooks/useLiveTranscriptFeed";
 import { OVERLAY_PILL_THEME } from "../hooks/usePillBackdrop";
 import { useOverlayClickThrough } from "../hooks/useOverlayClickThrough";
 import {
-  askGhost,
+  askReplii,
   type QuickAction,
   type TranscriptLine,
 } from "../services/ai";
-import { streamGhostSuggestion } from "../services/ghost-suggest";
+import { streamRepliiSuggestion } from "../services/replii-suggest";
 import {
   autoTriggerDelayMs,
   buildLiveDisplayText,
@@ -27,7 +27,8 @@ import {
 } from "../lib/company-info";
 import { useContentProtectionSync } from "../hooks/useContentProtectionSync";
 import { createSuggestionRecord } from "../lib/suggestion-tags";
-import { useAppStore, notifyAppStoreChanged, rehydrateAppStoreFromStorage } from "../store/useAppStore";
+import { endRepliiSession } from "../lib/end-replii-session";
+import { useAppStore, rehydrateAppStoreFromStorage } from "../store/useAppStore";
 import type { SuggestionRecord } from "../store/types";
 import {
   ControlButtons,
@@ -50,8 +51,12 @@ export function OverlayApp() {
   const [dealHealth, setDealHealth] = useState<number | null>(null);
   const [topPanelHidden, setTopPanelHidden] = useState(false);
 
-  const { companyInfo, knowledgeContext, settings, saveMeetingFromSession } =
-    useAppStore();
+  const {
+    activeMode,
+    companyInfo,
+    knowledgeContext,
+    settings,
+  } = useAppStore();
   const liveCoachingContext = getLiveKnowledgeContext(knowledgeContext);
   const assistCoachingContext = knowledgeContext;
   const aiProduct = getEffectiveProduct(companyInfo);
@@ -85,7 +90,7 @@ export function OverlayApp() {
   } = useLiveTranscriptFeed(feedActive);
 
   const clearTranscript = useCallback(() => {
-    window.ghost?.clearLiveTranscript?.();
+    window.replii?.clearLiveTranscript?.();
   }, []);
 
   linesRef.current = lines;
@@ -114,7 +119,7 @@ export function OverlayApp() {
     sessionStartRef.current = null;
     suggestionUsesRef.current = 0;
     suggestionsRef.current = [];
-    void window.ghost?.setOverlayMode("pill");
+    void window.replii?.setOverlayMode("pill");
     document.documentElement.classList.remove("active-mode");
     document.body.classList.remove("active-mode");
   }, [clearTranscript]);
@@ -130,23 +135,23 @@ export function OverlayApp() {
     suggestionsRef.current = [];
 
     await bootstrapOpenAIKey();
-    const permissions = await window.ghost?.getPermissionStatus?.();
+    const permissions = await window.replii?.getPermissionStatus?.();
     if (permissions && !permissions.microphone) {
-      await window.ghost?.showMicHelper?.();
-      await window.ghost?.ensureMicrophone?.();
+      await window.replii?.showMicHelper?.();
+      await window.replii?.ensureMicrophone?.();
     }
 
     document.documentElement.classList.add("active-mode");
     document.body.classList.add("active-mode");
-    await window.ghost?.setOverlayMode("active");
+    await window.replii?.setOverlayMode("active");
     setPhase("active");
     setListening(true);
-    window.ghost?.setSessionListening?.(true);
-    window.ghost?.requestLiveTranscript?.();
+    window.replii?.setSessionListening?.(true);
+    window.replii?.requestLiveTranscript?.();
   }, []);
 
   useEffect(() => {
-    return window.ghost?.onStoreChanged?.(() => {
+    return window.replii?.onStoreChanged?.(() => {
       void rehydrateAppStoreFromStorage();
     });
   }, []);
@@ -154,7 +159,7 @@ export function OverlayApp() {
   useEffect(() => {
     document.documentElement.classList.add("overlay");
     document.body.classList.add("overlay");
-    void window.ghost?.getSettings?.().then((s) => {
+    void window.replii?.getSettings?.().then((s) => {
       if (s.sessionActive) void activateListening();
     });
     return () => {
@@ -166,15 +171,15 @@ export function OverlayApp() {
   useContentProtectionSync(true);
 
   useEffect(() => {
-    return window.ghost?.onSessionStarted?.(() => void activateListening());
+    return window.replii?.onSessionStarted?.(() => void activateListening());
   }, [activateListening]);
 
   useEffect(() => {
-    return window.ghost?.onSessionStopped?.(() => resetSessionState());
+    return window.replii?.onSessionStopped?.(() => resetSessionState());
   }, [resetSessionState]);
 
   useEffect(() => {
-    return window.ghost?.onShortcutToggle?.(() => {
+    return window.replii?.onShortcutToggle?.(() => {
       setTopPanelHidden((hidden) => !hidden);
     });
   }, []);
@@ -246,7 +251,7 @@ export function OverlayApp() {
       setLoading(true);
       setStreamingText("");
 
-      void streamGhostSuggestion(text, linesRef.current, {
+      void streamRepliiSuggestion(text, linesRef.current, {
         product: aiProduct,
         objections: aiObjections,
         coachingContext: liveCoachingContext,
@@ -279,7 +284,7 @@ export function OverlayApp() {
         })
         .catch((err) => {
           if (err instanceof DOMException && err.name === "AbortError") return;
-          console.error("[ghost] Auto suggestion failed:", err);
+          console.error("[replii] Auto suggestion failed:", err);
           setLoading(false);
         })
         .finally(() => {
@@ -309,7 +314,7 @@ export function OverlayApp() {
       let final = "";
 
       try {
-        const response = await askGhost(action, snapshotLines, {
+        const response = await askReplii(action, snapshotLines, {
           customPrompt,
           systemPrompt: assistCoachingContext,
           smartMode,
@@ -358,11 +363,11 @@ export function OverlayApp() {
   runAssistRef.current = runAssist;
 
   useEffect(() => {
-    return window.ghost?.onAssist(() => void runAssist("assist"));
+    return window.replii?.onAssist(() => void runAssist("assist"));
   }, [runAssist]);
 
   useEffect(() => {
-    return window.ghost?.onClearSession(() => {
+    return window.replii?.onClearSession(() => {
       clearTranscript();
       setStreamingText("");
       setActiveSuggestion("");
@@ -458,43 +463,25 @@ export function OverlayApp() {
     };
   }, []);
 
-  const stopSession = async () => {
+  const stopSession = useCallback(async () => {
     const duration = sessionStartRef.current
       ? Math.floor((Date.now() - sessionStartRef.current) / 1000)
       : 0;
 
     setListening(false);
 
-    const meeting = saveMeetingFromSession({
-      title: "Live session",
-      company: "Meeting",
-      mode: activeMode,
+    await endRepliiSession({
       duration,
       transcript: linesRef.current,
-      summary: "Generating summary…",
-      status: "processing",
-      nextSteps: [],
-      dealScore: 0,
-      objections: [],
+      activeMode,
       suggestionUses: suggestionUsesRef.current,
       suggestions: suggestionsRef.current,
     });
+  }, [activeMode]);
 
-    if (linesRef.current.length === 0) {
-      useAppStore.getState().refundFreeSessionUsage();
-    }
-
-    notifyAppStoreChanged();
-
-    void window.ghost?.requestMeetingSummary?.({
-      meetingId: meeting.id,
-      transcript: linesRef.current,
-    });
-
-    await window.ghost?.stopSession();
-    useAppStore.getState().setSessionActive(false);
-    void window.ghost?.focusDashboard(`/meetings/${meeting.id}`);
-  };
+  useEffect(() => {
+    return window.replii?.onRequestEndSession?.(() => void stopSession());
+  }, [stopSession]);
 
   if (phase === "idle") return null;
 
@@ -511,6 +498,10 @@ export function OverlayApp() {
         <div
           ref={topPanelRef}
           className="pointer-events-auto absolute left-4 top-4 flex w-[min(520px,calc(100vw-32px))] flex-col gap-2"
+          onMouseEnter={() => void window.replii?.setIgnoreMouseEvents?.(false)}
+          onMouseLeave={() =>
+            void window.replii?.setIgnoreMouseEvents?.(true, { forward: true })
+          }
         >
           <ListeningPill
             listening={listening}
@@ -536,14 +527,18 @@ export function OverlayApp() {
       <div
         ref={controlBarRef}
         className="pointer-events-auto absolute bottom-6 left-1/2 w-max max-w-[calc(100vw-32px)] -translate-x-1/2"
+        onMouseEnter={() => void window.replii?.setIgnoreMouseEvents?.(false)}
+        onMouseLeave={() =>
+          void window.replii?.setIgnoreMouseEvents?.(true, { forward: true })
+        }
       >
         <ControlButtons
-          onToggleDashboard={() => void window.ghost?.toggleDashboard?.()}
+          onToggleDashboard={() => void window.replii?.toggleDashboard?.()}
           listening={listening}
           onToggleListening={() => {
             const next = !listening;
             setListening(next);
-            window.ghost?.setSessionListening?.(next);
+            window.replii?.setSessionListening?.(next);
           }}
           onEndSession={() => void stopSession()}
           pillTheme={pillTheme}

@@ -1,14 +1,14 @@
 {
-  "name": "ghost-desktop",
+  "name": "replii-desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "Ghost — live AI meeting assistant overlay",
+  "description": "Replii — live AI meeting assistant overlay",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "node scripts/prepare-dev-app.mjs && node scripts/dev.mjs",
     "dev:raw": "electron-vite dev",
-    "open-app": "node scripts/open-ghost-app.mjs",
-    "open-app:dev": "node scripts/open-ghost-app.mjs --dev",
+    "open-app": "node scripts/open-replii-app.mjs",
+    "open-app:dev": "node scripts/open-replii-app.mjs --dev",
     "setup:blackhole": "node scripts/setup-blackhole.mjs",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
@@ -16,7 +16,7 @@
     "package": "node scripts/ensure-icon.mjs && npm run build && electron-builder --mac --dir",
     "package:mac": "node scripts/prepare-ci-build.mjs && node scripts/ensure-icon.mjs && npm run build && electron-builder --mac",
     "package:win": "node scripts/prepare-ci-build.mjs && node scripts/ensure-icon.mjs && npm run build && electron-builder --win",
-    "fix:installed": "node scripts/sign-mac-app.mjs /Applications/Ghost.app",
+    "fix:installed": "node scripts/sign-mac-app.mjs /Applications/Replii.app",
     "test:audio": "node scripts/test-audio-suggestions.mjs"
   },
   "dependencies": {
@@ -41,8 +41,8 @@
     "vite": "^5.4.11"
   },
   "build": {
-    "appId": "com.ghost.app",
-    "productName": "Ghost",
+    "appId": "com.replii.app",
+    "productName": "Replii",
     "afterPack": "./scripts/after-pack.mjs",
     "win": {
       "icon": "build/icon.png",
@@ -55,27 +55,27 @@
           ]
         }
       ],
-      "artifactName": "Ghost-Setup.${ext}"
+      "artifactName": "Replii-Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Ghost",
+      "shortcutName": "Replii",
       "installerIcon": "build/icon.png",
       "uninstallerIcon": "build/icon.png",
       "installerHeaderIcon": "build/icon.png"
     },
     "mac": {
-      "artifactName": "Ghost.${ext}",
+      "artifactName": "Replii.${ext}",
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "Ghost needs microphone access to transcribe your voice during sales calls.",
-        "NSScreenCaptureDescription": "Ghost uses Screen Recording to capture call audio from Zoom, Meet, or Teams. Ghost does not view or record your screen."
+        "NSMicrophoneUsageDescription": "Replii needs microphone access to transcribe your voice during sales calls.",
+        "NSScreenCaptureDescription": "Replii uses Screen Recording to capture call audio from Zoom, Meet, or Teams. Replii does not view or record your screen."
       },
       "target": [
         "dmg",
@@ -83,7 +83,7 @@
       ]
     },
     "dmg": {
-      "title": "Ghost",
+      "title": "Replii",
       "contents": [
         {
           "x": 130,
@@ -99,13 +99,13 @@
           "x": 130,
           "y": 360,
           "type": "file",
-          "path": "build/Install Ghost.command"
+          "path": "build/Install Replii.command"
         },
         {
           "x": 410,
           "y": 360,
           "type": "file",
-          "path": "build/Open Ghost.command"
+          "path": "build/Open Replii.command"
         }
       ]
     },

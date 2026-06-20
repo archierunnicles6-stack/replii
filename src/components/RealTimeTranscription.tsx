@@ -21,7 +21,7 @@ const stats = [
 
 const summary = [
   "Discovery call with enterprise prospect on Q4 pipeline expansion.",
-  "Archie walked through Ghost's real-time coaching and manager review workflow.",
+  "Archie walked through Replii's real-time coaching and manager review workflow.",
   "Dylan asked about CRM integration, security, and team rollout timeline.",
   "Next step: send pricing proposal and schedule a technical demo for the buying committee.",
 ];

@@ -1,22 +1,25 @@
+import {
+  stripeProAnnualPriceId,
+  stripeProMonthlyPriceId,
+} from "@/lib/stripe-ids";
+
 export type StripePlanId = "pro";
 export type StripeBillingInterval = "monthly" | "annual";
 
-const PRO_PRICE_IDS = () =>
-  [process.env.STRIPE_PRICE_PRO, process.env.STRIPE_PRICE_PRO_ANNUAL].filter(
-    Boolean,
-  ) as string[];
+const PRO_PRICE_IDS = (): string[] =>
+  [stripeProMonthlyPriceId(), stripeProAnnualPriceId()].filter(Boolean);
 
 export function stripePriceIdForPlan(
   plan: StripePlanId,
   interval: StripeBillingInterval = "monthly",
 ): string | undefined {
-  const map: Record<StripePlanId, Record<StripeBillingInterval, string | undefined>> = {
+  const map: Record<StripePlanId, Record<StripeBillingInterval, string>> = {
     pro: {
-      monthly: process.env.STRIPE_PRICE_PRO,
-      annual: process.env.STRIPE_PRICE_PRO_ANNUAL,
+      monthly: stripeProMonthlyPriceId(),
+      annual: stripeProAnnualPriceId(),
     },
   };
-  return map[plan][interval]?.trim() || undefined;
+  return map[plan][interval] || undefined;
 }
 
 export function planFromStripePriceId(priceId: string): StripePlanId | "free" {

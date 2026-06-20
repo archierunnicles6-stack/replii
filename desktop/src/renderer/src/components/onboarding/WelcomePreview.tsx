@@ -12,7 +12,7 @@ export function WelcomePreview() {
       <div className="relative mt-6 flex min-h-0 flex-1 items-end justify-end overflow-hidden">
         <img
           src={klavioPreview}
-          alt="Ghost providing live coaching during a sales call"
+          alt="Replii providing live coaching during a sales call"
           className="h-full w-auto max-w-none select-none object-contain object-right-bottom"
           draggable={false}
         />

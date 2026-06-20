@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { GhostApp } from "@/components/app/GhostApp";
+import { RepliiApp } from "@/components/app/RepliiApp";
 
 export const metadata: Metadata = {
-  title: "Ghost App — Live Sales Co-pilot",
+  title: "Replii App — Live Sales Co-pilot",
   description:
     "Real-time AI coaching during sales calls. Mock demo with live GPT suggestions, follow-ups, and call recap.",
 };
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function AppPage() {
   return (
     <Suspense fallback={null}>
-      <GhostApp />
+      <RepliiApp />
     </Suspense>
   );
 }

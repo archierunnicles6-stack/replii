@@ -16,8 +16,8 @@ function parsePlatform(value: string | null): DownloadPlatform {
 }
 
 const LOCAL_CANDIDATES: Record<DownloadPlatform, string[]> = {
-  mac: [MAC_DOWNLOAD_FILENAME, "Ghost-0.1.0-arm64.dmg"],
-  windows: [WINDOWS_DOWNLOAD_FILENAME, "Ghost-Setup.exe", "Ghost-Windows.zip"],
+  mac: [MAC_DOWNLOAD_FILENAME, "Replii-0.1.0-arm64.dmg"],
+  windows: [WINDOWS_DOWNLOAD_FILENAME, "Replii-Setup.exe", "Replii-Windows.zip"],
 };
 
 const CONTENT_TYPES: Record<string, string> = {

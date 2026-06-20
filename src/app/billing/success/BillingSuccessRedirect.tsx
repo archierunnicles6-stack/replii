@@ -17,7 +17,7 @@ export function BillingSuccessRedirect() {
     if (!params.has("to")) params.set("to", "billing");
 
     const redirectToApp = () => {
-      window.location.replace(`ghost://billing/success?${params}`);
+      window.location.replace(`replii://billing/success?${params}`);
     };
 
     if (sessionId && sessionId !== "{CHECKOUT_SESSION_ID}") {

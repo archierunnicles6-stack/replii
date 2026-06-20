@@ -12,7 +12,7 @@ export function Hero() {
         </h1>
 
         <p className="mt-5 max-w-[560px] text-[16px] leading-[1.6] text-[#666666] md:text-[17px]">
-          Ghost coaches your reps in real time — surfacing the right words during live
+          Replii coaches your reps in real time — surfacing the right words during live
           calls and logging every session for your review.
         </p>
 

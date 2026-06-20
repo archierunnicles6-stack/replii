@@ -10,15 +10,15 @@ export type FaqItem = {
 const defaultFaqs: FaqItem[] = [
   {
     q: "Why real-time vs. a regular AI notetaker?",
-    a: "Most AI tools summarize calls after they end. Ghost coaches you during the call — when you actually need the words. It's the difference between a post-game recap and a coach in your ear.",
+    a: "Most AI tools summarize calls after they end. Replii coaches you during the call — when you actually need the words. It's the difference between a post-game recap and a coach in your ear.",
   },
   {
-    q: "Who is Ghost for?",
-    a: "Ghost is built for sales reps, account executives, and founders who run live calls and want sharper responses without sounding scripted.",
+    q: "Who is Replii for?",
+    a: "Replii is built for sales reps, account executives, and founders who run live calls and want sharper responses without sounding scripted.",
   },
   {
-    q: "Is Ghost free?",
-    a: "Ghost offers a free starter tier with limited AI responses. Pro unlocks unlimited coaching, custom playbooks, and priority support.",
+    q: "Is Replii free?",
+    a: "Replii offers a free starter tier with limited AI responses. Pro unlocks unlimited coaching, custom playbooks, and priority support.",
   },
   {
     q: "Is my call history saved?",
@@ -26,11 +26,11 @@ const defaultFaqs: FaqItem[] = [
   },
   {
     q: "What languages and apps are supported?",
-    a: "Ghost works on macOS with Zoom, Google Meet, Microsoft Teams, Webex, and any browser-based calling tool. Real-time transcription is available across 12+ languages.",
+    a: "Replii works on macOS with Zoom, Google Meet, Microsoft Teams, Webex, and any browser-based calling tool. Real-time transcription is available across 12+ languages.",
   },
   {
     q: "Can I talk to customer support?",
-    a: "Yes. Pro subscribers get priority support. Email us anytime at support@ghost.ai.",
+    a: "Yes. Pro subscribers get priority support. Email us anytime at support@replii.ai.",
   },
 ];
 

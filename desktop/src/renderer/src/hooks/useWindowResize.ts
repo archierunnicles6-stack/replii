@@ -24,8 +24,8 @@ export function useWindowResize(
       }
 
       lastSize.current = { width: roundedW, height: roundedH };
-      void window.ghost?.resize(roundedW, roundedH).then(() => {
-        window.ghost?.ready?.();
+      void window.replii?.resize(roundedW, roundedH).then(() => {
+        window.replii?.ready?.();
       });
     };
 

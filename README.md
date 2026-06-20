@@ -1,10 +1,10 @@
-# Ghost
+# Replii
 
 Live AI sales coach — Cluely-style desktop app + marketing site.
 
 ## What it does
 
-Ghost is a **full desktop application** for sales calls:
+Replii is a **full desktop application** for sales calls:
 
 - **Live overlay** — real-time coaching during calls, logged for manager review
 - **Dashboard** — Activity, upcoming pre-call briefs, meeting notes
@@ -42,7 +42,7 @@ Or: `npm run desktop:dev` from the repo root.
 | Activity | Past calls, deal scores, objections |
 | Upcoming | Pre-call briefs, participants, talking points |
 | Meeting detail | Summary, transcript, next steps, follow-up |
-| Customize Ghost | Sales modes, system prompt, file uploads |
+| Customize Replii | Sales modes, system prompt, file uploads |
 | Settings | Overlay display, languages, display, shortcuts |
 | Billing | Free, Pro ($20) |
 | Live overlay | Listen, Assist, Smart mode, quick actions |

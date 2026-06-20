@@ -10,7 +10,7 @@ import {
   OPENAI_MODELS,
   formatRecentTranscript,
 } from "@/lib/openai-config";
-import type { GhostSuggestion, TranscriptLine } from "@/types/ghost";
+import type { RepliiSuggestion, TranscriptLine } from "@/types/replii";
 
 function computeTalkRatio(transcript: TranscriptLine[]): number {
   const you = transcript.filter((t) => t.speaker === "You").length;
@@ -63,12 +63,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Empty model response" }, { status: 502 });
     }
 
-    const parsed = JSON.parse(raw) as Partial<GhostSuggestion>;
+    const parsed = JSON.parse(raw) as Partial<RepliiSuggestion>;
     if (!parsed.suggestion?.trim()) {
       return NextResponse.json({ error: "Invalid suggestion payload" }, { status: 502 });
     }
 
-    const result: GhostSuggestion = {
+    const result: RepliiSuggestion = {
       suggestion: parsed.suggestion.trim(),
       health: Math.max(0, Math.min(100, parsed.health ?? 50)),
       talkRatio: Math.max(0, Math.min(100, parsed.talkRatio ?? computeTalkRatio(transcript))),

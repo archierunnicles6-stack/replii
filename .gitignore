@@ -42,7 +42,7 @@ yarn-error.log*
 /supabase/.temp
 
 # desktop dev artifacts
-/desktop/.ghost-dev
+/desktop/.replii-dev
 /desktop/node_modules
 /desktop/release
 /public/downloads/*.dmg

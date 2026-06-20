@@ -69,7 +69,7 @@ function MeetingNotesMockup() {
               type="button"
               className="hidden rounded-full bg-[#4b8bf5] px-3.5 py-1.5 text-[12px] font-medium text-white sm:block"
             >
-              Start Ghost
+              Start Replii
             </button>
             <Avatar color="#4b8bf5" />
           </div>
@@ -154,7 +154,7 @@ function MeetingNotesMockup() {
           </button>
           <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
             <span className="truncate text-[12px] text-[#a1a1aa]">
-              Ask Ghost about this meeting...
+              Ask Replii about this meeting...
             </span>
             <ArrowUpIcon className="ml-auto h-4 w-4 shrink-0 text-[#a1a1aa]" />
           </div>

@@ -55,7 +55,7 @@ export function installAppIcon(appPath) {
 
   const plist = path.join(appPath, "Contents/Info.plist");
   const appName = path.basename(appPath);
-  const iconFile = appName === "Ghost.app" && appPath.includes(".ghost-dev") ? "electron" : "icon";
+  const iconFile = appName === "Replii.app" && appPath.includes(".replii-dev") ? "electron" : "icon";
 
   try {
     execSync(`/usr/libexec/PlistBuddy -c 'Set :CFBundleIconFile ${iconFile}' "${plist}"`, {

@@ -8,7 +8,7 @@ import { syncDesktopRenderer } from "./sync-desktop-renderer.mjs";
 ensureNodePath();
 
 const desktopRoot = path.join(repoRoot, "desktop");
-const installedApp = "/Applications/Ghost.app";
+const installedApp = "/Applications/Replii.app";
 const skipPackage = process.argv.includes("--skip-package");
 const skipOpen = process.argv.includes("--skip-open");
 
@@ -30,14 +30,14 @@ function runNpm(args, cwd, label) {
   run("npm", args, { cwd, label });
 }
 
-function quitGhost() {
+function quitReplii() {
   if (process.platform !== "darwin") return;
   spawnSync("osascript", [
     "-e",
-    'tell application "Ghost" to quit',
+    'tell application "Replii" to quit',
   ], { stdio: "ignore" });
-  spawnSync("pkill", ["-x", "Ghost"], { stdio: "ignore" });
-  spawnSync("pkill", ["-f", "Ghost.app/Contents/MacOS"], { stdio: "ignore" });
+  spawnSync("pkill", ["-x", "Replii"], { stdio: "ignore" });
+  spawnSync("pkill", ["-f", "Replii.app/Contents/MacOS"], { stdio: "ignore" });
 }
 
 function trySign(appPath) {
@@ -62,11 +62,11 @@ if (!skipPackage) {
 run("node", ["scripts/sync-downloads.mjs"], repoRoot, "Sync web download files");
 syncDesktopRenderer();
 
-const packagedApp = path.join(desktopRoot, "release", "mac-arm64", "Ghost.app");
+const packagedApp = path.join(desktopRoot, "release", "mac-arm64", "Replii.app");
 let appToOpen = packagedApp;
 
 if (process.platform === "darwin" && existsSync(packagedApp)) {
-  quitGhost();
+  quitReplii();
   console.log(`[update] Installing ${installedApp}…`);
   if (existsSync(installedApp)) {
     rmSync(installedApp, { recursive: true, force: true });
@@ -80,18 +80,18 @@ if (process.platform === "darwin" && existsSync(packagedApp)) {
     console.warn("[update] Could not install to /Applications — using packaged build instead");
   }
 } else if (process.platform === "darwin") {
-  console.warn("[update] Packaged Ghost.app not found — skipped /Applications install");
+  console.warn("[update] Packaged Replii.app not found — skipped /Applications install");
 }
 
 console.log("[update] Done.");
-console.log("  • Web dev downloads: public/downloads/Ghost.dmg");
+console.log("  • Web dev downloads: public/downloads/Replii.dmg");
 console.log("  • Static renderer:   index.html + assets/");
 console.log("  • GitHub release:    push tag v0.1.0 to publish installers");
 
 if (!skipOpen && process.platform === "darwin") {
   if (existsSync(appToOpen)) {
-    run("open", ["-a", appToOpen], repoRoot, "Open Ghost");
+    run("open", ["-a", appToOpen], repoRoot, "Open Replii");
   } else {
-    runNpm(["run", "open-app:dev"], desktopRoot, "Open dev Ghost app");
+    runNpm(["run", "open-app:dev"], desktopRoot, "Open dev Replii app");
   }
 }

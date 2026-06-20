@@ -80,13 +80,13 @@ export function usePillBackdrop(
 
     const sample = async () => {
       const el = ref.current;
-      if (!el || !window.ghost?.sampleBackdrop) return;
+      if (!el || !window.replii?.sampleBackdrop) return;
 
       const rect = el.getBoundingClientRect();
       if (rect.width < 10 || rect.height < 10) return;
 
       try {
-        const result = await window.ghost.sampleBackdrop({
+        const result = await window.replii.sampleBackdrop({
           x: Math.round(rect.left + rect.width * 0.35),
           y: Math.round(rect.top + rect.height / 2),
           width: Math.round(rect.width * 0.5),

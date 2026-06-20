@@ -1,11 +1,11 @@
 /** Must match desktop/src/main/index.ts OAUTH_LOOPBACK_PORT */
 export const OAUTH_LOOPBACK_PORT = 42817;
 
-/** Browser OAuth redirects here; Electron loopback server forwards to ghost://auth/callback. */
+/** Browser OAuth redirects here; Electron loopback server forwards to replii://auth/callback. */
 export const OAUTH_LOOPBACK_CALLBACK = `http://127.0.0.1:${OAUTH_LOOPBACK_PORT}/auth/callback`;
 
 const legalBase = (
-  import.meta.env.VITE_LEGAL_BASE_URL ?? "https://ghost.ai"
+  import.meta.env.VITE_LEGAL_BASE_URL ?? "https://replii.ai"
 ).replace(/\/$/, "");
 
 /** Redirect URL passed to Supabase signInWithOAuth from the desktop app. */

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import ghostIcon from "../../assets/ghost-icon.png";
+import repliiIcon from "../../assets/replii-icon.png";
 import {
   buildEmptyAdminMetrics,
   fetchAdminStripeMetrics,
@@ -44,7 +44,7 @@ function formatDateRange(start: string, end: string): string {
 }
 
 function openStripeDashboard(path: string) {
-  void window.ghost?.openExternal?.(`https://dashboard.stripe.com/${path}`);
+  void window.replii?.openExternal?.(`https://dashboard.stripe.com/${path}`);
 }
 
 function formatValueOrDash(
@@ -241,7 +241,7 @@ function MetricCard({
           </p>
         </div>
         <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-zinc-900">
-          <img src={ghostIcon} alt="Ghost" className="h-4 w-4 object-contain" />
+          <img src={repliiIcon} alt="Replii" className="h-4 w-4 object-contain" />
         </div>
       </div>
       <MiniLineChart data={data} isCurrency={isCurrency} />
@@ -274,7 +274,7 @@ function PaymentsBreakdownCard({
           </p>
         </div>
         <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-zinc-900">
-          <img src={ghostIcon} alt="Ghost" className="h-4 w-4 object-contain" />
+          <img src={repliiIcon} alt="Replii" className="h-4 w-4 object-contain" />
         </div>
       </div>
       <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-zinc-100">

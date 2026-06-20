@@ -16,13 +16,11 @@ export function PillButton({
   );
 }
 
-import ghostIcon from "../../assets/ghost-icon.png";
-import ghostLogo from "../../assets/ghost-logo.png";
-import ghostMark from "../../assets/ghost-mark.png";
-import ghostWordmark from "../../assets/ghost-wordmark.png";
-import ghostWordmarkLight from "../../assets/ghost-wordmark-light.png";
+import repliiIcon from "../../assets/replii-icon.png";
+import repliiLogo from "../../assets/replii-logo.png";
+import repliiMark from "../../assets/replii-mark.png";
 
-export function GhostLogo({
+export function RepliiLogo({
   className = "",
   variant = "icon",
   tone = "dark",
@@ -31,22 +29,30 @@ export function GhostLogo({
   variant?: "icon" | "mark" | "wordmark";
   tone?: "dark" | "light";
 }) {
+  if (variant === "wordmark") {
+    return (
+      <span
+        className={`inline-block shrink-0 font-semibold tracking-[-0.04em] ${
+          tone === "light" ? "text-white" : "text-zinc-900"
+        } ${className || "text-[28px] leading-none"}`}
+      >
+        Replii
+      </span>
+    );
+  }
+
   const src =
-    variant === "wordmark"
+    variant === "mark"
       ? tone === "light"
-        ? ghostWordmarkLight
-        : ghostWordmark
-      : variant === "mark"
-        ? tone === "light"
-          ? ghostMark
-          : ghostLogo
-        : ghostIcon;
+        ? repliiMark
+        : repliiLogo
+      : repliiIcon;
 
   return (
     <img
       src={src}
-      alt={variant === "wordmark" ? "Ghost" : ""}
-      aria-hidden={variant !== "wordmark"}
+      alt=""
+      aria-hidden
       draggable={false}
       className={`inline-block shrink-0 object-contain ${className || "h-8 w-8"}`}
     />
@@ -59,12 +65,12 @@ export function Button({
   className = "",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "replii" | "danger";
 }) {
   const styles = {
     primary: "bg-zinc-900 text-white hover:bg-zinc-800",
     secondary: "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50",
-    ghost: "text-zinc-600 hover:bg-zinc-100",
+    replii: "text-zinc-600 hover:bg-zinc-100",
     danger: "bg-red-600 text-white hover:bg-red-500",
   };
   return (
@@ -83,7 +89,7 @@ export function Input({
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-[14px] text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-ghost-400 focus:ring-2 focus:ring-ghost-100 ${className}`}
+      className={`h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-[14px] text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-replii-400 focus:ring-2 focus:ring-replii-100 ${className}`}
       {...props}
     />
   );
@@ -95,7 +101,7 @@ export function Textarea({
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
-      className={`w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[14px] text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-ghost-400 focus:ring-2 focus:ring-ghost-100 ${className}`}
+      className={`w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[14px] text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-replii-400 focus:ring-2 focus:ring-replii-100 ${className}`}
       {...props}
     />
   );
@@ -126,7 +132,7 @@ export function Switch({
   checked,
   disabled = false,
   size = "md",
-  checkedClassName = "bg-ghost-500",
+  checkedClassName = "bg-replii-500",
   uncheckedClassName = "bg-zinc-200",
   className = "",
   ...props

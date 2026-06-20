@@ -1,9 +1,9 @@
-import ghostMark from "../../assets/ghost-mark.png";
+import repliiMark from "../../assets/replii-mark.png";
 
-export function GhostMark() {
+export function RepliiMark() {
   return (
     <img
-      src={ghostMark}
+      src={repliiMark}
       alt=""
       aria-hidden
       draggable={false}

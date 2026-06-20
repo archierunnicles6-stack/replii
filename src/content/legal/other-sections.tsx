@@ -16,7 +16,7 @@ export const acceptableUseSections: LegalSection[] = [
         <LegalP>
           This Acceptable Use Policy (&ldquo;<LegalStrong>AUP</LegalStrong>
           &rdquo;) supplements the{" "}
-          <a href={LEGAL_ROUTES.terms} className="text-ghost-600 underline">
+          <a href={LEGAL_ROUTES.terms} className="text-replii-600 underline">
             Terms of Service
           </a>{" "}
           and applies to all use of {LEGAL.productName}. Violations may result
@@ -190,7 +190,7 @@ export const cookieSections: LegalSection[] = [
           (including transcripts, settings, and authentication tokens) using
           device storage mechanisms. This local storage is necessary to operate
           the application and is described further in our{" "}
-          <a href={LEGAL_ROUTES.privacy} className="text-ghost-600 underline">
+          <a href={LEGAL_ROUTES.privacy} className="text-replii-600 underline">
             Privacy Policy
           </a>
           .

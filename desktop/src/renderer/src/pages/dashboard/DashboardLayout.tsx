@@ -8,7 +8,7 @@ import { UpgradeModal } from "../../components/pricing/UpgradeModal";
 import { AI_DISCLAIMER_SHORT } from "../../lib/ai-disclaimer";
 import { useBillingSync } from "../../hooks/useBillingSync";
 import { useContentProtectionSync } from "../../hooks/useContentProtectionSync";
-import { useStartGhostSession } from "../../hooks/useStartGhostSession";
+import { useStartRepliiSession } from "../../hooks/useStartRepliiSession";
 import { rehydrateAppStoreFromStorage, syncPlanLimitsToMain, useAppStore } from "../../store/useAppStore";
 
 const SUB_PAGE_PATHS: string[] = ["/meetings"];
@@ -23,7 +23,7 @@ export function DashboardLayout() {
   const [upgradeContext, setUpgradeContext] = useState<string | undefined>();
   const { setSessionActive } = useAppStore();
   const { startSession, canStart, sessionActive, overlayTimeRemainingLabel, isPaid } =
-    useStartGhostSession();
+    useStartRepliiSession();
 
   const isSubPage = SUB_PAGE_PATHS.some((p) => location.pathname.startsWith(p));
   const isCalendarPage = CALENDAR_PATHS.some((p) => location.pathname.startsWith(p));
@@ -35,11 +35,11 @@ export function DashboardLayout() {
   useBillingSync();
 
   useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("dashboard");
+    void window.replii?.setDashboardLayout?.("dashboard");
     void rehydrateAppStoreFromStorage().then(() => {
       syncPlanLimitsToMain();
     });
-    void window.ghost?.getSettings?.().then((settings) => {
+    void window.replii?.getSettings?.().then((settings) => {
       if (settings.useCallAudio) {
         useAppStore.getState().setAudioCaptureMode("auto");
       }
@@ -47,7 +47,7 @@ export function DashboardLayout() {
   }, []);
 
   useEffect(() => {
-    return window.ghost?.onNavigate?.((path) => {
+    return window.replii?.onNavigate?.((path) => {
       void rehydrateAppStoreFromStorage().then(() => {
         navigate(path.startsWith("/") ? path : `/${path}`);
       });
@@ -55,17 +55,17 @@ export function DashboardLayout() {
   }, [navigate]);
 
   useEffect(() => {
-    return window.ghost?.onStoreChanged?.(() => {
+    return window.replii?.onStoreChanged?.(() => {
       void rehydrateAppStoreFromStorage();
     });
   }, []);
 
   useEffect(() => {
-    return window.ghost?.onSessionStarted?.(() => setSessionActive(true));
+    return window.replii?.onSessionStarted?.(() => setSessionActive(true));
   }, [setSessionActive]);
 
   useEffect(() => {
-    return window.ghost?.onSessionStopped?.(() => {
+    return window.replii?.onSessionStopped?.(() => {
       void rehydrateAppStoreFromStorage().then(() => {
         setSessionActive(false);
       });
@@ -73,7 +73,7 @@ export function DashboardLayout() {
   }, [setSessionActive]);
 
   useEffect(() => {
-    void window.ghost?.getSettings?.().then((s) => {
+    void window.replii?.getSettings?.().then((s) => {
       if (!s.sessionActive) setSessionActive(false);
     });
   }, [setSessionActive]);
@@ -101,6 +101,7 @@ export function DashboardLayout() {
         <>
           <DashboardHeader
             onStartSession={() => void startSession()}
+            onEndSession={() => void window.replii?.requestEndSession?.()}
             onRequestUpgrade={() => openUpgrade()}
             canStartSession={canStart}
             sessionActive={sessionActive}

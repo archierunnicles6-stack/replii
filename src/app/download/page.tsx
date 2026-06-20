@@ -11,7 +11,7 @@ const SCREENS = [
   "Dashboard — Activity (past call notes & deal scores)",
   "Upcoming — pre-call briefs with prospect intel",
   "Meeting detail — summary, transcript, next steps",
-  "Customize Ghost — sales modes & playbooks",
+  "Customize Replii — sales modes & playbooks",
   "Settings — overlay display, languages, shortcuts",
   "Billing — Free and Pro plans",
   "Live overlay — Listen, Assist, Smart mode",
@@ -23,7 +23,7 @@ export default function DownloadPage() {
       <Navbar />
       <main className="pt-14">
         <div className="mx-auto max-w-2xl px-6 py-24 md:py-32">
-          <p className="text-[13px] font-medium text-ghost-600">
+          <p className="text-[13px] font-medium text-replii-600">
             Desktop app · Sales calls
           </p>
           <Suspense fallback={null}>
@@ -47,7 +47,7 @@ export default function DownloadPage() {
 
           <Link
             href="/"
-            className="mt-10 inline-flex text-[14px] font-medium text-ghost-600 hover:text-ghost-700"
+            className="mt-10 inline-flex text-[14px] font-medium text-replii-600 hover:text-replii-700"
           >
             ← Back to home
           </Link>

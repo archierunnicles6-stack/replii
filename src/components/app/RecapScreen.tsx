@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { RecapResponse, TranscriptLine } from "@/types/ghost";
+import type { RecapResponse, TranscriptLine } from "@/types/replii";
 
 export function RecapScreen({
   recap,
@@ -18,12 +18,12 @@ export function RecapScreen({
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-6 py-16 text-white">
       <div className="absolute left-6 top-6">
         <Link href="/" className="text-sm text-zinc-500 hover:text-white">
-          ← Ghost home
+          ← Replii home
         </Link>
       </div>
 
       <div className="w-full max-w-lg">
-        <p className="text-[13px] font-medium text-ghost-400">Session complete</p>
+        <p className="text-[13px] font-medium text-replii-400">Session complete</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">Call recap</h1>
 
         {loading ? (
@@ -31,7 +31,7 @@ export function RecapScreen({
         ) : recap ? (
           <div className="mt-8 space-y-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-ghost-500/20 text-2xl font-semibold text-ghost-300">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-replii-500/20 text-2xl font-semibold text-replii-300">
                 {recap.score}
               </div>
               <div>
@@ -47,7 +47,7 @@ export function RecapScreen({
               <ul className="space-y-2">
                 {recap.bullets.map((b) => (
                   <li key={b} className="flex gap-2 text-[14px] leading-relaxed text-zinc-300">
-                    <span className="text-ghost-400">•</span>
+                    <span className="text-replii-400">•</span>
                     {b}
                   </li>
                 ))}
@@ -75,7 +75,7 @@ export function RecapScreen({
             <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto">
               {transcript.map((line) => (
                 <li key={line.id} className="text-[13px]">
-                  <span className={line.speaker === "Prospect" ? "text-ghost-300" : "text-zinc-500"}>
+                  <span className={line.speaker === "Prospect" ? "text-replii-300" : "text-zinc-500"}>
                     {line.speaker}:
                   </span>{" "}
                   <span className="text-zinc-300">{line.text}</span>

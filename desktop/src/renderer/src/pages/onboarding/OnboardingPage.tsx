@@ -54,18 +54,18 @@ const PERMISSIONS: PermissionItem[] = [
     key: "accessibility",
     icon: <BulbIcon />,
     step: 1,
-    title: "Enable Ghost shortcuts",
+    title: "Enable Replii shortcuts",
     description:
-      "Ghost needs accessibility access so it can appear on any call with one hotkey.",
+      "Replii needs accessibility access so it can appear on any call with one hotkey.",
   },
   {
     key: "microphone",
     icon: <MicIcon />,
     step: 2,
-    title: "Let Ghost hear your calls",
+    title: "Let Replii hear your calls",
     description:
-      "Your mic lets Ghost coach you in real time. Audio stays on your device.",
-    reassurance: "Choose Ghost in System Settings → Privacy → Microphone.",
+      "Your mic lets Replii coach you in real time. Audio stays on your device.",
+    reassurance: "Choose Replii in System Settings → Privacy → Microphone.",
   },
   {
     key: "screen",
@@ -73,7 +73,7 @@ const PERMISSIONS: PermissionItem[] = [
     step: null,
     title: "Hear Zoom / Meet / Teams audio",
     description:
-      "Optional — macOS uses Screen Recording for call audio only. Ghost never views your screen.",
+      "Optional — macOS uses Screen Recording for call audio only. Replii never views your screen.",
     reassurance: "Skip for now if you only use your mic — you can add this later.",
   },
 ];
@@ -95,7 +95,7 @@ export function OnboardingPage() {
   const prevGrantedRef = useRef(granted);
 
   const refreshStatus = useCallback(async () => {
-    const status = await window.ghost?.getPermissionStatus?.();
+    const status = await window.replii?.getPermissionStatus?.();
     if (!status) return;
     setGranted((prev) => {
       const next = {
@@ -124,7 +124,7 @@ export function OnboardingPage() {
   }, [completeOnboarding, completeShortcutTutorial, navigate]);
 
   useEffect(() => {
-    void window.ghost?.setDashboardLayout?.("onboarding");
+    void window.replii?.setDashboardLayout?.("onboarding");
   }, []);
 
   useEffect(() => {
@@ -149,9 +149,9 @@ export function OnboardingPage() {
 
   const openSettings = async (key: PermissionKey) => {
     setActiveKey(key);
-    await window.ghost?.openPermissionSettings?.(key);
+    await window.replii?.openPermissionSettings?.(key);
     if (key === "microphone" || (key === "screen" && !granted.microphone)) {
-      await window.ghost?.ensureMicrophone?.();
+      await window.replii?.ensureMicrophone?.();
     }
     void refreshStatus();
     const delays =
@@ -264,7 +264,7 @@ export function OnboardingPage() {
               </h1>
               <p className="mt-2 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500">
                 {requiredGranted
-                  ? "Start your first session now — Ghost will coach you live on your next call."
+                  ? "Start your first session now — Replii will coach you live on your next call."
                   : focusPerm.description}
               </p>
 

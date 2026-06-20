@@ -9,7 +9,7 @@ const buildDir = path.join(desktopRoot, "build");
 const iconPng = path.join(buildDir, "icon.png");
 
 if (existsSync(iconPng)) {
-  console.log("[ghost] Using existing build/icon.png");
+  console.log("[replii] Using existing build/icon.png");
   process.exit(0);
 }
 
@@ -24,7 +24,7 @@ writeFileSync(iconPng, tinyPng);
 
 try {
   execSync(`sips -z 1024 1024 "${iconPng}" --out "${iconPng}"`, { stdio: "ignore" });
-  console.log("[ghost] Created placeholder build/icon.png");
+  console.log("[replii] Created placeholder build/icon.png");
 } catch {
-  console.warn("[ghost] Could not scale icon — using 1×1 placeholder");
+  console.warn("[replii] Could not scale icon — using 1×1 placeholder");
 }

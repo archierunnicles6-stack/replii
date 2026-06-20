@@ -4,7 +4,7 @@ import { LEGAL, LEGAL_ROUTES } from "@/content/legal/config";
 import { termsSections } from "@/content/legal/terms-sections";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Ghost",
+  title: "Terms of Service — Replii",
   description: `Terms of Service for ${LEGAL.productName}, the live AI sales coach.`,
 };
 
