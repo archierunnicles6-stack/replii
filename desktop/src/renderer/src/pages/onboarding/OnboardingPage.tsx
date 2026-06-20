@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PermissionPreview } from "../../components/onboarding/PermissionPreview";
+import {
+  SplitScreenLeft,
+  SplitScreenLeftBody,
+} from "../../components/onboarding/SplitScreenLeft";
 import { SplitScreenShell } from "../../components/onboarding/SplitScreenShell";
 import { BackButton, Switch } from "../../components/ui";
 import { notifyAppStoreChanged, useAppStore } from "../../store/useAppStore";
@@ -25,6 +29,24 @@ function nextRequiredKey(
     if (!granted[key]) return key;
   }
   return null;
+}
+
+function isPermissionEnabled(
+  key: PermissionKey,
+  granted: Record<PermissionKey, boolean>,
+  pending: Partial<Record<PermissionKey, boolean>>,
+): boolean {
+  if (pending[key]) return true;
+  if (!granted[key]) return false;
+  // Don't show mic as on during step 1 — avoids confusing pre-granted mic state.
+  if (
+    key === "microphone" &&
+    !granted.accessibility &&
+    !pending.accessibility
+  ) {
+    return false;
+  }
+  return true;
 }
 
 const PERMISSIONS: PermissionItem[] = [
@@ -65,8 +87,10 @@ export function OnboardingPage() {
     microphone: false,
     screen: false,
   });
+  const [pending, setPending] = useState<Partial<Record<PermissionKey, boolean>>>(
+    {},
+  );
   const [activeKey, setActiveKey] = useState<PermissionKey>("accessibility");
-  const [pending, setPending] = useState<Partial<Record<PermissionKey, boolean>>>({});
   const finishingRef = useRef(false);
   const prevGrantedRef = useRef(granted);
 
@@ -100,11 +124,19 @@ export function OnboardingPage() {
   }, [completeOnboarding, completeShortcutTutorial, navigate]);
 
   useEffect(() => {
+    void window.ghost?.setDashboardLayout?.("onboarding");
+  }, []);
+
+  useEffect(() => {
     void refreshStatus();
     const id = setInterval(() => void refreshStatus(), 500);
-    const onFocus = () => void refreshStatus();
+    const onFocus = () => {
+      void refreshStatus();
+      setTimeout(() => void refreshStatus(), 300);
+      setTimeout(() => void refreshStatus(), 1000);
+    };
     const onVisible = () => {
-      if (document.visibilityState === "visible") void refreshStatus();
+      if (document.visibilityState === "visible") onFocus();
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisible);
@@ -118,20 +150,24 @@ export function OnboardingPage() {
   const openSettings = async (key: PermissionKey) => {
     setActiveKey(key);
     await window.ghost?.openPermissionSettings?.(key);
+    if (key === "microphone" || (key === "screen" && !granted.microphone)) {
+      await window.ghost?.ensureMicrophone?.();
+    }
     void refreshStatus();
-    for (const delay of [400, 1000, 2000, 4000]) {
+    const delays =
+      key === "accessibility"
+        ? [400, 1000, 2000, 4000, 8000, 12000]
+        : [400, 1000, 2000, 4000];
+    for (const delay of delays) {
       setTimeout(() => void refreshStatus(), delay);
     }
   };
 
   const handleToggle = async (key: PermissionKey) => {
-    if (granted[key]) return;
+    if (isPermissionEnabled(key, granted, pending)) return;
     setPending((prev) => ({ ...prev, [key]: true }));
     setActiveKey(key);
     await openSettings(key);
-    if (key === "screen" && !granted.microphone) {
-      await window.ghost?.ensureMicrophone?.();
-    }
   };
 
   useEffect(() => {
@@ -142,24 +178,34 @@ export function OnboardingPage() {
       let changed = false;
       const next = { ...pendingPrev };
       for (const perm of PERMISSIONS) {
-        if (granted[perm.key]) {
-          if (pendingPrev[perm.key]) {
-            next[perm.key] = false;
-            changed = true;
-          }
+        if (granted[perm.key] && pendingPrev[perm.key]) {
+          next[perm.key] = false;
+          changed = true;
         }
       }
       return changed ? next : pendingPrev;
     });
 
-    const newlyGranted = REQUIRED_KEYS.some((key) => granted[key] && !prev[key]);
-    if (!newlyGranted) return;
+    const accessibilityDone = isPermissionEnabled("accessibility", granted, pending);
+    const microphoneDone = isPermissionEnabled("microphone", granted, pending);
 
-    const next = nextRequiredKey(granted);
-    if (next) setActiveKey(next);
-  }, [granted]);
+    if (accessibilityDone && !microphoneDone) {
+      setActiveKey("microphone");
+    } else if (!accessibilityDone) {
+      setActiveKey("accessibility");
+    }
+
+    const newlyGranted = REQUIRED_KEYS.some((key) => granted[key] && !prev[key]);
+    if (newlyGranted) {
+      const next = nextRequiredKey(granted);
+      if (next) setActiveKey(next);
+    }
+  }, [granted, pending]);
 
   const requiredGranted = granted.accessibility && granted.microphone;
+  const bothEnabled = REQUIRED_KEYS.every((key) =>
+    isPermissionEnabled(key, granted, pending),
+  );
   const pendingRequiredKey = nextRequiredKey(granted);
   const focusKey = pendingRequiredKey ?? activeKey;
   const focusPerm = PERMISSIONS.find((p) => p.key === focusKey) ?? PERMISSIONS[0];
@@ -179,14 +225,33 @@ export function OnboardingPage() {
         ? "Open microphone settings"
         : "Open call audio settings";
 
+  const primaryLabel = requiredGranted
+    ? "Start my first session"
+    : bothEnabled
+      ? "Continue"
+      : settingsLabel;
+
+  const handlePrimary = () => {
+    if (requiredGranted) {
+      finish();
+      return;
+    }
+    if (bothEnabled) {
+      const missing = nextRequiredKey(granted);
+      if (missing) void openSettings(missing);
+      return;
+    }
+    void openSettings(focusKey);
+  };
+
   return (
-    <div className="relative h-screen max-h-screen w-full overflow-hidden">
+    <div className="relative h-screen max-h-screen w-full min-w-0 overflow-hidden">
       <BackButton to="/auth" />
       <SplitScreenShell
         rightVariant="grid"
         left={
-          <div className="flex min-h-full flex-col px-12 py-10">
-            <div className="flex flex-1 flex-col justify-center">
+          <SplitScreenLeft>
+            <SplitScreenLeftBody>
               {requiredStep ? (
                 <p className="text-[13px] font-medium text-[#3b82f6]">
                   Step {requiredStep} of {REQUIRED_KEYS.length}
@@ -194,10 +259,10 @@ export function OnboardingPage() {
               ) : (
                 <p className="text-[13px] font-medium text-zinc-400">Optional</p>
               )}
-              <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900">
+              <h1 className="mt-2 min-w-0 break-words text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900">
                 {requiredGranted ? "You're ready to start" : focusPerm.title}
               </h1>
-              <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">
+              <p className="mt-2 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500">
                 {requiredGranted
                   ? "Start your first session now — Ghost will coach you live on your next call."
                   : focusPerm.description}
@@ -217,44 +282,37 @@ export function OnboardingPage() {
                       icon={perm.icon}
                       title={perm.title}
                       description={perm.description}
-                      enabled={granted[perm.key] || !!pending[perm.key]}
+                      enabled={isPermissionEnabled(perm.key, granted, pending)}
                       active={focusKey === perm.key}
                       dimmed={!requiredGranted && perm.key !== focusKey}
-                      onSelect={() => setActiveKey(perm.key)}
+                      onSelect={() => {
+                        if (!requiredGranted && perm.key !== focusKey) return;
+                        setActiveKey(perm.key);
+                      }}
                       onToggle={() => void handleToggle(perm.key)}
                     />
                   ),
                 )}
               </div>
 
-              {requiredGranted ? (
-                <button
-                  type="button"
-                  onClick={finish}
-                  className="mt-8 flex h-[48px] w-full items-center justify-center rounded-xl bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] text-[15px] font-medium text-white shadow-[0_2px_12px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-90"
-                >
-                  Start my first session
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void openSettings(focusKey)}
-                  className="mt-8 flex h-[48px] w-full items-center justify-center rounded-xl bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] text-[15px] font-medium text-white shadow-[0_2px_12px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-90"
-                >
-                  {settingsLabel}
-                </button>
-              )}
-            </div>
+              <button
+                type="button"
+                onClick={handlePrimary}
+                className="mt-8 flex h-auto min-h-[48px] w-full min-w-0 items-center justify-center rounded-xl bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] px-4 py-3 text-center text-[15px] font-medium leading-snug text-white shadow-[0_2px_12px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-90"
+              >
+                {primaryLabel}
+              </button>
+            </SplitScreenLeftBody>
 
             <button
               type="button"
               onClick={finish}
-              className="mt-auto flex items-center gap-0.5 self-center py-2 text-[14px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
+              className="mt-auto flex min-w-0 items-center gap-0.5 self-center py-2 text-[14px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
             >
               {requiredGranted ? "Set up call audio later" : "Skip for now"}
               <span aria-hidden>›</span>
             </button>
-          </div>
+          </SplitScreenLeft>
         }
         right={<PermissionPreview />}
       />
@@ -281,25 +339,28 @@ function PermissionCard({
   onSelect: () => void;
   onToggle: () => void;
 }) {
+  const interactive = !dimmed;
+
   return (
     <div
       role="button"
-      tabIndex={0}
-      onClick={onSelect}
+      tabIndex={interactive ? 0 : -1}
+      onClick={interactive ? onSelect : undefined}
       onKeyDown={(e) => {
+        if (!interactive) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect();
         }
       }}
-      className={`flex w-full cursor-pointer items-center gap-3.5 rounded-2xl border px-4 py-3.5 text-left transition-all ${
+      className={`flex w-full min-w-0 items-center gap-3.5 rounded-2xl border px-4 py-3.5 text-left transition-all ${
         dimmed
           ? "border-zinc-100 bg-zinc-50/50 opacity-60"
           : enabled
             ? "border-[#3b82f6]/25 bg-[#3b82f6]/[0.04]"
             : active
-              ? "border-zinc-300 bg-zinc-50"
-              : "border-zinc-200/80 bg-transparent hover:border-zinc-300"
+              ? "cursor-pointer border-zinc-300 bg-zinc-50"
+              : "cursor-pointer border-zinc-200/80 bg-transparent hover:border-zinc-300"
       }`}
     >
       <div
@@ -309,14 +370,14 @@ function PermissionCard({
       </div>
       <div className="min-w-0 flex-1">
         <p
-          className={`text-[14px] font-medium leading-tight transition-colors ${
+          className={`min-w-0 break-words text-[14px] font-medium leading-tight transition-colors ${
             enabled || active ? "text-zinc-900" : "text-zinc-500"
           }`}
         >
           {title}
         </p>
         <p
-          className={`mt-1 text-[12px] leading-snug transition-colors ${
+          className={`mt-1 min-w-0 break-words text-[12px] leading-snug transition-colors ${
             active ? "text-zinc-500" : "text-zinc-400"
           }`}
         >
@@ -331,7 +392,7 @@ function PermissionCard({
         aria-label={`${enabled ? "Disable" : "Enable"} ${title}`}
         onClick={(e) => {
           e.stopPropagation();
-          onToggle();
+          if (!dimmed && !enabled) onToggle();
         }}
       />
     </div>

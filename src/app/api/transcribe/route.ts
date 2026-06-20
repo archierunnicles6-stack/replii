@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOpenAIClient } from "@/lib/openai";
+import { OPENAI_MODELS } from "@/lib/openai-config";
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
 
     const transcription = await openai.audio.transcriptions.create({
       file: upload,
-      model: "whisper-1",
+      model: OPENAI_MODELS.whisper,
       ...(language ? { language } : {}),
     });
 

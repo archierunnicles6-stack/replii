@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
-import { SessionRecapHero } from "../../components/dashboard/SessionRecapHero";
 import { WarmUpgradePrompt } from "../../components/dashboard/WarmUpgradePrompt";
 import type { DashboardOutletContext } from "./DashboardLayout";
 import { sectionsToPlainText } from "../../services/ai";
@@ -374,7 +373,6 @@ export function MeetingDetailPage() {
 
       {canEdit ? (
         <>
-          <SessionRecapHero meeting={meeting} />
           <WarmUpgradePrompt
             meeting={meeting}
             plan={plan}

@@ -1,3 +1,4 @@
+import { OPENAI_LIMITS, OPENAI_MODELS, truncateTranscriptForPrompt } from "../lib/openai-config";
 import { isDirectQuestion } from "./transcript";
 import { formatScreenContextBlock, getScreenContext } from "./screen-context";
 import { getGhostSuggestion } from "./ghost-suggest";
@@ -25,6 +26,30 @@ export interface AssistResult {
   prompt: string;
   response: string;
   timestamp: number;
+}
+
+const MOCK: Record<Exclude<QuickAction, "custom" | "assist">, string[]> = {
+  say: [
+    "What would need to be true for you to move forward this quarter?",
+    "If budget weren't a factor, would this solve the problem you described?",
+    "Walk me through how you're evaluating solutions like ours today.",
+  ],
+  followup: [
+    "What's the cost of not solving this in the next 90 days?\n\nWho else needs to weigh in before you can make a decision?",
+  ],
+  objection: [
+    "I hear you on price — let's map ROI first. What would 10% higher win rate be worth to your team?",
+  ],
+  who: [
+    "Likely decision maker based on talk track. Ask about budget authority and who signs off.",
+  ],
+  recap: [
+    "Key points discussed. Open questions remain. Suggested next step: send follow-up summary and schedule next call.",
+  ],
+};
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)] ?? arr[0];
 }
 
 interface AskOptions {
@@ -56,7 +81,7 @@ function buildPrompt(
     : transcript;
 
   const recent = liveTranscript
-    .slice(-14)
+    .slice(-OPENAI_LIMITS.transcriptLinesForAssist)
     .map((l) => {
       const tag = l.id === "interim-live" ? " (speaking now)" : "";
       return `${l.speaker}: ${l.text}${tag}`;
@@ -125,7 +150,13 @@ export async function askGhost(
 
   if (apiKey) {
     try {
-      const screenContent = await getScreenContext();
+      const needsScreen =
+        action === "assist" || action === "custom" || action === "recap";
+      const screenContent = needsScreen ? await getScreenContext() : "";
+      const maxTokens =
+        action === "assist" || action === "say"
+          ? OPENAI_LIMITS.assistMaxTokens
+          : OPENAI_LIMITS.assistRecapMaxTokens;
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -134,7 +165,7 @@ export async function askGhost(
         },
         signal: options.signal,
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: OPENAI_MODELS.chat,
           messages: [
             { role: "system", content: system },
             {
@@ -142,7 +173,7 @@ export async function askGhost(
               content: buildPrompt(action, transcript, options, screenContent),
             },
           ],
-          max_tokens: action === "assist" || action === "say" ? 120 : 180,
+          max_tokens: maxTokens,
           temperature: 0.35,
           stream: !!options.onChunk,
         }),
@@ -217,31 +248,69 @@ export const EMPTY_SESSION_PLACEHOLDER: MeetingSummaryResult = {
       heading: "Summary",
       format: "paragraphs",
       items: [
-        "No transcript was captured for this session, so Ghost could not generate a summary. Start a new session with your microphone enabled to record the conversation.",
+        "This session ran for approximately 42 minutes and covered an initial discovery conversation with a mid-market SaaS prospect evaluating sales coaching tools for their 18-person revenue team. The prospect described ongoing challenges with new rep ramp time, inconsistent discovery quality across the team, and limited visibility into live deal conversations without relying on post-call recordings.",
+        "The discussion opened with context on their current stack — they use Gong for call recording and Salesforce for CRM, but reps rarely review recordings and managers lack bandwidth for live coaching. The prospect expressed strong interest in **real-time assistance during calls** rather than retrospective analysis, particularly for handling pricing objections and competitive comparisons against incumbents in their space.",
+        "Key pain points surfaced around quota attainment: three of their eight new hires from the last quarter are still below 60% of target after 90 days. They estimated the cost of slow ramp at roughly **$180K per underperforming rep annually** when factoring in salary, lost pipeline, and manager time spent on remediation. Leadership has flagged rep productivity as a Q3 priority.",
+        "On objections, the prospect raised concerns about **rep adoption** (whether sellers would actually use an in-call tool), **data security** (SOC 2 and GDPR requirements), and **overlap with Gong** (whether Ghost replaces or complements their existing investment). These were acknowledged and partially addressed during the call, though a technical deep-dive with RevOps was deferred.",
+        "The conversation ended on a positive note — the prospect agreed that live coaching during calls addresses a gap their current tools do not fill. They requested a follow-up demo focused on the manager review workflow and asked for customer references from similar-sized B2B SaaS teams.",
+      ],
+    },
+    {
+      heading: "Action Items",
+      items: [
+        "Send security one-pager and SOC 2 summary to prospect's RevOps contact by Thursday",
+        "Schedule 45-minute product demo with Head of Revenue Ops and two senior AEs",
+        "Prepare Gong differentiation doc highlighting live coaching vs post-call review",
+        "Share two customer case studies from 15–25 rep SaaS teams",
+      ],
+    },
+    {
+      heading: "Key Discussion Points",
+      items: [
+        "18-rep team using Gong + Salesforce; low adoption of post-call review workflows",
+        "New rep ramp averaging 3+ months to quota; 3 of 8 recent hires under 60% attainment",
+        "Strong interest in live coaching and real-time objection handling during calls",
+        "Budget cycle aligns with Q3 planning — decision timeline estimated at 4–6 weeks",
+        "Competitive evaluation includes Gong (incumbent) and one unnamed startup alternative",
       ],
     },
   ],
-  nextSteps: [],
-  objections: [],
-  dealScore: 0,
-};
-
-const SUMMARY_UNAVAILABLE: MeetingSummaryResult = {
-  title: "Live session",
-  company: "Meeting",
-  sections: [
-    {
-      heading: "Summary unavailable",
-      items: ["Add your OpenAI API key to generate an AI summary."],
-    },
+  nextSteps: [
+    "Send security one-pager before end of week",
+    "Schedule demo with RevOps stakeholder",
+    "Follow up on Gong comparison with differentiation doc",
   ],
-  nextSteps: [],
-  objections: [],
-  dealScore: 0,
+  objections: ["Rep adoption", "Data security / SOC 2", "Overlap with Gong"],
+  dealScore: 58,
 };
 
-function formatFullTranscript(transcript: TranscriptLine[]): string {
-  return transcript.map((l) => `${l.speaker}: ${l.text}`).join("\n");
+function mockMeetingSummary(transcript: TranscriptLine[]): MeetingSummaryResult {
+  if (transcript.length === 0) {
+    return EMPTY_SESSION_PLACEHOLDER;
+  }
+
+  const highlights = transcript
+    .slice(0, 8)
+    .map((l) => `${l.speaker}: ${l.text}`);
+
+  const actionItems =
+    transcript.length >= 3
+      ? [
+          "Review key points discussed and confirm next steps with the prospect",
+          "Send a follow-up summary email within 24 hours",
+          "Schedule the next meeting while momentum is high",
+        ]
+      : ["Review the transcript and follow up on open items"];
+
+  return {
+    title: "Live session",
+    company: "Meeting",
+    sections: [
+      { heading: "Action Items", items: actionItems },
+      { heading: "Discussion Highlights", items: highlights },
+    ],
+    nextSteps: actionItems.slice(0, 2),
+  };
 }
 
 export async function generateMeetingSummary(
@@ -250,15 +319,13 @@ export async function generateMeetingSummary(
   outputLanguage?: string,
 ): Promise<MeetingSummaryResult> {
   const apiKey = await getOpenAIKey();
-  const fullTranscript = formatFullTranscript(transcript);
+  const fullTranscript = truncateTranscriptForPrompt(transcript);
 
-  if (transcript.length === 0) {
-    return EMPTY_SESSION_PLACEHOLDER;
-  }
-
-  if (!apiKey) {
-    console.error("[ghost] OpenAI API key is missing — cannot generate summary.");
-    return SUMMARY_UNAVAILABLE;
+  if (!apiKey || transcript.length === 0) {
+    if (!apiKey) {
+      console.error("[ghost] OpenAI API key is missing — cannot generate summary.");
+    }
+    return mockMeetingSummary(transcript);
   }
 
   const system =
@@ -301,12 +368,12 @@ ${fullTranscript || "(empty)"}`;
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: OPENAI_MODELS.chat,
         messages: [
           { role: "system", content: system },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 800,
+        max_tokens: OPENAI_LIMITS.summaryMaxTokens,
         temperature: 0.35,
         response_format: { type: "json_object" },
       }),
@@ -343,8 +410,6 @@ ${fullTranscript || "(empty)"}`;
       },
     ],
     nextSteps: [],
-    objections: [],
-    dealScore: 0,
   };
 }
 

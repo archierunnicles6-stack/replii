@@ -1,155 +1,117 @@
-import { useEffect, useState } from "react";
 import {
-  COMPANY_FIELD_LIMITS,
-  type CompanyInfo,
-} from "../../lib/company-info";
+  KNOWLEDGE_ACCEPT,
+  KNOWLEDGE_FORMATS_LABEL,
+  MAX_KNOWLEDGE_DOCS,
+  MAX_KNOWLEDGE_DOC_CHARS,
+} from "../../lib/knowledge-documents";
+import { formatKnowledgeFileSize } from "../../lib/parse-knowledge-doc";
+import { useKnowledgeFileUpload } from "../../hooks/useKnowledgeFileUpload";
 import { useAppStore } from "../../store/useAppStore";
-import { Input, Textarea } from "../ui";
-
-function FieldLabel({
-  label,
-  hint,
-  count,
-  max,
-}: {
-  label: string;
-  hint?: string;
-  count: number;
-  max: number;
-}) {
-  return (
-    <div className="mb-1.5 flex items-baseline justify-between gap-2">
-      <div>
-        <label className="text-[13px] font-medium text-zinc-900">{label}</label>
-        {hint && (
-          <p className="mt-0.5 text-[11px] text-zinc-500">{hint}</p>
-        )}
-      </div>
-      <span className="shrink-0 text-[11px] text-zinc-400">
-        {count}/{max}
-      </span>
-    </div>
-  );
-}
 
 export function CompanyPanel() {
-  const companyInfo = useAppStore((s) => s.companyInfo);
-  const updateCompanyInfo = useAppStore((s) => s.updateCompanyInfo);
-  const [draft, setDraft] = useState<CompanyInfo>(companyInfo);
-  const [saved, setSaved] = useState(false);
+  const removeKnowledgeDocument = useAppStore((s) => s.removeKnowledgeDocument);
+  const knowledgeContext = useAppStore((s) => s.knowledgeContext);
+  const {
+    knowledgeFiles,
+    uploadError,
+    uploading,
+    isDragging,
+    canUpload,
+    fileInputRef,
+    openFilePicker,
+    handleFileSelected,
+    dropzoneProps,
+  } = useKnowledgeFileUpload();
 
-  useEffect(() => {
-    setDraft(companyInfo);
-  }, [companyInfo]);
-
-  const isDirty =
-    draft.companyName !== companyInfo.companyName ||
-    draft.productDescription !== companyInfo.productDescription ||
-    draft.commonObjections !== companyInfo.commonObjections ||
-    draft.keyFacts !== companyInfo.keyFacts;
-
-  const handleSave = () => {
-    updateCompanyInfo(draft);
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 2000);
-  };
-
-  const updateField = (field: keyof CompanyInfo, value: string) => {
-    setDraft((prev) => ({
-      ...prev,
-      [field]: value.slice(0, COMPANY_FIELD_LIMITS[field]),
-    }));
-  };
+  const slots = Array.from({ length: MAX_KNOWLEDGE_DOCS }, (_, index) =>
+    knowledgeFiles[index] ?? null,
+  );
 
   return (
     <div>
-      <div className="mb-2 border-b border-zinc-100 pb-5">
+      <div className="mb-6 border-b border-zinc-100 pb-5">
         <h2 className="text-[15px] font-semibold text-zinc-900">Personalise</h2>
         <p className="mt-1 text-[12px] text-zinc-500">
-          Tell Ghost about your company so it can answer prospect questions and
-          tailor suggestions to you. Stored on your device only.
+          Upload playbooks or battlecards. Ghost reads each file once, stores it
+          locally, and uses it throughout your calls.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <FieldLabel
-            label="Company name"
-            count={draft.companyName.length}
-            max={COMPANY_FIELD_LIMITS.companyName}
-          />
-          <Input
-            value={draft.companyName}
-            onChange={(e) => updateField("companyName", e.target.value)}
-            placeholder="Acme Inc."
-          />
-        </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={KNOWLEDGE_ACCEPT}
+        className="hidden"
+        onChange={(e) => void handleFileSelected(e)}
+      />
 
-        <div>
-          <FieldLabel
-            label="What you sell"
-            hint="Product, service, and who it's for"
-            count={draft.productDescription.length}
-            max={COMPANY_FIELD_LIMITS.productDescription}
-          />
-          <Textarea
-            value={draft.productDescription}
-            onChange={(e) => updateField("productDescription", e.target.value)}
-            placeholder="AI sales co-pilot for B2B SaaS teams. Helps reps handle objections live during calls."
-            rows={3}
-            className="resize-none"
-          />
-        </div>
-
-        <div>
-          <FieldLabel
-            label="Common objections"
-            hint="Comma-separated — Ghost will know how to handle these"
-            count={draft.commonObjections.length}
-            max={COMPANY_FIELD_LIMITS.commonObjections}
-          />
-          <Textarea
-            value={draft.commonObjections}
-            onChange={(e) => updateField("commonObjections", e.target.value)}
-            placeholder="Too expensive, already using a competitor, need team approval, no budget this quarter"
-            rows={2}
-            className="resize-none"
-          />
-        </div>
-
-        <div>
-          <FieldLabel
-            label="Extra context"
-            hint="Pricing, competitors, target customer — keep it brief"
-            count={draft.keyFacts.length}
-            max={COMPANY_FIELD_LIMITS.keyFacts}
-          />
-          <Textarea
-            value={draft.keyFacts}
-            onChange={(e) => updateField("keyFacts", e.target.value)}
-            placeholder="Starts at $49/mo. Main competitor is Gong. Best for teams of 5–50 reps."
-            rows={3}
-            className="resize-none"
-          />
-        </div>
-
-        <div className="flex items-center gap-3 pt-1">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!isDirty}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Save
-          </button>
-          {saved && (
-            <span className="text-[12px] text-emerald-600">Saved</span>
-          )}
-          {isDirty && !saved && (
-            <span className="text-[12px] text-zinc-400">Unsaved changes</span>
-          )}
-        </div>
+      <div className="space-y-2" {...dropzoneProps}>
+        {slots.map((doc, index) =>
+          doc ? (
+            <div
+              key={doc.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-medium text-zinc-900">
+                  {doc.name}
+                </p>
+                <p className="mt-0.5 text-[11px] text-zinc-500">
+                  {doc.text.length.toLocaleString()} chars ·{" "}
+                  {formatKnowledgeFileSize(doc.text.length)} · Indexed
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeKnowledgeDocument(doc.id)}
+                className="shrink-0 text-[12px] font-medium text-zinc-500 transition-colors hover:text-red-600"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <button
+              key={`slot-${index}`}
+              type="button"
+              onClick={openFilePicker}
+              disabled={!canUpload}
+              className={`flex w-full flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                isDragging && canUpload
+                  ? "border-ghost-400 bg-ghost-50 text-ghost-700 ring-2 ring-ghost-200"
+                  : "border-zinc-300 bg-zinc-50/80 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-100"
+              }`}
+            >
+              <span>
+                {uploading
+                  ? "Reading file…"
+                  : isDragging && canUpload
+                    ? "Drop file here"
+                    : "Upload file"}
+              </span>
+              {!uploading && canUpload && (
+                <span className="mt-1 text-[11px] font-normal text-zinc-400">
+                  or drag and drop
+                </span>
+              )}
+            </button>
+          ),
+        )}
       </div>
+
+      <p className="mt-3 text-[11px] text-zinc-400">
+        Up to {MAX_KNOWLEDGE_DOCS} files · {KNOWLEDGE_FORMATS_LABEL} ·{" "}
+        {MAX_KNOWLEDGE_DOC_CHARS.toLocaleString()} characters each
+      </p>
+
+      {knowledgeContext.trim() && (
+        <p className="mt-2 text-[11px] font-medium text-emerald-600">
+          Knowledge indexed — Ghost will reference your docs in live calls.
+        </p>
+      )}
+
+      {uploadError && (
+        <p className="mt-2 text-[11px] text-red-600">{uploadError}</p>
+      )}
     </div>
   );
 }

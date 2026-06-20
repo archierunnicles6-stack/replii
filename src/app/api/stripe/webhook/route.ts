@@ -3,6 +3,11 @@ import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { subscriptionIdFromInvoice } from "@/lib/stripe-invoice";
 import { planFromStripePriceId } from "@/lib/stripe-plans";
+import {
+  recordCheckoutSessionPayment,
+  recordInvoicePayment,
+  recordPaymentEvent,
+} from "@/lib/payment-events";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -83,6 +88,7 @@ export async function POST(request: Request) {
         const userId =
           userIdFromMeta(session.metadata) ?? session.client_reference_id ?? null;
         const plan = session.metadata?.plan ?? "pro";
+        await recordCheckoutSessionPayment(session, event.type, event.id, stripe);
         if (userId) {
           await setUserPlan(
             userId,
@@ -106,7 +112,27 @@ export async function POST(request: Request) {
         const subscriptionId = subscriptionIdFromInvoice(invoice);
         if (!subscriptionId) break;
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        const userId = userIdFromMeta(sub.metadata);
+        const planMeta = sub.metadata?.plan ?? "pro";
+        await recordInvoicePayment(invoice, event.type, event.id, userId, planMeta);
         await syncSubscriptionPlan(stripe, sub);
+        break;
+      }
+      case "charge.succeeded": {
+        const charge = event.data.object as Stripe.Charge;
+        const amountCents = Math.max(charge.amount - (charge.amount_refunded ?? 0), 0);
+        if (amountCents <= 0) break;
+        await recordPaymentEvent({
+          idempotencyKey: `charge:${charge.id}`,
+          userId: charge.metadata?.userId ?? null,
+          plan: charge.metadata?.plan ?? null,
+          amountCents,
+          currency: charge.currency ?? "usd",
+          paidAt: new Date(charge.created * 1000),
+          source: event.type,
+          stripeEventId: event.id,
+          stripeChargeId: charge.id,
+        });
         break;
       }
       case "invoice.payment_failed": {

@@ -13,6 +13,7 @@ import { rehydrateAppStoreFromStorage, syncPlanLimitsToMain, useAppStore } from 
 
 const SUB_PAGE_PATHS: string[] = ["/meetings"];
 const CALENDAR_PATHS: string[] = ["/upcoming", "/calendar"];
+const ADMIN_PATHS: string[] = ["/admin"];
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -26,7 +27,8 @@ export function DashboardLayout() {
 
   const isSubPage = SUB_PAGE_PATHS.some((p) => location.pathname.startsWith(p));
   const isCalendarPage = CALENDAR_PATHS.some((p) => location.pathname.startsWith(p));
-  const showMainHeader = !isSubPage;
+  const isAdminPage = ADMIN_PATHS.some((p) => location.pathname.startsWith(p));
+  const showMainHeader = !isSubPage && !isAdminPage;
   const showCalendarPrompt = !isCalendarPage;
 
   useContentProtectionSync();
@@ -118,13 +120,21 @@ export function DashboardLayout() {
 
       <main className="no-drag min-h-0 flex-1 overflow-y-auto">
         <div
-          className={`mx-auto px-8 ${isSubPage ? "max-w-3xl py-8" : "max-w-5xl pt-6 pb-12"}`}
+          className={`mx-auto px-8 ${
+            isSubPage
+              ? "max-w-3xl py-8"
+              : isAdminPage
+                ? "max-w-none py-0"
+                : "max-w-5xl pt-6 pb-12"
+          }`}
         >
           <Outlet context={{ searchQuery, onRequestUpgrade: openUpgrade }} />
         </div>
-        <p className="mx-auto max-w-5xl px-8 pb-6 text-center text-[11px] leading-relaxed text-zinc-400">
-          {AI_DISCLAIMER_SHORT}
-        </p>
+        {!isAdminPage ? (
+          <p className="mx-auto max-w-5xl px-8 pb-6 text-center text-[11px] leading-relaxed text-zinc-400">
+            {AI_DISCLAIMER_SHORT}
+          </p>
+        ) : null}
       </main>
     </div>
   );

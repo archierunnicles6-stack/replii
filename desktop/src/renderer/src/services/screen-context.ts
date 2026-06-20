@@ -1,7 +1,8 @@
 import { getOpenAIKey } from "./whisper";
+import { OPENAI_LIMITS, OPENAI_MODELS } from "../lib/openai-config";
 
-const REFRESH_MS = 30_000;
-const OCR_MAX_CHARS = 2000;
+const REFRESH_MS = OPENAI_LIMITS.screenContextCacheMs;
+const OCR_MAX_CHARS = OPENAI_LIMITS.screenOcrMaxChars;
 
 let cachedText = "";
 let cachedAt = 0;
@@ -19,8 +20,8 @@ async function ocrScreenshot(base64Jpeg: string): Promise<string> {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        max_tokens: 600,
+        model: OPENAI_MODELS.vision,
+        max_tokens: OPENAI_LIMITS.screenOcrMaxTokens,
         temperature: 0,
         messages: [
           {

@@ -14,6 +14,7 @@ import { UpgradeModal } from "../pricing/UpgradeModal";
 import { Switch } from "../ui";
 import { UserAvatar } from "../ui/UserAvatar";
 import { OVERLAY_KEYBINDS, shortcutModLabel } from "../../lib/keybinds";
+import { isAdminUser } from "../../lib/admin";
 
 export type SettingsSection =
   | "general"
@@ -133,7 +134,13 @@ function NavIcon({ name }: { name: string }) {
     case "quit":
       return (
         <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      );
+    case "admin":
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       );
     default:
@@ -527,6 +534,8 @@ export function SettingsModal({
 }) {
   const navigate = useNavigate();
   const logout = useAppStore((s) => s.logout);
+  const userEmail = useAppStore((s) => s.user?.email);
+  const isAdmin = isAdminUser(userEmail);
   const [section, setSection] = useState<SettingsSection>(initialSection);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
@@ -545,6 +554,11 @@ export function SettingsModal({
 
   const handleQuit = () => {
     void window.ghost?.quit();
+  };
+
+  const handleOpenAdmin = () => {
+    onClose();
+    navigate("/admin");
   };
 
   return (
@@ -616,6 +630,16 @@ export function SettingsModal({
               <NavIcon name="quit" />
               Quit Ghost
             </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={handleOpenAdmin}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+              >
+                <NavIcon name="admin" />
+                Admin
+              </button>
+            ) : null}
           </div>
         </aside>
 

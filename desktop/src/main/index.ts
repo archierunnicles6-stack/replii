@@ -12,6 +12,7 @@ import {
 } from "electron";
 import path from "node:path";
 import fs from "node:fs";
+import http from "node:http";
 import { spawnSync } from "node:child_process";
 
 function parseEnvFile(contents: string): Record<string, string> {
@@ -107,6 +108,50 @@ if (isDev) {
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();
+}
+
+/** Desktop OAuth lands here so the browser never needs to open ghost:// directly. */
+const OAUTH_LOOPBACK_PORT = 42817;
+const OAUTH_LOOPBACK_PATH = "/auth/callback";
+
+function startOAuthLoopbackServer(): void {
+  const server = http.createServer((req, res) => {
+    const url = req.url ?? "";
+    if (!url.startsWith(OAUTH_LOOPBACK_PATH)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+
+    const suffix = url.slice(OAUTH_LOOPBACK_PATH.length);
+    handleDeepLink(`ghost://auth/callback${suffix}`);
+
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Signed in — Ghost</title></head>
+<body style="font-family:system-ui,sans-serif;text-align:center;padding:48px 24px;color:#18181b">
+  <h1 style="font-size:24px;font-weight:600">Signed in</h1>
+  <p style="margin-top:12px;color:#52525b">Return to Ghost — you can close this tab.</p>
+</body>
+</html>`);
+  });
+
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      console.warn(
+        `[ghost] OAuth loopback :${OAUTH_LOOPBACK_PORT} in use — restart Ghost if Google sign-in fails`,
+      );
+      return;
+    }
+    console.error("[ghost] OAuth loopback server error:", err);
+  });
+
+  server.listen(OAUTH_LOOPBACK_PORT, "127.0.0.1", () => {
+    console.log(
+      `[ghost] OAuth callback http://127.0.0.1:${OAUTH_LOOPBACK_PORT}${OAUTH_LOOPBACK_PATH}`,
+    );
+  });
 }
 
 // Register custom protocol for OAuth callbacks (ghost://auth/callback)
@@ -767,10 +812,10 @@ function setupMediaPermissions(): void {
 app.whenReady().then(async () => {
   setDockIcon();
   setupMediaPermissions();
+  startOAuthLoopbackServer();
   const startupUrl = process.argv.find((arg) => arg.startsWith("ghost://"));
   if (startupUrl) handleDeepLink(startupUrl);
 
-  await requestMicAccess();
   createDashboardWindow();
   createMicHelperWindow();
   registerShortcuts();

@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import { recapSystemPrompt } from "@/lib/prompts";
 import { getOpenAIClient } from "@/lib/openai";
+import {
+  OPENAI_LIMITS,
+  OPENAI_MODELS,
+  truncateTranscriptForPrompt,
+} from "@/lib/openai-config";
 import type { TranscriptLine } from "@/types/ghost";
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { transcript?: TranscriptLine[] };
     const transcript = body.transcript ?? [];
-    const formatted = transcript.map((t) => `${t.speaker}: ${t.text}`).join("\n");
+    const formatted = truncateTranscriptForPrompt(transcript);
 
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 400,
+      model: OPENAI_MODELS.chat,
+      max_tokens: OPENAI_LIMITS.recapMaxTokens,
       temperature: 0.4,
       response_format: { type: "json_object" },
       messages: [

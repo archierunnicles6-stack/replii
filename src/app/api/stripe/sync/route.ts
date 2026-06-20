@@ -5,6 +5,7 @@ import {
   persistBillingSync,
   syncUserBilling,
 } from "@/lib/stripe-sync";
+import { recordSubscriptionInvoicePayments } from "@/lib/payment-events";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
@@ -44,6 +45,14 @@ export async function POST(request: Request) {
 
     try {
       const { persisted } = await persistBillingSync(userId, synced);
+      if (synced.subscriptionId) {
+        await recordSubscriptionInvoicePayments(
+          stripe,
+          synced.subscriptionId,
+          userId,
+          synced.plan,
+        );
+      }
       if (!persisted) {
         return NextResponse.json({ plan: synced.plan, synced: false, persisted: false });
       }

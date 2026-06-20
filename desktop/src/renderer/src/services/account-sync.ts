@@ -1,4 +1,6 @@
 import { getSupabase, isSupabaseConfigured } from "../lib/supabase";
+import { compileKnowledgeContext, DEFAULT_COMPANY_INFO } from "../lib/company-info";
+import { normalizeKnowledgeDocuments } from "../lib/knowledge-documents";
 import { extractAccountProfile } from "../store/accountProfile";
 import type { AccountProfile } from "../store/accountProfile";
 import { resolveFreeOverlaySecondsUsed } from "../store/types";
@@ -153,7 +155,18 @@ function mergeAppState(
     companyInfo: preferRemote && remote.companyInfo
       ? { ...local.companyInfo, ...remote.companyInfo }
       : local.companyInfo,
-    knowledgeFiles: pick(local.knowledgeFiles, remote.knowledgeFiles),
+    knowledgeFiles: normalizeKnowledgeDocuments(
+      pick(local.knowledgeFiles, remote.knowledgeFiles),
+    ),
+    knowledgeContext: compileKnowledgeContext(
+      pick(local.customSystemPrompt, remote.customSystemPrompt),
+      preferRemote && remote.companyInfo
+        ? { ...DEFAULT_COMPANY_INFO, ...local.companyInfo, ...remote.companyInfo }
+        : local.companyInfo,
+      normalizeKnowledgeDocuments(
+        pick(local.knowledgeFiles, remote.knowledgeFiles),
+      ),
+    ),
     settings: preferRemote && remote.settings
       ? { ...local.settings, ...remote.settings }
       : local.settings,

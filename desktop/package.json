@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",
+    "pdfjs-dist": "^4.10.38",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",
@@ -49,7 +50,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "artifactName": "Ghost-Setup.${ext}"
@@ -82,10 +85,28 @@
     "dmg": {
       "title": "Ghost",
       "contents": [
-        { "x": 130, "y": 220 },
-        { "x": 410, "y": 220, "type": "link", "path": "/Applications" },
-        { "x": 130, "y": 360, "type": "file", "path": "build/Install Ghost.command" },
-        { "x": 410, "y": 360, "type": "file", "path": "build/Open Ghost.command" }
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 360,
+          "type": "file",
+          "path": "build/Install Ghost.command"
+        },
+        {
+          "x": 410,
+          "y": 360,
+          "type": "file",
+          "path": "build/Open Ghost.command"
+        }
       ]
     },
     "directories": {
@@ -95,7 +116,9 @@
       {
         "from": ".env",
         "to": ".env",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
       {
         "from": "build/icon.png",

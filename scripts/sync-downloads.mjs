@@ -1,6 +1,9 @@
 import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ensureNodePath } from "./ensure-node-path.mjs";
+
+ensureNodePath();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");

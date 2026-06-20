@@ -15,6 +15,7 @@ import { hasLocalAccountProfile } from "../../services/account-sync";
 import { useAppStore } from "../../store/useAppStore";
 import { BackButton, PillButton } from "../../components/ui";
 import { TermsAgreement } from "../../components/auth/TermsAgreement";
+import { getOAuthRedirectTo } from "../../lib/oauth-redirect";
 
 type Mode = "signin" | "signup";
 
@@ -162,7 +163,7 @@ export function AuthPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "ghost://auth/callback",
+          redirectTo: getOAuthRedirectTo(),
           skipBrowserRedirect: true,
         },
       });
@@ -385,9 +386,9 @@ export function AuthPage() {
 
 function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="no-drag relative flex h-screen max-h-screen w-full overflow-y-auto overscroll-contain bg-white px-8">
+    <div className="no-drag relative flex h-screen max-h-screen w-full min-w-0 overflow-y-auto overscroll-contain bg-white px-8">
       <BackButton to="/welcome" />
-      <div className="mx-auto flex min-h-full w-full max-w-[320px] flex-col items-center justify-center py-10 text-center">
+      <div className="mx-auto flex min-h-full w-full min-w-0 max-w-[320px] flex-col items-center justify-center py-10 text-center">
         {children}
       </div>
     </div>

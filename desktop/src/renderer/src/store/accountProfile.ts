@@ -1,7 +1,12 @@
 import {
+  compileKnowledgeContext,
   DEFAULT_COMPANY_INFO,
   type CompanyInfo,
 } from "../lib/company-info";
+import {
+  normalizeKnowledgeDocuments,
+  type KnowledgeDocument,
+} from "../lib/knowledge-documents";
 import {
   DEFAULT_SETTINGS,
   DEFAULT_UPCOMING,
@@ -24,7 +29,9 @@ export interface AccountProfile {
   activeMode: SalesMode;
   customSystemPrompt: string;
   companyInfo: CompanyInfo;
-  knowledgeFiles: string[];
+  knowledgeFiles: KnowledgeDocument[];
+  /** Pre-compiled from uploaded docs + company info — read once, reused in calls. */
+  knowledgeContext: string;
   settings: UserSettings;
   meetings: MeetingRecord[];
   upcoming: UpcomingCall[];
@@ -46,6 +53,7 @@ export function createDefaultAccountProfile(): AccountProfile {
     customSystemPrompt: SALES_MODES[0].systemPrompt,
     companyInfo: { ...DEFAULT_COMPANY_INFO },
     knowledgeFiles: [],
+    knowledgeContext: "",
     settings: { ...DEFAULT_SETTINGS },
     meetings: [],
     upcoming: [...DEFAULT_UPCOMING],
@@ -62,7 +70,8 @@ export function extractAccountProfile(state: {
   activeMode: SalesMode;
   customSystemPrompt: string;
   companyInfo: CompanyInfo;
-  knowledgeFiles: string[];
+  knowledgeFiles: KnowledgeDocument[];
+  knowledgeContext: string;
   settings: UserSettings;
   meetings: MeetingRecord[];
   upcoming: UpcomingCall[];
@@ -77,7 +86,8 @@ export function extractAccountProfile(state: {
     activeMode: state.activeMode,
     customSystemPrompt: state.customSystemPrompt,
     companyInfo: { ...state.companyInfo },
-    knowledgeFiles: [...state.knowledgeFiles],
+    knowledgeFiles: normalizeKnowledgeDocuments(state.knowledgeFiles),
+    knowledgeContext: state.knowledgeContext ?? "",
     settings: { ...state.settings },
     meetings: [...state.meetings],
     upcoming: [...state.upcoming],
@@ -97,7 +107,16 @@ export function applyAccountProfile(profile: AccountProfile) {
     companyInfo: profile.companyInfo
       ? { ...DEFAULT_COMPANY_INFO, ...profile.companyInfo }
       : { ...DEFAULT_COMPANY_INFO },
-    knowledgeFiles: [...profile.knowledgeFiles],
+    knowledgeFiles: normalizeKnowledgeDocuments(profile.knowledgeFiles),
+    knowledgeContext:
+      profile.knowledgeContext?.trim() ||
+      compileKnowledgeContext(
+        profile.customSystemPrompt,
+        profile.companyInfo
+          ? { ...DEFAULT_COMPANY_INFO, ...profile.companyInfo }
+          : { ...DEFAULT_COMPANY_INFO },
+        normalizeKnowledgeDocuments(profile.knowledgeFiles),
+      ),
     settings: { ...profile.settings },
     meetings: [...profile.meetings],
     upcoming: [...profile.upcoming],
@@ -121,9 +140,17 @@ export function extractLegacyAccountProfile(
     companyInfo: state.companyInfo
       ? { ...DEFAULT_COMPANY_INFO, ...(state.companyInfo as CompanyInfo) }
       : defaults.companyInfo,
-    knowledgeFiles: Array.isArray(state.knowledgeFiles)
-      ? [...(state.knowledgeFiles as string[])]
-      : defaults.knowledgeFiles,
+    knowledgeFiles: normalizeKnowledgeDocuments(state.knowledgeFiles),
+    knowledgeContext:
+      typeof state.knowledgeContext === "string"
+        ? state.knowledgeContext
+        : compileKnowledgeContext(
+            (state.customSystemPrompt as string) ?? defaults.customSystemPrompt,
+            state.companyInfo
+              ? { ...DEFAULT_COMPANY_INFO, ...(state.companyInfo as CompanyInfo) }
+              : defaults.companyInfo,
+            normalizeKnowledgeDocuments(state.knowledgeFiles),
+          ),
     settings: {
       ...defaults.settings,
       ...(state.settings as UserSettings | undefined),

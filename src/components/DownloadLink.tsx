@@ -46,12 +46,14 @@ function DownloadLinkContent({
 }: DownloadLinkProps) {
   const detectedPlatform = useDownloadPlatform();
   const platform = platformProp ?? detectedPlatform;
-  const { label } = getDownloadInfo(platform);
+  const { label, filename } = getDownloadInfo(platform);
   const href = resolveDownloadHref(platform);
+  const isSameOrigin = href.startsWith("/");
 
   return (
     <a
       href={href}
+      {...(isSameOrigin ? { download: filename } : {})}
       className={className ?? `${baseClassName} ${sizeClassName[size]}`}
     >
       {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_PRODUCT, followUpSystemPrompt } from "@/lib/prompts";
 import { getOpenAIClient } from "@/lib/openai";
+import {
+  OPENAI_LIMITS,
+  OPENAI_MODELS,
+  truncateTranscriptForPrompt,
+} from "@/lib/openai-config";
 import type { TranscriptLine } from "@/types/ghost";
 
 export async function POST(request: Request) {
@@ -12,12 +17,12 @@ export async function POST(request: Request) {
 
     const transcript = body.transcript ?? [];
     const product = body.product ?? DEFAULT_PRODUCT;
-    const formatted = transcript.map((t) => `${t.speaker}: ${t.text}`).join("\n");
+    const formatted = truncateTranscriptForPrompt(transcript);
 
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 200,
+      model: OPENAI_MODELS.chat,
+      max_tokens: OPENAI_LIMITS.followUpMaxTokens,
       temperature: 0.5,
       response_format: { type: "json_object" },
       messages: [

@@ -12,7 +12,7 @@ export const MAC_DOWNLOAD_GITHUB_URL =
 
 export const WINDOWS_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL?.trim() ||
-  "https://github.com/archierunnicles6-stack/ghost/releases/latest/download/Ghost-Windows.zip";
+  "https://github.com/archierunnicles6-stack/ghost/releases/latest/download/Ghost-Setup.exe";
 
 export const MAC_DOWNLOAD_FILENAME = "Ghost.dmg";
 /** Preferred Windows installer; API falls back to Ghost-Windows.zip until published. */

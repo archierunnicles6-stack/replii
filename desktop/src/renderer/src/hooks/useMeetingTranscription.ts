@@ -26,7 +26,8 @@ import { useSpeechRecognition } from "./useSpeechRecognition";
 
 const CHUNK_MS = 500;
 const MIN_BLOB_BYTES = 96;
-const MAX_SPEECH_BUFFER_MS = 8000;
+const MAX_SPEECH_BUFFER_MS = 12_000;
+const SPEECH_FLUSH_DELAY_MS = 280;
 
 export type AudioCaptureMode = "auto" | "mic" | "system";
 
@@ -111,7 +112,7 @@ class StreamTranscriber {
     this.flushTimer = window.setTimeout(() => {
       this.flushTimer = null;
       void this.flushSpeechBuffer();
-    }, 120);
+    }, SPEECH_FLUSH_DELAY_MS);
   }
 
   private async flushSpeechBuffer(): Promise<void> {
@@ -141,7 +142,7 @@ class StreamTranscriber {
       this.recorder = preferredMime
         ? new MediaRecorder(this.stream, {
             mimeType: preferredMime,
-            audioBitsPerSecond: 128_000,
+            audioBitsPerSecond: 64_000,
           })
         : new MediaRecorder(this.stream);
       this.mimeType = this.recorder.mimeType || preferredMime || "audio/webm";

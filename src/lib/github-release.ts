@@ -1,3 +1,4 @@
+import { DOWNLOAD_RELEASE_TAG } from "./download";
 import type { DownloadPlatform } from "./platform";
 
 const GITHUB_REPO = "archierunnicles6-stack/ghost";
@@ -22,30 +23,43 @@ let cachedRelease: { fetchedAt: number; assets: GitHubReleaseAsset[] } | null =
 
 const CACHE_MS = 5 * 60 * 1000;
 
+const GITHUB_HEADERS = {
+  Accept: "application/vnd.github+json",
+  "User-Agent": "ghost-download",
+} as const;
+
+async function fetchReleaseAssets(
+  endpoint: "latest" | `tags/${string}`,
+): Promise<GitHubReleaseAsset[]> {
+  const response = await fetch(
+    `https://api.github.com/repos/${GITHUB_REPO}/releases/${endpoint}`,
+    {
+      headers: GITHUB_HEADERS,
+      next: { revalidate: 300 },
+    },
+  );
+
+  if (!response.ok) return [];
+
+  const release = (await response.json()) as GitHubRelease;
+  return release.assets ?? [];
+}
+
 async function fetchLatestReleaseAssets(): Promise<GitHubReleaseAsset[]> {
   if (cachedRelease && Date.now() - cachedRelease.fetchedAt < CACHE_MS) {
     return cachedRelease.assets;
   }
 
-  const response = await fetch(
-    `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
-    {
-      headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "ghost-download",
-      },
-      next: { revalidate: 300 },
-    },
-  );
-
-  if (!response.ok) {
-    return cachedRelease?.assets ?? [];
+  let assets = await fetchReleaseAssets("latest");
+  if (assets.length === 0) {
+    assets = await fetchReleaseAssets(`tags/${DOWNLOAD_RELEASE_TAG}`);
   }
 
-  const release = (await response.json()) as GitHubRelease;
-  const assets = release.assets ?? [];
-  cachedRelease = { fetchedAt: Date.now(), assets };
-  return assets;
+  if (assets.length > 0) {
+    cachedRelease = { fetchedAt: Date.now(), assets };
+  }
+
+  return assets.length > 0 ? assets : (cachedRelease?.assets ?? []);
 }
 
 /** Resolve the best GitHub Release download URL for a platform. */

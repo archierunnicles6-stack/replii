@@ -11,11 +11,13 @@
     "desktop:open": "npm run open-app --prefix desktop",
     "desktop:open:dev": "npm run open-app:dev --prefix desktop",
     "desktop:build": "npm run build --prefix desktop",
-    "desktop:package": "npm run package:mac --prefix desktop && npm run sync-downloads",
+    "desktop:package": "npm run package:mac --prefix desktop && npm run sync-downloads && node scripts/sync-desktop-renderer.mjs",
     "desktop:package:win": "npm run package:win --prefix desktop && npm run sync-downloads",
+    "desktop:update": "node scripts/update-everywhere.mjs",
     "sync-downloads": "node scripts/sync-downloads.mjs",
-    "local:app": "npm run sync-downloads && npm run desktop:open",
-    "local:setup": "npm run desktop:package && npm run sync-downloads && npm run desktop:open"
+    "sync-renderer": "node scripts/sync-desktop-renderer.mjs",
+    "local:app": "npm run sync-downloads && npm run sync-renderer && npm run desktop:open",
+    "local:setup": "node scripts/update-everywhere.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",

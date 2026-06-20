@@ -1,7 +1,8 @@
 import { speechLangFromSetting } from "./transcript";
+import { OPENAI_MODELS } from "../lib/openai-config";
 
 const MIN_BLOB_BYTES = 96;
-const MIN_SPEECH_BLOB_BYTES = 800;
+const MIN_SPEECH_BLOB_BYTES = 1400;
 
 const WHISPER_LANG_MAP: Record<string, string> = {
   "en-US": "en",
@@ -122,7 +123,7 @@ export async function transcribeAudioChunk(
   const ext = extensionForMime(mimeType);
   const formData = new FormData();
   formData.append("file", blob, `audio.${ext}`);
-  formData.append("model", "whisper-1");
+  formData.append("model", OPENAI_MODELS.whisper);
   formData.append("response_format", "verbose_json");
   formData.append("temperature", "0");
 

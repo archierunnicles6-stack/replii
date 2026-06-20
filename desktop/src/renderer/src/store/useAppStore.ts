@@ -2,9 +2,16 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
   clampCompanyInfo,
+  compileKnowledgeContext,
   DEFAULT_COMPANY_INFO,
   type CompanyInfo,
 } from "../lib/company-info";
+import {
+  createKnowledgeDocument,
+  MAX_KNOWLEDGE_DOCS,
+  normalizeKnowledgeDocuments,
+  type KnowledgeDocument,
+} from "../lib/knowledge-documents";
 import {
   applyAccountProfile,
   createDefaultAccountProfile,
@@ -124,6 +131,19 @@ function switchToAccountProfile(
   };
 }
 
+function withKnowledgeContext(
+  state: AppState,
+  patch: Partial<AppState>,
+): Partial<AppState> {
+  const merged = { ...state, ...patch };
+  const knowledgeContext = compileKnowledgeContext(
+    merged.customSystemPrompt,
+    merged.companyInfo,
+    merged.knowledgeFiles,
+  );
+  return withAccountProfile(state, { ...patch, knowledgeContext });
+}
+
 /** Keep per-account profile in sync whenever top-level persisted fields change. */
 function withAccountProfile(
   state: AppState,
@@ -154,6 +174,7 @@ function mergeAccountProfileIntoState(
     | "customSystemPrompt"
     | "companyInfo"
     | "knowledgeFiles"
+    | "knowledgeContext"
     | "settings"
     | "meetings"
     | "upcoming"
@@ -189,7 +210,8 @@ interface AppState {
   activeMode: SalesMode;
   customSystemPrompt: string;
   companyInfo: CompanyInfo;
-  knowledgeFiles: string[];
+  knowledgeFiles: KnowledgeDocument[];
+  knowledgeContext: string;
   settings: UserSettings;
   meetings: MeetingRecord[];
   upcoming: UpcomingCall[];
@@ -217,8 +239,8 @@ interface AppState {
   setActiveMode: (mode: SalesMode) => void;
   setCustomSystemPrompt: (prompt: string) => void;
   updateCompanyInfo: (partial: Partial<CompanyInfo>) => void;
-  addKnowledgeFile: (name: string) => void;
-  removeKnowledgeFile: (name: string) => void;
+  addKnowledgeDocument: (name: string, text: string) => boolean;
+  removeKnowledgeDocument: (id: string) => void;
   updateSettings: (partial: Partial<UserSettings>) => void;
   setPlan: (plan: Plan) => void;
   setSessionActive: (active: boolean) => void;
@@ -268,6 +290,7 @@ export const useAppStore = create<AppState>()(
       customSystemPrompt: SALES_MODES[0].systemPrompt,
       companyInfo: { ...DEFAULT_COMPANY_INFO },
       knowledgeFiles: [],
+      knowledgeContext: "",
       settings: DEFAULT_SETTINGS,
       meetings: DEFAULT_MEETINGS,
       upcoming: DEFAULT_UPCOMING,
@@ -410,7 +433,7 @@ export const useAppStore = create<AppState>()(
       setActiveMode: (mode) => {
         const config = SALES_MODES.find((m) => m.id === mode) ?? SALES_MODES[0];
         set((s) =>
-          withAccountProfile(s, {
+          withKnowledgeContext(s, {
             activeMode: mode,
             customSystemPrompt: config.systemPrompt,
           }),
@@ -420,14 +443,14 @@ export const useAppStore = create<AppState>()(
       },
 
       setCustomSystemPrompt: (prompt) => {
-        set((s) => withAccountProfile(s, { customSystemPrompt: prompt }));
+        set((s) => withKnowledgeContext(s, { customSystemPrompt: prompt }));
         notifyAppStoreChanged();
         pushForCurrentUser();
       },
 
       updateCompanyInfo: (partial) => {
         set((s) =>
-          withAccountProfile(s, {
+          withKnowledgeContext(s, {
             companyInfo: clampCompanyInfo({ ...s.companyInfo, ...partial }),
           }),
         );
@@ -435,21 +458,28 @@ export const useAppStore = create<AppState>()(
         pushForCurrentUser();
       },
 
-      addKnowledgeFile: (name) => {
+      addKnowledgeDocument: (name, text) => {
+        let added = false;
         set((s) => {
-          if (s.knowledgeFiles.includes(name)) return {};
-          return withAccountProfile(s, {
-            knowledgeFiles: [...s.knowledgeFiles, name],
+          if (s.knowledgeFiles.length >= MAX_KNOWLEDGE_DOCS) return {};
+          const doc = createKnowledgeDocument(name, text);
+          if (!doc.text.trim()) return {};
+          added = true;
+          return withKnowledgeContext(s, {
+            knowledgeFiles: [...s.knowledgeFiles, doc],
           });
         });
-        notifyAppStoreChanged();
-        pushForCurrentUser();
+        if (added) {
+          notifyAppStoreChanged();
+          pushForCurrentUser();
+        }
+        return added;
       },
 
-      removeKnowledgeFile: (name) => {
+      removeKnowledgeDocument: (id) => {
         set((s) =>
-          withAccountProfile(s, {
-            knowledgeFiles: s.knowledgeFiles.filter((f) => f !== name),
+          withKnowledgeContext(s, {
+            knowledgeFiles: s.knowledgeFiles.filter((doc) => doc.id !== id),
           }),
         );
         notifyAppStoreChanged();
@@ -596,7 +626,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "ghost-app-storage",
-      version: 12,
+      version: 14,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
         if (version < 5) {
@@ -715,6 +745,44 @@ export const useAppStore = create<AppState>()(
           }
           state.accountProfiles = profiles;
         }
+        if (version < 13) {
+          state.knowledgeFiles = normalizeKnowledgeDocuments(state.knowledgeFiles);
+
+          const profiles =
+            (state.accountProfiles as AccountProfiles | undefined) ?? {};
+          for (const id of Object.keys(profiles)) {
+            profiles[id] = {
+              ...profiles[id],
+              knowledgeFiles: normalizeKnowledgeDocuments(
+                profiles[id].knowledgeFiles,
+              ),
+            };
+          }
+          state.accountProfiles = profiles;
+        }
+        if (version < 14) {
+          const compileFor = (profile: AccountProfile): AccountProfile => ({
+            ...profile,
+            knowledgeContext: compileKnowledgeContext(
+              profile.customSystemPrompt,
+              profile.companyInfo ?? DEFAULT_COMPANY_INFO,
+              normalizeKnowledgeDocuments(profile.knowledgeFiles),
+            ),
+          });
+
+          state.knowledgeContext = compileKnowledgeContext(
+            (state.customSystemPrompt as string) ?? SALES_MODES[0].systemPrompt,
+            (state.companyInfo as CompanyInfo) ?? DEFAULT_COMPANY_INFO,
+            normalizeKnowledgeDocuments(state.knowledgeFiles),
+          );
+
+          const profiles =
+            (state.accountProfiles as AccountProfiles | undefined) ?? {};
+          for (const id of Object.keys(profiles)) {
+            profiles[id] = compileFor(profiles[id]);
+          }
+          state.accountProfiles = profiles;
+        }
         return state as AppState;
       },
       partialize: (state) => {
@@ -736,6 +804,7 @@ export const useAppStore = create<AppState>()(
           customSystemPrompt: state.customSystemPrompt,
           companyInfo: state.companyInfo,
           knowledgeFiles: state.knowledgeFiles,
+          knowledgeContext: state.knowledgeContext,
           settings: state.settings,
           meetings: state.meetings,
           upcoming: state.upcoming,
@@ -752,6 +821,14 @@ export const useAppStore = create<AppState>()(
           state.settings = { ...state.settings, invisible };
         }
         if (!state.user?.id) return;
+        state.knowledgeFiles = normalizeKnowledgeDocuments(state.knowledgeFiles);
+        if (!state.knowledgeContext?.trim()) {
+          state.knowledgeContext = compileKnowledgeContext(
+            state.customSystemPrompt,
+            state.companyInfo,
+            state.knowledgeFiles,
+          );
+        }
         const profile = state.accountProfiles[state.user.id];
         if (!profile) return;
         Object.assign(state, mergeAccountProfileIntoState(state, profile));

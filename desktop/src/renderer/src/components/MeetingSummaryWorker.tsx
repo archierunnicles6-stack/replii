@@ -5,8 +5,7 @@ import {
   generateMeetingSummary,
   sectionsToPlainText,
 } from "../services/ai";
-import { buildAiCoachingContext } from "../lib/company-info";
-import { notifyAppStoreChanged, useAppStore } from "../store/useAppStore";
+import { useAppStore, notifyAppStoreChanged } from "../store/useAppStore";
 
 function finalizeMeeting(
   meetingId: string,
@@ -64,12 +63,10 @@ function finalizeMeeting(
 
 /** Generate meeting summaries in the dashboard (survives overlay close). */
 export function MeetingSummaryWorker() {
-  const customSystemPrompt = useAppStore((s) => s.customSystemPrompt);
-  const companyInfo = useAppStore((s) => s.companyInfo);
+  const knowledgeContext = useAppStore((s) => s.knowledgeContext);
   const outputLanguage = useAppStore((s) => s.settings.outputLanguage);
   const updateMeeting = useAppStore((s) => s.updateMeeting);
   const meetings = useAppStore((s) => s.meetings);
-  const coachingContext = buildAiCoachingContext(customSystemPrompt, companyInfo);
 
   const recoveredRef = useRef<Set<string>>(new Set());
 
@@ -78,12 +75,12 @@ export function MeetingSummaryWorker() {
       finalizeMeeting(
         payload.meetingId,
         payload.transcript,
-        coachingContext,
+        knowledgeContext,
         outputLanguage,
         updateMeeting,
       );
     });
-  }, [coachingContext, outputLanguage, updateMeeting]);
+  }, [knowledgeContext, outputLanguage, updateMeeting]);
 
   useEffect(() => {
     for (const meeting of meetings) {
@@ -94,12 +91,12 @@ export function MeetingSummaryWorker() {
       finalizeMeeting(
         meeting.id,
         meeting.transcript,
-        coachingContext,
+        knowledgeContext,
         outputLanguage,
         updateMeeting,
       );
     }
-  }, [coachingContext, meetings, outputLanguage, updateMeeting]);
+  }, [knowledgeContext, meetings, outputLanguage, updateMeeting]);
 
   return null;
 }

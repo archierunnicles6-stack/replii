@@ -11,25 +11,23 @@ import { streamGhostSuggestion } from "../services/ghost-suggest";
 import {
   autoTriggerDelayMs,
   buildLiveDisplayText,
-  buildLiveTranscript,
   isDirectQuestion,
   normalizeTranscriptText,
   shouldAutoSuggestLine,
   shouldSuggestFromInterim,
   suggestionTriggerKey,
 } from "../services/transcript";
-import { clearScreenContext, getScreenContext } from "../services/screen-context";
+import { clearScreenContext } from "../services/screen-context";
 import { bootstrapOpenAIKey } from "../services/whisper";
+import { OPENAI_LIMITS } from "../lib/openai-config";
 import {
-  buildAiCoachingContext,
   getEffectiveObjections,
   getEffectiveProduct,
+  getLiveKnowledgeContext,
 } from "../lib/company-info";
-import { useFreeOverlayUsageTracker } from "../hooks/useFreeOverlayUsageTracker";
 import { useContentProtectionSync } from "../hooks/useContentProtectionSync";
-import { buildCoachingInsightsContext } from "../lib/coaching-analytics";
 import { createSuggestionRecord } from "../lib/suggestion-tags";
-import { useAppStore, notifyAppStoreChanged, rehydrateAppStoreFromStorage, syncPlanLimitsToMain } from "../store/useAppStore";
+import { useAppStore, notifyAppStoreChanged, rehydrateAppStoreFromStorage } from "../store/useAppStore";
 import type { SuggestionRecord } from "../store/types";
 import {
   ControlButtons,
@@ -52,15 +50,10 @@ export function OverlayApp() {
   const [dealHealth, setDealHealth] = useState<number | null>(null);
   const [topPanelHidden, setTopPanelHidden] = useState(false);
 
-  const { activeMode, customSystemPrompt, companyInfo, settings, saveMeetingFromSession, meetings } =
+  const { companyInfo, knowledgeContext, settings, saveMeetingFromSession } =
     useAppStore();
-  const insightsContext = buildCoachingInsightsContext(meetings);
-  const aiCoachingContext = [
-    buildAiCoachingContext(customSystemPrompt, companyInfo),
-    insightsContext,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const liveCoachingContext = getLiveKnowledgeContext(knowledgeContext);
+  const assistCoachingContext = knowledgeContext;
   const aiProduct = getEffectiveProduct(companyInfo);
   const aiObjections = getEffectiveObjections(companyInfo);
   const sessionStartRef = useRef<number | null>(null);
@@ -75,6 +68,7 @@ export function OverlayApp() {
   >(() => Promise.resolve());
   const lastTriggerKeyRef = useRef<string | null>(null);
   const lastProcessedLineIdRef = useRef<string | null>(null);
+  const lastSuggestionAtRef = useRef(0);
   const prevSpeakingRef = useRef(false);
   const suggestDebounceRef = useRef<number | null>(null);
 
@@ -144,16 +138,11 @@ export function OverlayApp() {
 
     document.documentElement.classList.add("active-mode");
     document.body.classList.add("active-mode");
+    await window.ghost?.setOverlayMode("active");
     setPhase("active");
     setListening(true);
-    // Paint overlay UI before expanding to a fullscreen transparent window.
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-    });
-    await window.ghost?.setOverlayMode("active");
     window.ghost?.setSessionListening?.(true);
     window.ghost?.requestLiveTranscript?.();
-    void window.ghost?.ready?.();
   }, []);
 
   useEffect(() => {
@@ -243,6 +232,10 @@ export function OverlayApp() {
       if (!key || key === lastTriggerKeyRef.current) return;
 
       const isQuestion = isDirectQuestion(text);
+      const cooldownMs = isQuestion
+        ? OPENAI_LIMITS.questionSuggestionCooldownMs
+        : OPENAI_LIMITS.suggestionCooldownMs;
+      if (Date.now() - lastSuggestionAtRef.current < cooldownMs) return;
 
       assistAbortRef.current?.abort();
       const controller = new AbortController();
@@ -253,14 +246,13 @@ export function OverlayApp() {
       setLoading(true);
       setStreamingText("");
 
-      void streamGhostSuggestion(text, buildLiveTranscript(linesRef.current, interimRef.current), {
+      void streamGhostSuggestion(text, linesRef.current, {
         product: aiProduct,
         objections: aiObjections,
-        coachingContext: aiCoachingContext,
+        coachingContext: liveCoachingContext,
         micOnly: !hasSystemAudio && hasMic,
         fast: true,
         isQuestion,
-        outputLanguage: settings.outputLanguage,
         signal: controller.signal,
         onChunk: (chunk) => setStreamingText(chunk),
       })
@@ -270,6 +262,7 @@ export function OverlayApp() {
             setLoading(false);
             return;
           }
+          lastSuggestionAtRef.current = Date.now();
           lastTriggerKeyRef.current = key;
           suggestionUsesRef.current += 1;
           const lastLine = linesRef.current[linesRef.current.length - 1];
@@ -295,7 +288,7 @@ export function OverlayApp() {
           }
         });
     },
-    [aiCoachingContext, aiObjections, aiProduct, hasMic, hasSystemAudio, settings.outputLanguage, clearHideSuggestionTimer, scheduleHideSuggestion, recordSuggestion],
+    [aiObjections, aiProduct, hasMic, hasSystemAudio, liveCoachingContext, clearHideSuggestionTimer, scheduleHideSuggestion, recordSuggestion],
   );
 
   const runAssist = useCallback(
@@ -318,7 +311,7 @@ export function OverlayApp() {
       try {
         const response = await askGhost(action, snapshotLines, {
           customPrompt,
-          systemPrompt: aiCoachingContext,
+          systemPrompt: assistCoachingContext,
           smartMode,
           interimText: snapshotInterim,
           outputLanguage: settings.outputLanguage,
@@ -359,7 +352,7 @@ export function OverlayApp() {
         }
       }
     },
-    [aiCoachingContext, smartMode, settings.outputLanguage, clearHideSuggestionTimer, scheduleHideSuggestion, recordSuggestion],
+    [assistCoachingContext, smartMode, settings.outputLanguage, clearHideSuggestionTimer, scheduleHideSuggestion, recordSuggestion],
   );
 
   runAssistRef.current = runAssist;
@@ -387,12 +380,6 @@ export function OverlayApp() {
   }, [clearHideSuggestionTimer]);
 
   useEffect(() => {
-    if (phase !== "active" || !listening) return;
-    const id = window.setInterval(() => void getScreenContext(true), 60_000);
-    return () => window.clearInterval(id);
-  }, [phase, listening]);
-
-  useEffect(() => {
     if (!listening) return;
 
     const lastLine = lines[lines.length - 1];
@@ -410,7 +397,7 @@ export function OverlayApp() {
     const interimText = normalizeTranscriptText(interim);
     if (!shouldSuggestFromInterim(interimText)) return;
 
-    const delay = autoTriggerDelayMs(interimText, true) ?? 50;
+    const delay = autoTriggerDelayMs(interimText, true) ?? 80;
     const id = window.setTimeout(() => {
       runSuggestion(interimText);
     }, delay);
@@ -436,7 +423,7 @@ export function OverlayApp() {
     const preview = buildLiveDisplayText(linesRef.current, interimRef.current);
     if (!preview || preview === "…" || preview.length < 3) return;
 
-    const delay = isDirectQuestion(preview) ? 25 : 50;
+    const delay = isDirectQuestion(preview) ? 40 : 80;
 
     suggestDebounceRef.current = window.setTimeout(() => {
       suggestDebounceRef.current = null;
@@ -493,8 +480,11 @@ export function OverlayApp() {
       suggestions: suggestionsRef.current,
     });
 
+    if (linesRef.current.length === 0) {
+      useAppStore.getState().refundFreeSessionUsage();
+    }
+
     notifyAppStoreChanged();
-    void syncPlanLimitsToMain();
 
     void window.ghost?.requestMeetingSummary?.({
       meetingId: meeting.id,
@@ -505,13 +495,6 @@ export function OverlayApp() {
     useAppStore.getState().setSessionActive(false);
     void window.ghost?.focusDashboard(`/meetings/${meeting.id}`);
   };
-
-  const stopSessionRef = useRef(stopSession);
-  stopSessionRef.current = stopSession;
-
-  useFreeOverlayUsageTracker(phase === "active", () => {
-    void stopSessionRef.current();
-  });
 
   if (phase === "idle") return null;
 

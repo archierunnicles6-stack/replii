@@ -1,6 +1,7 @@
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthBootstrap } from "./hooks/useAuthBootstrap";
+import { useAuthCallback } from "./hooks/useAuthCallback";
 import { useBillingReturn } from "./hooks/useBillingReturn";
 import { bootstrapOpenAIKey } from "./services/whisper";
 import { resolveApiBase } from "./lib/billing-api-base";
@@ -16,6 +17,7 @@ import { DashboardLayout } from "./pages/dashboard/DashboardLayout";
 import { ActivityPage } from "./pages/dashboard/ActivityPage";
 import { MeetingDetailPage } from "./pages/dashboard/MeetingDetailPage";
 import { UpcomingPage } from "./pages/dashboard/UpcomingPage";
+import { AdminGuard } from "./pages/admin/AdminGuard";
 
 function RootRedirect() {
   const welcomeComplete = useAppStore((s) => s.welcomeComplete);
@@ -56,6 +58,7 @@ function AppRoutes() {
         <Route path="/" element={<ActivityPage />} />
         <Route path="/upcoming" element={<UpcomingPage />} />
         <Route path="/meetings/:id" element={<MeetingDetailPage />} />
+        <Route path="/admin" element={<AdminGuard />} />
       </Route>
       <Route path="/*" element={<RootRedirect />} />
     </Routes>
@@ -64,6 +67,7 @@ function AppRoutes() {
 
 function AppShell() {
   useBillingReturn();
+  useAuthCallback();
 
   return <AppRoutes />;
 }

@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
             key: "Cache-Control",
             value: "public, max-age=3600",
           },
+          {
+            key: "Content-Disposition",
+            value: "attachment",
+          },
         ],
       },
     ];

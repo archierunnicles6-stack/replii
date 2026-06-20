@@ -15,7 +15,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT_REF="$(grep '^project_id' "$ROOT/supabase/config.toml" | sed 's/.*= *"\(.*\)".*/\1/')"
-GOOGLE_CLIENT_ID="821453006387-snrakrrq6n17m5pde2nfshmnf8nanmc6.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID="821453006387-t40vuplgvemi57kf3qhqp9gca4qmicd5.apps.googleusercontent.com"
 
 if command -v supabase >/dev/null 2>&1; then
   SUPABASE=supabase
@@ -52,7 +52,10 @@ echo ""
 echo "Google auth configured for project $PROJECT_REF"
 echo "  Client ID: $GOOGLE_CLIENT_ID"
 echo "  Redirect (Google Cloud): https://$PROJECT_REF.supabase.co/auth/v1/callback"
-echo "  Redirect (desktop app):  ghost://auth/callback"
+echo "  Redirect (desktop app):  ghost://auth/callback (via web bridge at /auth/callback)"
+echo ""
+echo "IMPORTANT: If sign-in shows redirect_uri_mismatch, add the Google Cloud"
+echo "redirect URI above (exact URL). Run: ./scripts/fix-google-oauth-redirect.sh --open"
 echo ""
 echo "Verify: curl -s \"https://$PROJECT_REF.supabase.co/auth/v1/settings\" \\"
 echo "  -H \"apikey: \$VITE_SUPABASE_ANON_KEY\" | grep google"

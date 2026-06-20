@@ -1,22 +1,21 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { corsHeaders } from "@/lib/api-cors";
 
+/** Supabase may fall back to site_url with OAuth params on `/` — forward to the app bridge. */
 export function middleware(request: NextRequest) {
-  if (request.method === "OPTIONS") {
-    return new NextResponse(null, {
-      status: 204,
-      headers: corsHeaders(request),
-    });
+  if (request.nextUrl.pathname.startsWith("/auth/callback")) {
+    return NextResponse.next();
   }
 
-  const response = NextResponse.next();
-  corsHeaders(request).forEach((value, key) => {
-    response.headers.set(key, value);
-  });
-  return response;
+  const code = request.nextUrl.searchParams.get("code");
+  const error = request.nextUrl.searchParams.get("error");
+  if (!code && !error) return NextResponse.next();
+
+  const url = request.nextUrl.clone();
+  url.pathname = "/auth/callback";
+  return NextResponse.redirect(url);
 }
 
 export const config = {
-  matcher: ["/api/stripe/:path*", "/api/webhooks/stripe"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|downloads|assets).*)"],
 };

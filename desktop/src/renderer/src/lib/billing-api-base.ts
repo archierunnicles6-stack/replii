@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = "https://ghost-eight-virid.vercel.app";
+export const DEFAULT_API_BASE = "https://ghost-eight-virid.vercel.app";
 
 let cachedApiBase: string | null = null;
 let bootstrapPromise: Promise<string> | null = null;

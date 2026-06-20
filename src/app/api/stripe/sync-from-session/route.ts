@@ -5,6 +5,7 @@ import {
   persistBillingSync,
   syncFromCheckoutSession,
 } from "@/lib/stripe-sync";
+import { recordSubscriptionInvoicePayments, recordCheckoutSessionPayment } from "@/lib/payment-events";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(request: Request) {
@@ -23,6 +24,18 @@ export async function GET(request: Request) {
     const synced = await syncFromCheckoutSession(stripe, sessionId);
     if (!synced) {
       return NextResponse.json({ synced: false });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    await recordCheckoutSessionPayment(session, "sync-from-session", undefined, stripe);
+
+    if (synced.subscriptionId) {
+      await recordSubscriptionInvoicePayments(
+        stripe,
+        synced.subscriptionId,
+        synced.userId,
+        synced.plan,
+      );
     }
 
     try {

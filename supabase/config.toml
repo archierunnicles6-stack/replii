@@ -5,7 +5,11 @@ site_url = "https://ghost.ai"
 additional_redirect_urls = [
   "ghost://auth/callback",
   "ghost://**",
+  "http://127.0.0.1:42817/auth/callback",
+  "http://localhost:42817/auth/callback",
+  "http://localhost:3000/auth/callback",
   "http://localhost:3000/**",
+  "https://ghost.ai/auth/callback",
   "https://ghost.ai/**",
 ]
 
@@ -14,5 +18,5 @@ enable_confirmations = false
 
 [auth.external.google]
 enabled = true
-client_id = "821453006387-snrakrrq6n17m5pde2nfshmnf8nanmc6.apps.googleusercontent.com"
+client_id = "821453006387-t40vuplgvemi57kf3qhqp9gca4qmicd5.apps.googleusercontent.com"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"

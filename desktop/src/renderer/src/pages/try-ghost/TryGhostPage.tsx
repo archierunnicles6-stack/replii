@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SplitScreenShell } from "../../components/onboarding/SplitScreenShell";
+import {
+  SplitScreenLeft,
+  SplitScreenLeftBody,
+} from "../../components/onboarding/SplitScreenLeft";
 import { TryGhostPreview } from "../../components/onboarding/TryGhostPreview";
 import { BackButton } from "../../components/ui";
 import { notifyAppStoreChanged, useAppStore } from "../../store/useAppStore";
@@ -26,6 +30,10 @@ export function TryGhostPage() {
       navigate("/onboarding", { replace: true });
     }
   }, [isAuthenticated, onboardingComplete, navigate]);
+
+  useEffect(() => {
+    void window.ghost?.setDashboardLayout?.("onboarding");
+  }, []);
 
   useEffect(() => {
     const unsubShortcut = window.ghost?.onShortcutToggle?.(() => {
@@ -58,17 +66,17 @@ export function TryGhostPage() {
   }, []);
 
   return (
-    <div className="relative h-screen max-h-screen w-full overflow-hidden">
+    <div className="relative h-screen max-h-screen w-full min-w-0 overflow-hidden">
       <BackButton to="/onboarding" />
       <SplitScreenShell
         rightVariant="grid-preview"
         left={
-          <div className="flex min-h-full flex-col px-12 py-10">
-            <div className="flex flex-1 flex-col justify-center">
-              <h1 className="text-[32px] font-semibold leading-[1.12] tracking-[-0.025em] text-zinc-900">
+          <SplitScreenLeft>
+            <SplitScreenLeftBody>
+              <h1 className="min-w-0 break-words text-[32px] font-semibold leading-[1.12] tracking-[-0.025em] text-zinc-900">
                 Hide Ghost using the following hotkeys
               </h1>
-              <p className="mt-3 text-[15px] leading-relaxed text-zinc-500">
+              <p className="mt-3 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500">
                 You can open and hide Ghost anytime.
               </p>
 
@@ -99,21 +107,21 @@ export function TryGhostPage() {
               <button
                 type="button"
                 onClick={finish}
-                className="mt-10 flex h-[48px] w-full items-center justify-center rounded-full border border-zinc-300 bg-white text-[15px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+                className="mt-10 flex h-[48px] w-full min-w-0 items-center justify-center rounded-full border border-zinc-300 bg-white text-[15px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
               >
                 Continue
               </button>
-            </div>
+            </SplitScreenLeftBody>
 
             <button
               type="button"
               onClick={skip}
-              className="mt-auto flex items-center gap-0.5 self-center py-2 text-[14px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
+              className="mt-auto flex min-w-0 items-center gap-0.5 self-center py-2 text-[14px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
             >
               Skip
               <span aria-hidden>›</span>
             </button>
-          </div>
+          </SplitScreenLeft>
         }
         right={<TryGhostPreview overlayVisible={overlayVisible} />}
       />

@@ -5,14 +5,12 @@ import {
   suggestSystemPrompt,
 } from "@/lib/prompts";
 import { getOpenAIClient } from "@/lib/openai";
+import {
+  OPENAI_LIMITS,
+  OPENAI_MODELS,
+  formatRecentTranscript,
+} from "@/lib/openai-config";
 import type { GhostSuggestion, TranscriptLine } from "@/types/ghost";
-
-function formatRecentTranscript(transcript: TranscriptLine[], limit = 6): string {
-  return transcript
-    .slice(-limit)
-    .map((t) => `${t.speaker}: ${t.text}`)
-    .join("\n");
-}
 
 function computeTalkRatio(transcript: TranscriptLine[]): number {
   const you = transcript.filter((t) => t.speaker === "You").length;
@@ -47,8 +45,8 @@ export async function POST(request: Request) {
 
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 200,
+      model: OPENAI_MODELS.chat,
+      max_tokens: OPENAI_LIMITS.suggestMaxTokens,
       temperature: 0.4,
       response_format: { type: "json_object" },
       messages: [
