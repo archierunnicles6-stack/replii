@@ -4,6 +4,7 @@ import { Readable } from "node:stream";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getExternalDownloadUrl,
+  getLocalDownloadPath,
   MAC_DOWNLOAD_FILENAME,
   RELEASE_PAGE_URL,
   WINDOWS_DOWNLOAD_FILENAME,
@@ -63,7 +64,20 @@ export async function GET(request: NextRequest) {
 
   const local = findLocalInstaller(platform);
   if (local) {
-    return serveLocalFile(local);
+    if (process.env.NODE_ENV === "development") {
+      return serveLocalFile(local);
+    }
+
+    const response = NextResponse.redirect(
+      new URL(getLocalDownloadPath(platform), request.url),
+      302,
+    );
+    response.headers.set(
+      "Content-Disposition",
+      `attachment; filename="${local.filename}"`,
+    );
+    response.headers.set("Cache-Control", "public, max-age=3600");
+    return response;
   }
 
   if (process.env.NODE_ENV === "development") {

@@ -1,22 +1,28 @@
 import type { DownloadPlatform } from "./platform";
 
-/** GitHub Release assets — hosted outside Vercel (installers exceed deploy size limits). */
+/** GitHub Release tag when CI publishes installers. */
 export const DOWNLOAD_RELEASE_TAG = "v0.1.0";
 
+/** Primary production host for static installers and billing API. */
+export const VERCEL_APP_ORIGIN =
+  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+  "https://ghost-eight-virid.vercel.app";
+
 export const RELEASE_PAGE_URL =
-  "https://github.com/archierunnicles6-stack/replii/releases/latest";
+  process.env.NEXT_PUBLIC_RELEASE_PAGE_URL?.trim() ||
+  `${VERCEL_APP_ORIGIN}/download`;
 
 export const MAC_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_MAC_DOWNLOAD_URL?.trim() ||
-  "https://github.com/archierunnicles6-stack/replii/releases/latest/download/Replii.dmg";
+  `${VERCEL_APP_ORIGIN}/downloads/Replii.dmg`;
 
 export const WINDOWS_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL?.trim() ||
-  "https://github.com/archierunnicles6-stack/replii/releases/latest/download/Replii-Setup.exe";
+  `${VERCEL_APP_ORIGIN}/downloads/Replii-Windows.zip`;
 
 export const MAC_DOWNLOAD_FILENAME = "Replii.dmg";
-/** Preferred Windows installer; API falls back to Replii-Windows.zip until published. */
-export const WINDOWS_DOWNLOAD_FILENAME = "Replii-Setup.exe";
+/** Windows portable build until NSIS installer is published. */
+export const WINDOWS_DOWNLOAD_FILENAME = "Replii-Windows.zip";
 
 /** @deprecated Use DOWNLOAD_RELEASE_TAG */
 export const MAC_DOWNLOAD_RELEASE_TAG = DOWNLOAD_RELEASE_TAG;
@@ -49,6 +55,18 @@ export function getDownloadHref(platform: DownloadPlatform): string {
   return `/api/download?platform=${platform}`;
 }
 
+function isVercelHost(host: string): boolean {
+  return (
+    host.endsWith(".vercel.app") ||
+    host === new URL(VERCEL_APP_ORIGIN).hostname
+  );
+}
+
+/** Hosts that proxy marketing pages but block /api/* (Apache ModSecurity). */
+function isLegacyMarketingHost(host: string): boolean {
+  return host === "replii.ai" || host === "www.replii.ai" || host === "ghost.ai";
+}
+
 /** Pick the best download URL in the browser (handles broken legacy hosts). */
 export function resolveDownloadHref(platform: DownloadPlatform): string {
   if (typeof window === "undefined") {
@@ -57,14 +75,19 @@ export function resolveDownloadHref(platform: DownloadPlatform): string {
 
   const host = window.location.hostname;
   const isLocal = host === "localhost" || host === "127.0.0.1";
-  const isVercel =
-    host.endsWith(".vercel.app") || host === "ghost-eight-virid.vercel.app";
 
-  if (isLocal || isVercel) {
-    return getDownloadHref(platform);
+  if (isLocal) {
+    return getLocalDownloadPath(platform);
   }
 
-  // replii.ai is not on Vercel — direct GitHub links avoid 406 from legacy Apache host.
+  if (isLegacyMarketingHost(host)) {
+    return getExternalDownloadUrl(platform);
+  }
+
+  if (isVercelHost(host)) {
+    return getLocalDownloadPath(platform);
+  }
+
   return getExternalDownloadUrl(platform);
 }
 
