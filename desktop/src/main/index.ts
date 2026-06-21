@@ -39,7 +39,7 @@ function loadOpenAIKey(): string | undefined {
   return loadEnvVar("VITE_OPENAI_API_KEY");
 }
 
-const DEFAULT_BILLING_API_BASE = "https://ghost-eight-virid.vercel.app";
+const DEFAULT_BILLING_API_BASE = "https://replii-lac.vercel.app";
 
 function loadEnvVar(key: string): string | undefined {
   const candidates = [

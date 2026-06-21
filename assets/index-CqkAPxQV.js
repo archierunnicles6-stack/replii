@@ -35857,8 +35857,8 @@ const supabase = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProp
   toAppUser
 }, Symbol.toStringTag, { value: "Module" }));
 const OPENAI_MODELS = {
-  chat: "gpt-4o-mini",
-  vision: "gpt-4o-mini",
+  chat: "gpt-4.1-nano",
+  vision: "gpt-4.1-nano",
   whisper: "whisper-1"
 };
 const OPENAI_LIMITS = {
@@ -37619,11 +37619,12 @@ async function completePurchaseReturn(userId, returnTo, navigate) {
     useAppStore.getState().requestSettingsOpen("billing");
   }
 }
-const DEFAULT_API_BASE = "https://ghost-eight-virid.vercel.app";
+const REPLII_PRODUCTION_ORIGIN = "https://replii-lac.vercel.app";
+const DEFAULT_API_BASE = REPLII_PRODUCTION_ORIGIN;
 let cachedApiBase = null;
 let bootstrapPromise$1 = null;
 function readBuiltInApiBase() {
-  const raw = "https://ghost-eight-virid.vercel.app"?.trim().replace(/\/$/, "");
+  const raw = "https://replii-lac.vercel.app"?.trim().replace(/\/$/, "");
   if (!raw) return void 0;
   if (raw.includes("localhost") || raw.includes("127.0.0.1")) return void 0;
   return raw;
@@ -39492,11 +39493,13 @@ function AuthPage() {
         }
       }
       const state = useAppStore.getState();
-      if (!state.onboardingComplete) {
-        navigate("/onboarding");
-        return;
-      }
-      navigate("/");
+      const next = getOnboardingFunnelRoute({
+        onboardingComplete: state.onboardingComplete,
+        shortcutTutorialComplete: state.shortcutTutorialComplete,
+        paywallComplete: state.paywallComplete,
+        plan: state.plan
+      });
+      navigate(next ?? "/");
     },
     [login, navigate]
   );
@@ -39831,13 +39834,15 @@ function nextRequiredKey(granted) {
   }
   return null;
 }
-function isPermissionEnabled(key, granted, pending) {
-  if (pending[key]) return true;
+function isPermissionGranted(key, granted) {
   if (!granted[key]) return false;
-  if (key === "microphone" && !granted.accessibility && !pending.accessibility) {
-    return false;
-  }
+  if (key === "microphone" && !granted.accessibility) return false;
   return true;
+}
+function isPermissionReachable(key, granted) {
+  if (key === "accessibility") return true;
+  if (key === "microphone") return granted.accessibility;
+  return granted.accessibility && granted.microphone;
 }
 const PERMISSIONS = [
   {
@@ -39867,7 +39872,6 @@ const PERMISSIONS = [
 function OnboardingPage() {
   const navigate = useNavigate();
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
-  const completeShortcutTutorial = useAppStore((s) => s.completeShortcutTutorial);
   const [granted, setGranted] = reactExports.useState({
     accessibility: false,
     microphone: false,
@@ -39879,13 +39883,17 @@ function OnboardingPage() {
   const [activeKey, setActiveKey] = reactExports.useState("accessibility");
   const finishingRef = reactExports.useRef(false);
   const prevGrantedRef = reactExports.useRef(granted);
-  const refreshStatus = reactExports.useCallback(async () => {
+  const refreshStatus = reactExports.useCallback(async (options) => {
     const status = await window.replii?.getPermissionStatus?.();
     if (!status) return;
+    let microphone = status.microphone;
+    if (options?.deep && !microphone && status.accessibility) {
+      microphone = await confirmMicrophoneAccess();
+    }
     setGranted((prev) => {
       const next = {
         accessibility: status.accessibility,
-        microphone: status.microphone,
+        microphone,
         screen: status.screen
       };
       if (prev.accessibility === next.accessibility && prev.microphone === next.microphone && prev.screen === next.screen) {
@@ -39898,10 +39906,9 @@ function OnboardingPage() {
     if (finishingRef.current) return;
     finishingRef.current = true;
     completeOnboarding();
-    completeShortcutTutorial();
     notifyAppStoreChanged();
-    navigate("/");
-  }, [completeOnboarding, completeShortcutTutorial, navigate]);
+    navigate("/try");
+  }, [completeOnboarding, navigate]);
   reactExports.useEffect(() => {
     void window.replii?.setDashboardLayout?.("onboarding");
   }, []);
@@ -39909,9 +39916,9 @@ function OnboardingPage() {
     void refreshStatus();
     const id = setInterval(() => void refreshStatus(), 500);
     const onFocus = () => {
-      void refreshStatus();
-      setTimeout(() => void refreshStatus(), 300);
-      setTimeout(() => void refreshStatus(), 1e3);
+      void refreshStatus({ deep: true });
+      setTimeout(() => void refreshStatus({ deep: true }), 300);
+      setTimeout(() => void refreshStatus({ deep: true }), 1e3);
     };
     const onVisible = () => {
       if (document.visibilityState === "visible") onFocus();
@@ -39937,42 +39944,35 @@ function OnboardingPage() {
     }
   };
   const handleToggle = async (key) => {
-    if (isPermissionEnabled(key, granted, pending)) return;
+    if (isPermissionGranted(key, granted)) return;
+    if (!isPermissionReachable(key, granted)) return;
     setPending((prev) => ({ ...prev, [key]: true }));
     setActiveKey(key);
     await openSettings(key);
+    void refreshStatus({ deep: true });
   };
   reactExports.useEffect(() => {
     const prev = prevGrantedRef.current;
     prevGrantedRef.current = granted;
     setPending((pendingPrev) => {
       let changed = false;
-      const next = { ...pendingPrev };
+      const next2 = { ...pendingPrev };
       for (const perm of PERMISSIONS) {
         if (granted[perm.key] && pendingPrev[perm.key]) {
-          next[perm.key] = false;
+          next2[perm.key] = false;
           changed = true;
         }
       }
-      return changed ? next : pendingPrev;
+      return changed ? next2 : pendingPrev;
     });
-    const accessibilityDone = isPermissionEnabled("accessibility", granted, pending);
-    const microphoneDone = isPermissionEnabled("microphone", granted, pending);
-    if (accessibilityDone && !microphoneDone) {
+    const next = nextRequiredKey(granted);
+    if (next) {
+      setActiveKey(next);
+    } else if (REQUIRED_KEYS.some((key) => granted[key] && !prev[key])) {
       setActiveKey("microphone");
-    } else if (!accessibilityDone) {
-      setActiveKey("accessibility");
     }
-    const newlyGranted = REQUIRED_KEYS.some((key) => granted[key] && !prev[key]);
-    if (newlyGranted) {
-      const next = nextRequiredKey(granted);
-      if (next) setActiveKey(next);
-    }
-  }, [granted, pending]);
+  }, [granted]);
   const requiredGranted = granted.accessibility && granted.microphone;
-  const bothEnabled = REQUIRED_KEYS.every(
-    (key) => isPermissionEnabled(key, granted, pending)
-  );
   const pendingRequiredKey = nextRequiredKey(granted);
   const focusKey = pendingRequiredKey ?? activeKey;
   const focusPerm = PERMISSIONS.find((p) => p.key === focusKey) ?? PERMISSIONS[0];
@@ -39983,19 +39983,26 @@ function OnboardingPage() {
     const id = setTimeout(() => finish(), 700);
     return () => clearTimeout(id);
   }, [requiredGranted, finish]);
-  const settingsLabel = focusKey === "accessibility" ? "Open accessibility settings" : focusKey === "microphone" ? "Open microphone settings" : "Open call audio settings";
-  const primaryLabel = requiredGranted ? "Start my first session" : bothEnabled ? "Continue" : settingsLabel;
-  const handlePrimary = () => {
-    if (requiredGranted) {
+  const primaryLabel = "Continue";
+  const handlePrimary = async () => {
+    const status = await window.replii?.getPermissionStatus?.();
+    if (!status) return;
+    let microphone = status.microphone;
+    if (!microphone && status.accessibility) {
+      microphone = await confirmMicrophoneAccess();
+    }
+    const current = {
+      accessibility: status.accessibility,
+      microphone,
+      screen: status.screen
+    };
+    setGranted(current);
+    if (current.accessibility && current.microphone) {
       finish();
       return;
     }
-    if (bothEnabled) {
-      const missing = nextRequiredKey(granted);
-      if (missing) void openSettings(missing);
-      return;
-    }
-    void openSettings(focusKey);
+    const missing = nextRequiredKey(current);
+    if (missing) await openSettings(missing);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative h-screen max-h-screen w-full min-w-0 overflow-hidden", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(BackButton, { to: "/auth" }),
@@ -40003,59 +40010,48 @@ function OnboardingPage() {
       SplitScreenShell,
       {
         rightVariant: "grid",
-        left: /* @__PURE__ */ jsxRuntimeExports.jsxs(SplitScreenLeft, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(SplitScreenLeftBody, { children: [
-            requiredStep ? /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[13px] font-medium text-[#3b82f6]", children: [
-              "Step ",
-              requiredStep,
-              " of ",
-              REQUIRED_KEYS.length
-            ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[13px] font-medium text-zinc-400", children: "Optional" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "mt-2 min-w-0 break-words text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900", children: requiredGranted ? "You're ready to start" : focusPerm.title }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500", children: requiredGranted ? "Start your first session now — Replii will coach you live on your next call." : focusPerm.description }),
-            !requiredGranted && focusPerm.reassurance ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[13px] leading-relaxed text-blue-900/80", children: focusPerm.reassurance }) : null,
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-8 space-y-3", children: PERMISSIONS.filter((p) => p.step !== null || showOptionalScreen).map(
-              (perm) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-                PermissionCard,
-                {
-                  icon: perm.icon,
-                  title: perm.title,
-                  description: perm.description,
-                  enabled: isPermissionEnabled(perm.key, granted, pending),
-                  active: focusKey === perm.key,
-                  dimmed: !requiredGranted && perm.key !== focusKey,
-                  onSelect: () => {
-                    if (!requiredGranted && perm.key !== focusKey) return;
-                    setActiveKey(perm.key);
-                  },
-                  onToggle: () => void handleToggle(perm.key)
-                },
-                perm.key
-              )
-            ) }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
+        left: /* @__PURE__ */ jsxRuntimeExports.jsx(SplitScreenLeft, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(SplitScreenLeftBody, { children: [
+          requiredStep ? /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[13px] font-medium text-[#3b82f6]", children: [
+            "Step ",
+            requiredStep,
+            " of ",
+            REQUIRED_KEYS.length
+          ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[13px] font-medium text-zinc-400", children: "Optional" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "mt-2 min-w-0 break-words text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900", children: requiredGranted ? "You're ready to start" : focusPerm.title }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 min-w-0 break-words text-[15px] leading-relaxed text-zinc-500", children: requiredGranted ? "Start your first session now — Replii will coach you live on your next call." : focusPerm.description }),
+          !requiredGranted && focusPerm.reassurance ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[13px] leading-relaxed text-blue-900/80", children: focusPerm.reassurance }) : null,
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-8 space-y-3", children: PERMISSIONS.filter((p) => p.step !== null || showOptionalScreen).map(
+            (perm) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+              PermissionCard,
               {
-                type: "button",
-                onClick: handlePrimary,
-                className: "mt-8 flex h-auto min-h-[48px] w-full min-w-0 items-center justify-center rounded-xl bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] px-4 py-3 text-center text-[15px] font-medium leading-snug text-white shadow-[0_2px_12px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-90",
-                children: primaryLabel
-              }
+                icon: perm.icon,
+                title: perm.title,
+                description: perm.description,
+                enabled: isPermissionGranted(perm.key, granted),
+                requesting: Boolean(pending[perm.key]),
+                active: focusKey === perm.key,
+                dimmed: !requiredGranted && !isPermissionReachable(perm.key, granted),
+                onSelect: () => {
+                  if (!requiredGranted && !isPermissionReachable(perm.key, granted)) {
+                    return;
+                  }
+                  setActiveKey(perm.key);
+                },
+                onToggle: () => void handleToggle(perm.key)
+              },
+              perm.key
             )
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          ) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
             {
               type: "button",
-              onClick: finish,
-              className: "mt-auto flex min-w-0 items-center gap-0.5 self-center py-2 text-[14px] font-medium text-zinc-400 transition-colors hover:text-zinc-600",
-              children: [
-                requiredGranted ? "Set up call audio later" : "Skip for now",
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { "aria-hidden": true, children: "›" })
-              ]
+              onClick: handlePrimary,
+              className: "mt-8 flex h-auto min-h-[48px] w-full min-w-0 items-center justify-center rounded-xl bg-gradient-to-b from-[#5aa7f9] to-[#3b82f6] px-4 py-3 text-center text-[15px] font-medium leading-snug text-white shadow-[0_2px_12px_rgba(59,130,246,0.35)] transition-opacity hover:opacity-90",
+              children: primaryLabel
             }
           )
-        ] }),
+        ] }) }),
         right: /* @__PURE__ */ jsxRuntimeExports.jsx(PermissionPreview, {})
       }
     )
@@ -40066,6 +40062,7 @@ function PermissionCard({
   title,
   description,
   enabled,
+  requesting,
   active,
   dimmed,
   onSelect,
@@ -40114,13 +40111,14 @@ function PermissionCard({
           Switch,
           {
             checked: enabled,
+            disabled: dimmed || requesting,
             size: "sm",
             checkedClassName: "bg-[#3b82f6]",
             uncheckedClassName: active ? "bg-zinc-300" : "bg-zinc-200",
             "aria-label": `${enabled ? "Disable" : "Enable"} ${title}`,
             onClick: (e) => {
               e.stopPropagation();
-              if (!dimmed && !enabled) onToggle();
+              if (!dimmed && !enabled && !requesting) onToggle();
             }
           }
         )
@@ -40141,9 +40139,20 @@ function OnboardingGuard() {
   const welcomeComplete = useAppStore((s) => s.welcomeComplete);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const shortcutTutorialComplete = useAppStore((s) => s.shortcutTutorialComplete);
+  const paywallComplete = useAppStore((s) => s.paywallComplete);
+  const plan = useAppStore((s) => s.plan);
   if (!welcomeComplete) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/welcome", replace: true });
   if (!isAuthenticated) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/auth", replace: true });
-  if (onboardingComplete) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true });
+  if (onboardingComplete) {
+    const next = getOnboardingFunnelRoute({
+      onboardingComplete,
+      shortcutTutorialComplete,
+      paywallComplete,
+      plan
+    });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: next ?? "/", replace: true });
+  }
   return /* @__PURE__ */ jsxRuntimeExports.jsx(OnboardingPage, {});
 }
 function TryRepliiPreview({
@@ -40634,6 +40643,7 @@ function PaywallPage() {
   const {
     isAuthenticated,
     onboardingComplete,
+    shortcutTutorialComplete,
     paywallComplete,
     plan
   } = useAppStore();
@@ -40662,12 +40672,17 @@ function PaywallPage() {
       navigate("/onboarding", { replace: true });
       return;
     }
+    if (!shortcutTutorialComplete) {
+      navigate("/try", { replace: true });
+      return;
+    }
     if (hasDashboardAccess(plan, paywallComplete)) {
       navigate("/", { replace: true });
     }
   }, [
     isAuthenticated,
     onboardingComplete,
+    shortcutTutorialComplete,
     paywallComplete,
     plan,
     navigate
@@ -66292,22 +66307,34 @@ function AdminGuard() {
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsx(AdminDashboardPage, {});
 }
+function useFunnelRedirect() {
+  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const shortcutTutorialComplete = useAppStore((s) => s.shortcutTutorialComplete);
+  const paywallComplete = useAppStore((s) => s.paywallComplete);
+  const plan = useAppStore((s) => s.plan);
+  return getOnboardingFunnelRoute({
+    onboardingComplete,
+    shortcutTutorialComplete,
+    paywallComplete,
+    plan
+  });
+}
 function RootRedirect() {
   const welcomeComplete = useAppStore((s) => s.welcomeComplete);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const funnelRoute = useFunnelRedirect();
   if (!welcomeComplete) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/welcome", replace: true });
   if (!isAuthenticated) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/auth", replace: true });
-  if (!onboardingComplete) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/onboarding", replace: true });
+  if (funnelRoute) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: funnelRoute, replace: true });
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true });
 }
 function DashboardGuard() {
   const welcomeComplete = useAppStore((s) => s.welcomeComplete);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const funnelRoute = useFunnelRedirect();
   if (!welcomeComplete) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/welcome", replace: true });
   if (!isAuthenticated) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/auth", replace: true });
-  if (!onboardingComplete) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/onboarding", replace: true });
+  if (funnelRoute) return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: funnelRoute, replace: true });
   return /* @__PURE__ */ jsxRuntimeExports.jsx(DashboardLayout, {});
 }
 function AppRoutes() {

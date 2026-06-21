@@ -1,12 +1,12 @@
 import type { DownloadPlatform } from "./platform";
+import { REPLII_PRODUCTION_ORIGIN } from "./replii-urls";
 
 /** GitHub Release tag when CI publishes installers. */
 export const DOWNLOAD_RELEASE_TAG = "v0.1.0";
 
 /** Primary production host for static installers and billing API. */
 export const VERCEL_APP_ORIGIN =
-  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-  "https://ghost-eight-virid.vercel.app";
+  process.env.NEXT_PUBLIC_APP_URL?.trim() || REPLII_PRODUCTION_ORIGIN;
 
 export const RELEASE_PAGE_URL =
   "https://github.com/archierunnicles6-stack/replii/releases/latest";

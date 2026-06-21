@@ -1,4 +1,6 @@
-export const DEFAULT_API_BASE = "https://ghost-eight-virid.vercel.app";
+import { REPLII_PRODUCTION_ORIGIN } from "./replii-urls";
+
+export const DEFAULT_API_BASE = REPLII_PRODUCTION_ORIGIN;
 
 let cachedApiBase: string | null = null;
 let bootstrapPromise: Promise<string> | null = null;
