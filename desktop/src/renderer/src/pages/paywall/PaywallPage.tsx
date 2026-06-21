@@ -13,6 +13,7 @@ export function PaywallPage() {
   const {
     isAuthenticated,
     onboardingComplete,
+    shortcutTutorialComplete,
     paywallComplete,
     plan,
   } = useAppStore();
@@ -45,12 +46,17 @@ export function PaywallPage() {
       navigate("/onboarding", { replace: true });
       return;
     }
+    if (!shortcutTutorialComplete) {
+      navigate("/try", { replace: true });
+      return;
+    }
     if (hasDashboardAccess(plan, paywallComplete)) {
       navigate("/", { replace: true });
     }
   }, [
     isAuthenticated,
     onboardingComplete,
+    shortcutTutorialComplete,
     paywallComplete,
     plan,
     navigate,

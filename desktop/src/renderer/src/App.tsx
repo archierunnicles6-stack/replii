@@ -5,6 +5,7 @@ import { useAuthCallback } from "./hooks/useAuthCallback";
 import { useBillingReturn } from "./hooks/useBillingReturn";
 import { bootstrapOpenAIKey } from "./services/whisper";
 import { resolveApiBase } from "./lib/billing-api-base";
+import { getOnboardingFunnelRoute } from "./lib/onboarding-flow";
 import { MicHelperApp } from "./mic/MicHelperApp";
 import { useAppStore } from "./store/useAppStore";
 import { WelcomePage } from "./pages/welcome/WelcomePage";
@@ -19,13 +20,27 @@ import { MeetingDetailPage } from "./pages/dashboard/MeetingDetailPage";
 import { UpcomingPage } from "./pages/dashboard/UpcomingPage";
 import { AdminGuard } from "./pages/admin/AdminGuard";
 
+function useFunnelRedirect(): string | null {
+  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const shortcutTutorialComplete = useAppStore((s) => s.shortcutTutorialComplete);
+  const paywallComplete = useAppStore((s) => s.paywallComplete);
+  const plan = useAppStore((s) => s.plan);
+
+  return getOnboardingFunnelRoute({
+    onboardingComplete,
+    shortcutTutorialComplete,
+    paywallComplete,
+    plan,
+  });
+}
+
 function RootRedirect() {
   const welcomeComplete = useAppStore((s) => s.welcomeComplete);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const funnelRoute = useFunnelRedirect();
   if (!welcomeComplete) return <Navigate to="/welcome" replace />;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  if (!onboardingComplete) return <Navigate to="/onboarding" replace />;
+  if (funnelRoute) return <Navigate to={funnelRoute} replace />;
 
   return <Navigate to="/" replace />;
 }
@@ -33,10 +48,10 @@ function RootRedirect() {
 function DashboardGuard() {
   const welcomeComplete = useAppStore((s) => s.welcomeComplete);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const funnelRoute = useFunnelRedirect();
   if (!welcomeComplete) return <Navigate to="/welcome" replace />;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  if (!onboardingComplete) return <Navigate to="/onboarding" replace />;
+  if (funnelRoute) return <Navigate to={funnelRoute} replace />;
 
   return <DashboardLayout />;
 }

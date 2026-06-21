@@ -7,6 +7,7 @@ import {
 } from "../../components/onboarding/SplitScreenLeft";
 import { SplitScreenShell } from "../../components/onboarding/SplitScreenShell";
 import { BackButton, Switch } from "../../components/ui";
+import { confirmMicrophoneAccess } from "../../services/audio-capture";
 import { notifyAppStoreChanged, useAppStore } from "../../store/useAppStore";
 
 type PermissionKey = "accessibility" | "microphone" | "screen";
@@ -31,22 +32,23 @@ function nextRequiredKey(
   return null;
 }
 
-function isPermissionEnabled(
+function isPermissionGranted(
   key: PermissionKey,
   granted: Record<PermissionKey, boolean>,
-  pending: Partial<Record<PermissionKey, boolean>>,
 ): boolean {
-  if (pending[key]) return true;
   if (!granted[key]) return false;
   // Don't show mic as on during step 1 — avoids confusing pre-granted mic state.
-  if (
-    key === "microphone" &&
-    !granted.accessibility &&
-    !pending.accessibility
-  ) {
-    return false;
-  }
+  if (key === "microphone" && !granted.accessibility) return false;
   return true;
+}
+
+function isPermissionReachable(
+  key: PermissionKey,
+  granted: Record<PermissionKey, boolean>,
+): boolean {
+  if (key === "accessibility") return true;
+  if (key === "microphone") return granted.accessibility;
+  return granted.accessibility && granted.microphone;
 }
 
 const PERMISSIONS: PermissionItem[] = [
@@ -81,7 +83,6 @@ const PERMISSIONS: PermissionItem[] = [
 export function OnboardingPage() {
   const navigate = useNavigate();
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
-  const completeShortcutTutorial = useAppStore((s) => s.completeShortcutTutorial);
   const [granted, setGranted] = useState<Record<PermissionKey, boolean>>({
     accessibility: false,
     microphone: false,
@@ -94,13 +95,19 @@ export function OnboardingPage() {
   const finishingRef = useRef(false);
   const prevGrantedRef = useRef(granted);
 
-  const refreshStatus = useCallback(async () => {
+  const refreshStatus = useCallback(async (options?: { deep?: boolean }) => {
     const status = await window.replii?.getPermissionStatus?.();
     if (!status) return;
+
+    let microphone = status.microphone;
+    if (options?.deep && !microphone && status.accessibility) {
+      microphone = await confirmMicrophoneAccess();
+    }
+
     setGranted((prev) => {
       const next = {
         accessibility: status.accessibility,
-        microphone: status.microphone,
+        microphone,
         screen: status.screen,
       };
       if (
@@ -118,10 +125,9 @@ export function OnboardingPage() {
     if (finishingRef.current) return;
     finishingRef.current = true;
     completeOnboarding();
-    completeShortcutTutorial();
     notifyAppStoreChanged();
-    navigate("/");
-  }, [completeOnboarding, completeShortcutTutorial, navigate]);
+    navigate("/try");
+  }, [completeOnboarding, navigate]);
 
   useEffect(() => {
     void window.replii?.setDashboardLayout?.("onboarding");
@@ -131,9 +137,9 @@ export function OnboardingPage() {
     void refreshStatus();
     const id = setInterval(() => void refreshStatus(), 500);
     const onFocus = () => {
-      void refreshStatus();
-      setTimeout(() => void refreshStatus(), 300);
-      setTimeout(() => void refreshStatus(), 1000);
+      void refreshStatus({ deep: true });
+      setTimeout(() => void refreshStatus({ deep: true }), 300);
+      setTimeout(() => void refreshStatus({ deep: true }), 1000);
     };
     const onVisible = () => {
       if (document.visibilityState === "visible") onFocus();
@@ -164,10 +170,12 @@ export function OnboardingPage() {
   };
 
   const handleToggle = async (key: PermissionKey) => {
-    if (isPermissionEnabled(key, granted, pending)) return;
+    if (isPermissionGranted(key, granted)) return;
+    if (!isPermissionReachable(key, granted)) return;
     setPending((prev) => ({ ...prev, [key]: true }));
     setActiveKey(key);
     await openSettings(key);
+    void refreshStatus({ deep: true });
   };
 
   useEffect(() => {
@@ -186,26 +194,15 @@ export function OnboardingPage() {
       return changed ? next : pendingPrev;
     });
 
-    const accessibilityDone = isPermissionEnabled("accessibility", granted, pending);
-    const microphoneDone = isPermissionEnabled("microphone", granted, pending);
-
-    if (accessibilityDone && !microphoneDone) {
+    const next = nextRequiredKey(granted);
+    if (next) {
+      setActiveKey(next);
+    } else if (REQUIRED_KEYS.some((key) => granted[key] && !prev[key])) {
       setActiveKey("microphone");
-    } else if (!accessibilityDone) {
-      setActiveKey("accessibility");
     }
-
-    const newlyGranted = REQUIRED_KEYS.some((key) => granted[key] && !prev[key]);
-    if (newlyGranted) {
-      const next = nextRequiredKey(granted);
-      if (next) setActiveKey(next);
-    }
-  }, [granted, pending]);
+  }, [granted]);
 
   const requiredGranted = granted.accessibility && granted.microphone;
-  const bothEnabled = REQUIRED_KEYS.every((key) =>
-    isPermissionEnabled(key, granted, pending),
-  );
   const pendingRequiredKey = nextRequiredKey(granted);
   const focusKey = pendingRequiredKey ?? activeKey;
   const focusPerm = PERMISSIONS.find((p) => p.key === focusKey) ?? PERMISSIONS[0];
@@ -218,30 +215,31 @@ export function OnboardingPage() {
     return () => clearTimeout(id);
   }, [requiredGranted, finish]);
 
-  const settingsLabel =
-    focusKey === "accessibility"
-      ? "Open accessibility settings"
-      : focusKey === "microphone"
-        ? "Open microphone settings"
-        : "Open call audio settings";
+  const primaryLabel = "Continue";
 
-  const primaryLabel = requiredGranted
-    ? "Start my first session"
-    : bothEnabled
-      ? "Continue"
-      : settingsLabel;
+  const handlePrimary = async () => {
+    const status = await window.replii?.getPermissionStatus?.();
+    if (!status) return;
 
-  const handlePrimary = () => {
-    if (requiredGranted) {
+    let microphone = status.microphone;
+    if (!microphone && status.accessibility) {
+      microphone = await confirmMicrophoneAccess();
+    }
+
+    const current = {
+      accessibility: status.accessibility,
+      microphone,
+      screen: status.screen,
+    };
+    setGranted(current);
+
+    if (current.accessibility && current.microphone) {
       finish();
       return;
     }
-    if (bothEnabled) {
-      const missing = nextRequiredKey(granted);
-      if (missing) void openSettings(missing);
-      return;
-    }
-    void openSettings(focusKey);
+
+    const missing = nextRequiredKey(current);
+    if (missing) await openSettings(missing);
   };
 
   return (
@@ -282,11 +280,20 @@ export function OnboardingPage() {
                       icon={perm.icon}
                       title={perm.title}
                       description={perm.description}
-                      enabled={isPermissionEnabled(perm.key, granted, pending)}
+                      enabled={isPermissionGranted(perm.key, granted)}
+                      requesting={Boolean(pending[perm.key])}
                       active={focusKey === perm.key}
-                      dimmed={!requiredGranted && perm.key !== focusKey}
+                      dimmed={
+                        !requiredGranted &&
+                        !isPermissionReachable(perm.key, granted)
+                      }
                       onSelect={() => {
-                        if (!requiredGranted && perm.key !== focusKey) return;
+                        if (
+                          !requiredGranted &&
+                          !isPermissionReachable(perm.key, granted)
+                        ) {
+                          return;
+                        }
                         setActiveKey(perm.key);
                       }}
                       onToggle={() => void handleToggle(perm.key)}
@@ -303,15 +310,6 @@ export function OnboardingPage() {
                 {primaryLabel}
               </button>
             </SplitScreenLeftBody>
-
-            <button
-              type="button"
-              onClick={finish}
-              className="mt-auto flex min-w-0 items-center gap-0.5 self-center py-2 text-[14px] font-medium text-zinc-400 transition-colors hover:text-zinc-600"
-            >
-              {requiredGranted ? "Set up call audio later" : "Skip for now"}
-              <span aria-hidden>›</span>
-            </button>
           </SplitScreenLeft>
         }
         right={<PermissionPreview />}
@@ -325,6 +323,7 @@ function PermissionCard({
   title,
   description,
   enabled,
+  requesting,
   active,
   dimmed,
   onSelect,
@@ -334,6 +333,7 @@ function PermissionCard({
   title: string;
   description: string;
   enabled: boolean;
+  requesting?: boolean;
   active: boolean;
   dimmed?: boolean;
   onSelect: () => void;
@@ -386,13 +386,14 @@ function PermissionCard({
       </div>
       <Switch
         checked={enabled}
+        disabled={dimmed || requesting}
         size="sm"
         checkedClassName="bg-[#3b82f6]"
         uncheckedClassName={active ? "bg-zinc-300" : "bg-zinc-200"}
         aria-label={`${enabled ? "Disable" : "Enable"} ${title}`}
         onClick={(e) => {
           e.stopPropagation();
-          if (!dimmed && !enabled) onToggle();
+          if (!dimmed && !enabled && !requesting) onToggle();
         }}
       />
     </div>

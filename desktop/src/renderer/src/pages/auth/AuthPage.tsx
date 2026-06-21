@@ -11,6 +11,7 @@ import {
   recordTermsAcceptance,
   termsAcceptanceMetadata,
 } from "../../lib/legal-acceptance";
+import { getOnboardingFunnelRoute } from "../../lib/onboarding-flow";
 import { hasLocalAccountProfile } from "../../services/account-sync";
 import { useAppStore } from "../../store/useAppStore";
 import { BackButton, PillButton } from "../../components/ui";
@@ -57,11 +58,13 @@ export function AuthPage() {
       }
 
       const state = useAppStore.getState();
-      if (!state.onboardingComplete) {
-        navigate("/onboarding");
-        return;
-      }
-      navigate("/");
+      const next = getOnboardingFunnelRoute({
+        onboardingComplete: state.onboardingComplete,
+        shortcutTutorialComplete: state.shortcutTutorialComplete,
+        paywallComplete: state.paywallComplete,
+        plan: state.plan,
+      });
+      navigate(next ?? "/");
     },
     [login, navigate],
   );
