@@ -53,7 +53,7 @@ function DownloadLinkContent({
   return (
     <a
       href={href}
-      {...(isSameOrigin ? { download: filename } : {})}
+      {...(isSameOrigin ? { download: filename } : { rel: "noopener noreferrer" })}
       className={className ?? `${baseClassName} ${sizeClassName[size]}`}
     >
       {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}
@@ -70,11 +70,12 @@ function DownloadLinkFallback({
   children,
 }: DownloadLinkProps) {
   const platform = platformProp ?? "mac";
-  const { label, url } = getDownloadInfo(platform);
+  const { label, externalUrl } = getDownloadInfo(platform);
 
   return (
     <a
-      href={url}
+      href={externalUrl}
+      rel="noopener noreferrer"
       className={className ?? `${baseClassName} ${sizeClassName[size]}`}
     >
       {!hideIcon && (platform === "windows" ? <WindowsIcon /> : <AppleIcon />)}

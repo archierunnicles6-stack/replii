@@ -1,5 +1,6 @@
 import { HeroAppPreview } from "./HeroAppPreview";
 import { DownloadLink } from "./DownloadLink";
+import { MacInstallHint } from "./MacInstallHint";
 
 export function Hero() {
   return (
@@ -16,8 +17,9 @@ export function Hero() {
           calls and logging every session for your review.
         </p>
 
-        <div className="mt-8">
+        <div className="mt-8 flex w-full max-w-md flex-col items-center gap-3">
           <DownloadLink />
+          <MacInstallHint className="w-full" />
         </div>
 
         <div className="mt-14 w-full md:mt-16">

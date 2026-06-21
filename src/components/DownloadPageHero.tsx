@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getDownloadInfo } from "@/lib/download";
 import { useDownloadPlatform } from "@/hooks/useDownloadPlatform";
 import { DownloadLink } from "./DownloadLink";
+import { MacInstallHint } from "./MacInstallHint";
 import { OpenRepliiButton } from "./OpenRepliiButton";
 import type { DownloadPlatform } from "@/lib/platform";
 
@@ -60,20 +61,23 @@ export function DownloadPageHero() {
 
       <PlatformToggle platform={platform} onChange={setPlatform} />
 
-      <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-start">
-        <DownloadLink
-          platform={platform}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-zinc-900 px-6 text-[14px] font-medium text-white transition-colors hover:bg-zinc-800"
-        >
-          {longLabel}
-        </DownloadLink>
-        <OpenRepliiButton platform={platform} />
-        <Link
-          href="/app"
-          className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-6 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-        >
-          Open web app
-        </Link>
+      <div className="mt-10 flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <DownloadLink
+            platform={platform}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-zinc-900 px-6 text-[14px] font-medium text-white transition-colors hover:bg-zinc-800"
+          >
+            {longLabel}
+          </DownloadLink>
+          <OpenRepliiButton platform={platform} />
+          <Link
+            href="/app"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-6 text-[14px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+          >
+            Open web app
+          </Link>
+        </div>
+        {!isWindows ? <MacInstallHint className="max-w-xl" /> : null}
       </div>
     </>
   );

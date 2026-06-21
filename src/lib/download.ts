@@ -54,40 +54,16 @@ export function getDownloadHref(platform: DownloadPlatform): string {
   return `/api/download?platform=${platform}`;
 }
 
-function isVercelHost(host: string): boolean {
-  return (
-    host.endsWith(".vercel.app") ||
-    host === new URL(VERCEL_APP_ORIGIN).hostname
-  );
-}
-
-/** Hosts that proxy marketing pages but block /api/* (Apache ModSecurity). */
-function isLegacyMarketingHost(host: string): boolean {
-  return (
-    host === "replii.ai" ||
-    host === "www.replii.ai" ||
-    host === "ghost.ai" ||
-    host === "www.ghost.ai"
-  );
-}
-
-/** Pick the best download URL in the browser (handles broken legacy hosts). */
+/** Pick the best download URL in the browser. */
 export function resolveDownloadHref(platform: DownloadPlatform): string {
-  if (typeof window === "undefined") {
-    return getDownloadHref(platform);
+  if (process.env.NODE_ENV === "development") {
+    if (typeof window === "undefined") return getDownloadHref(platform);
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") return getDownloadHref(platform);
   }
 
-  const host = window.location.hostname;
-  const isLocal = host === "localhost" || host === "127.0.0.1";
-
-  if (isLegacyMarketingHost(host)) {
-    return getExternalDownloadUrl(platform);
-  }
-
-  if (isLocal || isVercelHost(host)) {
-    return getDownloadHref(platform);
-  }
-
+  // Production: link straight to GitHub Release assets. Safari and Chrome handle
+  // this more reliably than /api/download → 302 → GitHub.
   return getExternalDownloadUrl(platform);
 }
 
