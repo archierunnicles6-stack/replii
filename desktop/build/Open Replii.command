@@ -1,16 +1,21 @@
 #!/bin/bash
-# Double-click to open Replii (clears quarantine + avoids silent no-op launches).
+# Double-click to open Replii (clears quarantine + avoids Gatekeeper blocks).
 set -e
 
-APP="/Applications/Replii.app"
-DEV_APP="$(cd "$(dirname "$0")/../.replii-dev" 2>/dev/null && pwd)/Replii.app"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+INSTALLED="/Applications/Replii.app"
+LOCAL="$DIR/Replii.app"
+DEV_APP="$(cd "$DIR/../.replii-dev" 2>/dev/null && pwd)/Replii.app"
 
-if [ ! -d "$APP" ]; then
-  if [ -d "$DEV_APP" ]; then
-    open "$DEV_APP"
-    exit 0
-  fi
-  osascript -e 'display alert "Install Replii first — open the DMG and run Install Replii.command, or download from replii.ai/download." as warning'
+if [ -d "$INSTALLED" ]; then
+  APP="$INSTALLED"
+elif [ -d "$LOCAL" ]; then
+  APP="$LOCAL"
+elif [ -d "$DEV_APP" ]; then
+  open "$DEV_APP"
+  exit 0
+else
+  osascript -e 'display alert "Replii.app not found. Run Install Replii.command in this folder, or drag Replii to Applications." as warning'
   exit 1
 fi
 

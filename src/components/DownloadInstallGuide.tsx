@@ -68,8 +68,10 @@ codesign --force --deep --sign - /Applications/Replii.app
 open /Applications/Replii.app`}
         </pre>
         <p className="mt-2 text-[13px] text-amber-900/70">
-          Fastest fix: use <strong>Open Replii.command</strong> on your Desktop (or inside the DMG).
-          Or right-click Replii in Applications → <strong>Open</strong> → <strong>Open</strong> again.
+          Fastest fix: in the DMG, double-click <strong>Install Replii.command</strong> (installs +
+          opens), or <strong>Open Replii.command</strong> to try without installing. If you already
+          dragged Replii to Applications, right-click it → <strong>Open</strong> →{" "}
+          <strong>Open</strong> again (do not double-click the app icon).
         </p>
       </div>
 
