@@ -1,0 +1,167 @@
+name: Desktop Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0)"
+        required: true
+        default: "v0.1.0"
+      platform:
+        description: "Which installers to build"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - mac
+          - windows
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  BUILD_PLATFORM: ${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'all' }}
+  CSC_IDENTITY_AUTO_DISCOVERY: false
+
+jobs:
+  build-mac:
+    if: env.BUILD_PLATFORM == 'all' || env.BUILD_PLATFORM == 'mac'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install desktop dependencies
+        run: npm ci
+        working-directory: desktop
+
+      - name: Configure desktop env
+        working-directory: desktop
+        env:
+          VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_LEGAL_BASE_URL: ${{ secrets.VITE_LEGAL_BASE_URL }}
+          VITE_ADMIN_EMAIL: ${{ secrets.VITE_ADMIN_EMAIL }}
+        run: node scripts/write-ci-env.mjs
+
+      - name: Build Mac installer
+        run: npm run package:mac
+        working-directory: desktop
+
+      - name: Verify Mac artifact
+        run: test -f desktop/release/Replii.dmg
+
+      - name: Upload Mac artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-installer
+          path: desktop/release/Replii.dmg
+          if-no-files-found: error
+
+  build-win:
+    if: env.BUILD_PLATFORM == 'all' || env.BUILD_PLATFORM == 'windows'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install desktop dependencies
+        run: npm ci
+        working-directory: desktop
+
+      - name: Configure desktop env
+        working-directory: desktop
+        env:
+          VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_LEGAL_BASE_URL: ${{ secrets.VITE_LEGAL_BASE_URL }}
+          VITE_ADMIN_EMAIL: ${{ secrets.VITE_ADMIN_EMAIL }}
+        run: node scripts/write-ci-env.mjs
+
+      - name: Build Windows installer
+        run: npm run package:win
+        working-directory: desktop
+
+      - name: Verify Windows installer
+        shell: pwsh
+        run: |
+          $installer = "desktop/release/Replii-Setup.exe"
+          if (-not (Test-Path $installer)) {
+            throw "Missing $installer — expected NSIS installer, not a portable zip"
+          }
+          $size = (Get-Item $installer).Length
+          if ($size -lt 1MB) {
+            throw "Installer too small ($size bytes) — build likely failed"
+          }
+          Write-Host "Replii-Setup.exe size: $([math]::Round($size / 1MB, 2)) MB"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-installer
+          path: desktop/release/Replii-Setup.exe
+          if-no-files-found: error
+
+  release:
+    needs: [build-mac, build-win]
+    if: |
+      always() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      (needs.build-mac.result == 'success' || needs.build-win.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          if [ -f artifacts/mac-installer/Replii.dmg ]; then
+            cp artifacts/mac-installer/Replii.dmg release-assets/
+          fi
+          if [ -f artifacts/win-installer/Replii-Setup.exe ]; then
+            cp artifacts/win-installer/Replii-Setup.exe release-assets/
+          fi
+          ls -la release-assets/
+
+      - name: Remove obsolete Windows zip
+        if: needs.build-win.result == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete-asset "${RELEASE_TAG}" Replii-Windows.zip --yes || true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Replii ${{ env.RELEASE_TAG }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          overwrite: true
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
