@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { APP_VERSION } from "../../lib/version";
 import { getSupabase, isSupabaseConfigured } from "../../lib/supabase";
 import { removeProfileAvatar, isAvatarImage, uploadProfileAvatar } from "../../lib/avatar";
 import { applyContentProtection } from "../../services/content-protection";
@@ -227,10 +228,10 @@ function GeneralPanel({ onRequestUpgrade }: { onRequestUpgrade: () => void }) {
             </svg>
           }
           title="Replii Version"
-          description="You are currently using Replii version 0.1.0"
+          description={`You are currently using Replii version ${APP_VERSION}`}
           action={
             <span className="rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-1.5 text-[12px] font-medium text-zinc-500">
-              v0.1.0
+              v{APP_VERSION}
             </span>
           }
         />
@@ -422,7 +423,7 @@ function ReleaseNotesPanel() {
       <PanelHeader title="Release Notes" subtitle="What's new in Replii" />
       <div className="space-y-4">
         <div className="rounded-xl border border-zinc-200 p-4">
-          <p className="text-[12px] font-semibold text-zinc-900">v0.1.0</p>
+          <p className="text-[12px] font-semibold text-zinc-900">v{APP_VERSION}</p>
           <p className="mt-1 text-[12px] text-zinc-500">Initial release — live AI coaching, overlay, and meeting summaries.</p>
         </div>
       </div>

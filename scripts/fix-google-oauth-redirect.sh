@@ -15,7 +15,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT_REF="$(grep '^project_id' "$ROOT/supabase/config.toml" | sed 's/.*= *"\(.*\)".*/\1/')"
-GOOGLE_CLIENT_ID="821453006387-t40vuplgvemi57kf3qhqp9gca4qmicd5.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID="821453006387-snrakrrq6n17m5pde2nfshmnf8nanmc6.apps.googleusercontent.com"
 REDIRECT_URI="https://${PROJECT_REF}.supabase.co/auth/v1/callback"
 OPEN_CONSOLE=false
 

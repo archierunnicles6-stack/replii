@@ -19,7 +19,7 @@ const DEFAULTS = {
   VITE_LEGAL_BASE_URL: "https://replii.ai",
   VITE_API_BASE_URL: "https://replii-lac.vercel.app",
   VITE_GOOGLE_CLIENT_ID:
-    "821453006387-t40vuplgvemi57kf3qhqp9gca4qmicd5.apps.googleusercontent.com",
+    "821453006387-snrakrrq6n17m5pde2nfshmnf8nanmc6.apps.googleusercontent.com",
 };
 
 const REQUIRED = [

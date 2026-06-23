@@ -1,4 +1,4 @@
-import { DOWNLOAD_RELEASE_TAG } from "./download";
+import { DOWNLOAD_RELEASE_TAG } from "./version";
 import type { DownloadPlatform } from "./platform";
 import { APP_VERSION } from "./version";
 

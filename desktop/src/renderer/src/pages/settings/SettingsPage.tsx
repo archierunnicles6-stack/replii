@@ -1,4 +1,5 @@
 import { OVERLAY_KEYBINDS, shortcutModLabel } from "../../lib/keybinds";
+import { APP_VERSION } from "../../lib/version";
 import { useEffect, useState } from "react";
 import { PageHeader, SelectRow, Toggle } from "../../components/ui";
 import { useContentProtectionSync } from "../../hooks/useContentProtectionSync";
@@ -146,7 +147,7 @@ export function SettingsPage() {
           App
         </h2>
         <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px] text-zinc-600">
-          Replii v0.1.0
+          Replii v{APP_VERSION}
         </div>
         <button
           type="button"

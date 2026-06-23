@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, rmSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { signMacApp } from "../desktop/scripts/sign-mac-app.mjs";
 import { ensureNodePath, repoRoot } from "./ensure-node-path.mjs";
@@ -8,6 +8,9 @@ import { syncDesktopRenderer } from "./sync-desktop-renderer.mjs";
 ensureNodePath();
 
 const desktopRoot = path.join(repoRoot, "desktop");
+const appVersion = JSON.parse(
+  readFileSync(path.join(repoRoot, "package.json"), "utf8"),
+).version;
 const installedApp = "/Applications/Replii.app";
 const skipPackage = process.argv.includes("--skip-package");
 const skipOpen = process.argv.includes("--skip-open");
@@ -86,7 +89,7 @@ if (process.platform === "darwin" && existsSync(packagedApp)) {
 console.log("[update] Done.");
 console.log("  • Web dev downloads: public/downloads/Replii.dmg");
 console.log("  • Static renderer:   index.html + assets/");
-console.log("  • GitHub release:    push tag v0.1.0 to publish installers");
+console.log(`  • GitHub release:    push tag v${appVersion} to publish installers`);
 
 if (!skipOpen && process.platform === "darwin") {
   if (existsSync(appToOpen)) {

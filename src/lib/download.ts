@@ -1,8 +1,8 @@
 import type { DownloadPlatform } from "./platform";
 import { REPLII_PRODUCTION_ORIGIN } from "./replii-urls";
+import { DOWNLOAD_RELEASE_TAG } from "./version";
 
-/** GitHub Release tag when CI publishes installers. */
-export const DOWNLOAD_RELEASE_TAG = "v0.1.0";
+export { DOWNLOAD_RELEASE_TAG };
 
 /** Primary production host for static installers and billing API. */
 export const VERCEL_APP_ORIGIN =
@@ -17,11 +17,10 @@ export const MAC_DOWNLOAD_GITHUB_URL =
 
 export const WINDOWS_DOWNLOAD_GITHUB_URL =
   process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL?.trim() ||
-  "https://github.com/archierunnicles6-stack/replii/releases/latest/download/Replii-Windows.zip";
+  "https://github.com/archierunnicles6-stack/replii/releases/latest/download/Replii-Setup.exe";
 
 export const MAC_DOWNLOAD_FILENAME = "Replii.dmg";
-/** Windows portable build until NSIS installer is published. */
-export const WINDOWS_DOWNLOAD_FILENAME = "Replii-Windows.zip";
+export const WINDOWS_DOWNLOAD_FILENAME = "Replii-Setup.exe";
 
 /** @deprecated Use DOWNLOAD_RELEASE_TAG */
 export const MAC_DOWNLOAD_RELEASE_TAG = DOWNLOAD_RELEASE_TAG;
