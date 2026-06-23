@@ -45,11 +45,14 @@ if (ghHasWorkflowScope()) {
 
 if (process.env.SUPABASE_DB_PASSWORD?.trim()) {
   if (run("node", ["scripts/apply-supabase-migrations.mjs"]) !== 0) failed = true;
-  if (run("node", ["scripts/check-supabase-schema.mjs"]) !== 0) failed = true;
-} else {
-  console.log(
-    "\n[finish] SUPABASE_DB_PASSWORD not set. Run:\n  SUPABASE_DB_PASSWORD='your-db-password' node scripts/finish-launch.mjs",
-  );
+}
+
+if (run("node", ["scripts/check-supabase-schema.mjs"]) !== 0) {
+  if (!process.env.SUPABASE_DB_PASSWORD?.trim()) {
+    console.log(
+      "\n[finish] Schema check failed. Apply migrations:\n  SUPABASE_DB_PASSWORD='your-db-password' node scripts/apply-supabase-migrations.mjs",
+    );
+  }
   failed = true;
 }
 
