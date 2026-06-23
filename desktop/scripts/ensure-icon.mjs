@@ -7,8 +7,24 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const desktopRoot = path.join(__dirname, "..");
 const buildDir = path.join(desktopRoot, "build");
 const iconPng = path.join(buildDir, "icon.png");
+const iconIco = path.join(buildDir, "icon.ico");
+
+function ensureIco() {
+  if (existsSync(iconIco)) return;
+  if (!existsSync(iconPng)) return;
+  try {
+    execSync(
+      `python3 -c "from PIL import Image; img=Image.open('${iconPng}').convert('RGBA'); img.save('${iconIco}', format='ICO', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])"`,
+      { stdio: "inherit" },
+    );
+    console.log("[replii] Created build/icon.ico");
+  } catch {
+    console.warn("[replii] Could not create icon.ico — install Pillow or commit build/icon.ico");
+  }
+}
 
 if (existsSync(iconPng)) {
+  ensureIco();
   console.log("[replii] Using existing build/icon.png");
   process.exit(0);
 }
@@ -28,3 +44,5 @@ try {
 } catch {
   console.warn("[replii] Could not scale icon — using 1×1 placeholder");
 }
+
+ensureIco();
