@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getDownloadInfo } from "@/lib/download";
 import { useDownloadPlatform } from "@/hooks/useDownloadPlatform";
 import { DownloadLink } from "./DownloadLink";
-import { MacInstallHint } from "./MacInstallHint";
 import { OpenRepliiButton } from "./OpenRepliiButton";
 import type { DownloadPlatform } from "@/lib/platform";
 
@@ -77,7 +76,6 @@ export function DownloadPageHero() {
             Open web app
           </Link>
         </div>
-        {!isWindows ? <MacInstallHint className="max-w-xl" /> : null}
       </div>
     </>
   );

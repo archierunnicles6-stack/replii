@@ -1,7 +1,5 @@
 import { HeroAppPreview } from "./HeroAppPreview";
 import { DownloadLink } from "./DownloadLink";
-import { MacInstallHint } from "./MacInstallHint";
-
 export function Hero() {
   return (
     <section id="download" className="relative overflow-hidden pb-16 pt-6 md:pb-24 md:pt-10">
@@ -19,7 +17,6 @@ export function Hero() {
 
         <div className="mt-8 flex w-full max-w-md flex-col items-center gap-3">
           <DownloadLink />
-          <MacInstallHint className="w-full" />
         </div>
 
         <div className="mt-14 w-full md:mt-16">
