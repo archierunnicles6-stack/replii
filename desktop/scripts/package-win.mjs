@@ -15,12 +15,12 @@ if (process.platform !== "win32") {
   process.exit(1);
 }
 
-function run(label, command, args) {
+function run(label, command, args, { useShell = false } = {}) {
   console.log(`[replii] ${label}…`);
   const result = spawnSync(command, args, {
     cwd: desktopRoot,
     stdio: "inherit",
-    shell: false,
+    shell: useShell,
   });
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
@@ -29,5 +29,7 @@ function run(label, command, args) {
 
 run("Prepare CI build", "node", ["scripts/prepare-ci-build.mjs"]);
 run("Ensure icon", "node", ["scripts/ensure-icon.mjs"]);
-run("Build app", "npm", ["run", "build"]);
-run("Package Windows installer", "npx", ["electron-builder", "--win"]);
+run("Build app", "npm", ["run", "build"], { useShell: true });
+run("Package Windows installer", "npx", ["electron-builder", "--win"], {
+  useShell: true,
+});

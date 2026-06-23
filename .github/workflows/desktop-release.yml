@@ -127,7 +127,6 @@ jobs:
     needs: [build-mac, build-win]
     if: |
       always() &&
-      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       (needs.build-mac.result == 'success' || needs.build-win.result == 'success')
     runs-on: ubuntu-latest
