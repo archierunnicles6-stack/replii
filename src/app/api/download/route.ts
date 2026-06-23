@@ -11,14 +11,15 @@ import {
 } from "@/lib/download";
 import { resolveGitHubAssetUrl } from "@/lib/github-release";
 import type { DownloadPlatform } from "@/lib/platform";
+import { APP_VERSION } from "@/lib/version";
 
 function parsePlatform(value: string | null): DownloadPlatform {
   return value === "windows" ? "windows" : "mac";
 }
 
 const LOCAL_CANDIDATES: Record<DownloadPlatform, string[]> = {
-  mac: [MAC_DOWNLOAD_FILENAME, "Replii-0.1.0-arm64.dmg"],
-  windows: [WINDOWS_DOWNLOAD_FILENAME, "Replii-Setup.exe", "Replii-Windows.zip"],
+  mac: [MAC_DOWNLOAD_FILENAME, `Replii-${APP_VERSION}-arm64.dmg`],
+  windows: [WINDOWS_DOWNLOAD_FILENAME],
 };
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -62,6 +63,17 @@ export async function GET(request: NextRequest) {
     platform === "windows" ? WINDOWS_DOWNLOAD_FILENAME : MAC_DOWNLOAD_FILENAME;
   const fallbackUrl = getExternalDownloadUrl(platform);
 
+  const githubAsset = await resolveGitHubAssetUrl(platform);
+  if (githubAsset) {
+    const response = NextResponse.redirect(githubAsset.url, 302);
+    response.headers.set(
+      "Content-Disposition",
+      `attachment; filename="${githubAsset.filename}"`,
+    );
+    response.headers.set("Cache-Control", "public, max-age=300");
+    return response;
+  }
+
   const local = findLocalInstaller(platform);
   if (local) {
     if (process.env.NODE_ENV === "development") {
@@ -94,15 +106,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const githubAsset = await resolveGitHubAssetUrl(platform);
-  if (!githubAsset) {
-    return NextResponse.redirect(RELEASE_PAGE_URL, 302);
-  }
-
-  const response = NextResponse.redirect(githubAsset.url, 302);
+  const response = NextResponse.redirect(fallbackUrl, 302);
   response.headers.set(
     "Content-Disposition",
-    `attachment; filename="${githubAsset.filename}"`,
+    `attachment; filename="${fallbackFilename}"`,
   );
   response.headers.set("Cache-Control", "public, max-age=300");
   return response;
