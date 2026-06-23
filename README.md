@@ -75,12 +75,55 @@ Required for production:
 npm run local:setup
 
 # Publish installers to GitHub Releases (Mac DMG + Windows Replii-Setup.exe)
-git tag v0.1.0 && git push origin v0.1.0
+git tag v0.1.1 && git push origin v0.1.1
 ```
 
 Signed Mac builds: `desktop/build-release.command` (requires `desktop/.release-secrets.local`).
 
 **Windows installer** (`Replii-Setup.exe`) must be built on Windows — NSIS does not run on macOS. Push `.github/workflows/desktop-release.yml`, then either tag a release or run **Actions → Desktop Release → Run workflow** with platform `windows` to replace an old zip with the NSIS installer.
+
+### GitHub Actions secrets (desktop release)
+
+Configure these in **Settings → Secrets and variables → Actions** before tagging a release:
+
+| Secret | Purpose |
+|--------|---------|
+| `VITE_OPENAI_API_KEY` | Baked into desktop builds |
+| `VITE_SUPABASE_URL` | Auth |
+| `VITE_SUPABASE_ANON_KEY` | Auth |
+| `VITE_GOOGLE_CLIENT_ID` | Google sign-in |
+| `VITE_API_BASE_URL` | Billing API (default: `https://replii-lac.vercel.app`) |
+| `VITE_LEGAL_BASE_URL` | Legal pages (default: `https://replii.ai`) |
+| `VITE_ADMIN_EMAIL` | Optional admin panel access |
+
+### Launch checklist
+
+**Vercel (site + API)**
+
+- [ ] Set all root `.env` vars on Vercel (OpenAI, Supabase, Stripe live keys + price IDs, `ADMIN_EMAIL`)
+- [ ] `NEXT_PUBLIC_SITE_URL=https://replii.ai` and custom domain `replii.ai` on the project
+- [ ] Stripe webhook → `https://replii-lac.vercel.app/api/webhooks/stripe` (live mode)
+- [ ] `npm run deploy:prod` or push to `main` if connected to Vercel
+- [ ] Verify `/download`, `/pricing`, `/app`, and legal pages load on `replii.ai`
+
+**Supabase**
+
+- [ ] `supabase db push` — migrations applied
+- [ ] Google OAuth redirect: `https://<project>.supabase.co/auth/v1/callback`
+- [ ] Redirect URLs include `http://127.0.0.1:42817/auth/callback` (desktop) and `https://replii.ai/auth/callback`
+
+**Desktop**
+
+- [ ] Fill `desktop/.env` with production `VITE_*` keys (match Vercel/Supabase)
+- [ ] Tag `v0.1.1` (or current `package.json` version) to trigger **Desktop Release** workflow
+- [ ] Confirm GitHub Release has `Replii.dmg` and `Replii-Setup.exe`
+- [ ] Test download buttons on the marketing site
+
+**Smoke test**
+
+- [ ] Sign up (email + Google) → profile → role → try shortcuts → paywall → dashboard
+- [ ] Start a session, overlay assist works, meeting saves to Activity
+- [ ] Pro checkout + billing portal
 
 ## Stack
 

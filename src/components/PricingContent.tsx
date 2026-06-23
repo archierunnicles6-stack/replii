@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { DownloadLink } from "@/components/DownloadLink";
 import { SUPPORT_ROUTES } from "@/content/legal/config";
 import { priceForInterval, type BillingInterval } from "@/lib/pricing";
 
@@ -113,44 +114,6 @@ function BillingToggle({
   );
 }
 
-function PlaceholderPlanButton({
-  children,
-  splitChevron = false,
-}: {
-  children: React.ReactNode;
-  splitChevron?: boolean;
-}) {
-  const className = splitChevron
-    ? "mt-5 flex h-11 w-full items-center overflow-hidden rounded-xl bg-[#1a1a1a] text-[14px] font-medium text-white cursor-default"
-    : `${PRIMARY_BUTTON_CLASS} cursor-default hover:bg-[#1a1a1a]`;
-
-  return (
-    <button
-      type="button"
-      disabled
-      aria-disabled="true"
-      title="Subscriptions are available in the Replii desktop app"
-      className={className}
-    >
-      <span className="flex flex-1 items-center justify-center">{children}</span>
-      {splitChevron ? (
-        <>
-          <span className="h-5 w-px bg-white/20" />
-          <span className="flex w-10 items-center justify-center">
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-              <path
-                fillRule="evenodd"
-                d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </span>
-        </>
-      ) : null}
-    </button>
-  );
-}
-
 export function PricingContent() {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const { current, original } = priceForInterval("pro", interval);
@@ -160,8 +123,8 @@ export function PricingContent() {
       <BillingToggle interval={interval} onChange={setInterval} />
 
       <p className="mt-6 max-w-[520px] text-center text-[13px] leading-relaxed text-zinc-500">
-        Pro subscriptions are purchased in the Replii desktop app. Plan buttons here are for
-        preview only.
+        Download the desktop app to get started. Pro subscriptions are managed in the app after
+        signup.
       </p>
 
       <div className="mt-10 flex w-full max-w-[1080px] items-stretch gap-5">
@@ -173,7 +136,7 @@ export function PricingContent() {
                 Free
               </span>
             </div>
-            <PlaceholderPlanButton splitChevron>Get for Mac</PlaceholderPlanButton>
+            <DownloadLink className={PRIMARY_BUTTON_CLASS}>Get for Mac</DownloadLink>
             <p className="mt-4 text-[13px] text-zinc-500">All essential features.</p>
             <FeatureList features={STARTER_FEATURES} />
           </div>
@@ -196,7 +159,7 @@ export function PricingContent() {
               </span>
               <span className="text-[14px] text-zinc-500">/ month</span>
             </div>
-            <PlaceholderPlanButton>Subscribe</PlaceholderPlanButton>
+            <DownloadLink className={PRIMARY_BUTTON_CLASS}>Download to subscribe</DownloadLink>
             <p className="mt-4 text-[13px] text-zinc-500">Unlimited access.</p>
             <FeatureList
               features={PRO_FEATURES}

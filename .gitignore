@@ -24,6 +24,9 @@
 # local dev tools
 /.tools
 
+# Desktop renderer bundle (baked VITE_* keys — generate via npm run sync-renderer)
+/assets/index-*.js
+
 # misc
 .DS_Store
 *.pem

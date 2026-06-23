@@ -1,5 +1,5 @@
 const ALLOWED_ORIGIN =
-  /^https?:\/\/(localhost|127\.0\.0\.1|replii\.ai|www\.replii\.ai)(:\d+)?$/;
+  /^https?:\/\/(localhost|127\.0\.0\.1|replii\.ai|www\.replii\.ai|replii-lac\.vercel\.app)(:\d+)?$/;
 
 export function corsHeaders(request: Request): Headers {
   const headers = new Headers();
