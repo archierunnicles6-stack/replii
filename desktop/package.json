@@ -15,12 +15,14 @@
     "icons": "python3 scripts/generate-app-icon.py",
     "package": "node scripts/ensure-icon.mjs && npm run build && electron-builder --mac --dir",
     "package:mac": "node scripts/prepare-ci-build.mjs && node scripts/ensure-icon.mjs && npm run build && electron-builder --mac",
-    "package:win": "node scripts/prepare-ci-build.mjs && node scripts/ensure-icon.mjs && npm run build && electron-builder --win",
+    "package:mac:release": "node scripts/package-mac-release.mjs",
+    "package:win": "node scripts/package-win.mjs",
     "fix:installed": "node scripts/sign-mac-app.mjs /Applications/Replii.app",
     "test:audio": "node scripts/test-audio-suggestions.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",
+    "katex": "^0.16.11",
     "pdfjs-dist": "^4.10.38",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -71,8 +73,11 @@
       "artifactName": "Replii.${ext}",
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
-      "hardenedRuntime": false,
+      "hardenedRuntime": true,
       "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": true,
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Replii needs microphone access to transcribe your voice during sales calls.",
         "NSScreenCaptureDescription": "Replii uses Screen Recording to capture call audio from Zoom, Meet, or Teams. Replii does not view or record your screen."
