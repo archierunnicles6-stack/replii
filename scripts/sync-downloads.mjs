@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +10,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const releaseDir = path.join(root, "desktop", "release");
 const destDir = path.join(root, "public", "downloads");
+const appVersion = JSON.parse(
+  readFileSync(path.join(root, "package.json"), "utf8"),
+).version;
 
 function pickNewest(candidates) {
   let best = null;
@@ -25,11 +29,11 @@ mkdirSync(destDir, { recursive: true });
 
 const macSrc = pickNewest([
   "Replii.dmg",
-  "Replii-0.1.0-arm64.dmg",
-  "Replii-0.1.0.dmg",
+  `Replii-${appVersion}-arm64.dmg`,
+  `Replii-${appVersion}.dmg`,
 ]);
 
-const winSrc = pickNewest(["Replii-Setup.exe", "Replii-Windows.zip"]);
+const winSrc = pickNewest(["Replii-Setup.exe"]);
 
 if (macSrc) {
   copyFileSync(macSrc, path.join(destDir, "Replii.dmg"));
@@ -39,14 +43,10 @@ if (macSrc) {
 }
 
 if (winSrc) {
-  const destName = winSrc.endsWith(".exe") ? "Replii-Setup.exe" : "Replii-Windows.zip";
-  copyFileSync(winSrc, path.join(destDir, destName));
-  console.log(`[sync-downloads] ${destName} ← ${path.relative(root, winSrc)}`);
-  if (!winSrc.endsWith(".exe")) {
-    console.warn(
-      "[sync-downloads] Only a portable zip was found — run npm run desktop:package:win for Replii-Setup.exe",
-    );
-  }
+  copyFileSync(winSrc, path.join(destDir, "Replii-Setup.exe"));
+  console.log(`[sync-downloads] Replii-Setup.exe ← ${path.relative(root, winSrc)}`);
 } else {
-  console.warn("[sync-downloads] No Windows installer found — run: npm run desktop:package:win");
+  console.warn(
+    "[sync-downloads] No Windows installer found — run the Desktop Release GitHub Actions workflow (Windows build)",
+  );
 }
