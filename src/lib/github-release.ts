@@ -1,12 +1,19 @@
 import { DOWNLOAD_RELEASE_TAG } from "./download";
 import type { DownloadPlatform } from "./platform";
+import { APP_VERSION } from "./version";
 
-const GITHUB_REPO = "archierunnicles6-stack/replii";
+const GITHUB_REPO =
+  process.env.GITHUB_RELEASE_REPO?.trim() ?? "archierunnicles6-stack/replii";
 
 /** Preferred asset names per platform (first match wins). */
 const ASSET_PREFERENCES: Record<DownloadPlatform, string[]> = {
-  mac: ["Replii.dmg", "Replii-0.1.0-arm64.dmg", "Replii-0.1.0.dmg", "Replii.zip"],
-  windows: ["Replii-Setup.exe", "Replii-Windows.zip"],
+  mac: [
+    "Replii.dmg",
+    `Replii-${APP_VERSION}-arm64.dmg`,
+    `Replii-${APP_VERSION}.dmg`,
+    "Replii.zip",
+  ],
+  windows: ["Replii-Setup.exe"],
 };
 
 type GitHubReleaseAsset = {
@@ -31,6 +38,8 @@ const GITHUB_HEADERS = {
 async function fetchReleaseAssets(
   endpoint: "latest" | `tags/${string}`,
 ): Promise<GitHubReleaseAsset[]> {
+  if (!GITHUB_REPO) return [];
+
   const response = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/releases/${endpoint}`,
     {
